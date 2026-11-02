@@ -5,6 +5,7 @@ let peer=null,connection=null,remoteState=null,overlayMode=null,cameraStream=nul
 const fmt=n=>Number(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
 const isLinked=()=>!!connection?.open&&(connection.local!==true||!!(localPumpWindow&&!localPumpWindow.closed));
 let localPumpWindow=null,localPendingId=null,localReady=false,localWindowTimer=null,qrEntryActive=false;
+const useLocalDemo=()=>!qrEntryActive&&typeof inPresentationDemo==='function'&&inPresentationDemo()&&(location.protocol==='file:'||['localhost','127.0.0.1','[::1]'].includes(location.hostname));
 function currentProfile(){const pp=data.profile||{},cv=data.customVehicle||{};return {profileName:[pp.first,pp.last].filter(Boolean).join(' ').trim()||'Usuario GAS&GO',vehicle:data.vehicle||cv.name||'Vehículo registrado',fuel:data.fuel||cv.fuel||'Gasolina 95',vehicleName:cv.name||data.vehicle||'Vehículo registrado',vehicleModel:cv.model||'',vehiclePlate:cv.plate||'',vehicleEmoji:cv.emoji||'',vehicleDetected:[cv.name||data.vehicle||'Vehículo registrado',cv.model||'',cv.plate||''].filter(Boolean).join(' · ')}}
 function reportProfile(){if(isLinked())connection.send({type:'profile',...currentProfile()})}
 const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -27,7 +28,7 @@ function pairErrorMessage(error){
 }
 function retry(){if(lastTarget){if(connection&&!connection.open){try{connection.close()}catch(e){}}connection=null;isConnecting=false;connect(lastTarget)}else openPair()}
 
-function openPair(){if(!qrEntryActive&&typeof inPresentationDemo==='function'&&inPresentationDemo()){openLocalPump(9001);return}if(isLinked()){show(`<h2>Dispositivos vinculados</h2><p>El móvil está conectado con el surtidor virtual del portátil.</p><div class="ggv2-success">● Conexión activa</div><button class="ggv2-alt" onclick="ggv2.unlink()">Desvincular</button>`, 'paired');return}
+function openPair(){if(useLocalDemo()&&!isLinked()){openLocalPump(9001);return}if(isLinked()){show(`<h2>Dispositivos vinculados</h2><p>El móvil está conectado con el surtidor virtual del portátil.</p><div class="ggv2-success">● Conexión activa</div><button class="ggv2-alt" onclick="ggv2.unlink()">Desvincular</button>`, 'paired');return}
  show(`<h2>Conectar con el surtidor</h2><p>Escanea con la cámara del móvil el <b>QR de vinculación</b> que aparece en el ordenador. Esto conecta los dispositivos, pero no autoriza un repostaje.</p><button class="ggv2-main" onclick="ggv2.scanPair()">▣ Abrir cámara y escanear QR</button><div class="ggv2-separator">o introduce el código del portátil</div><label for="ggv2Code">Código de vinculación</label><input id="ggv2Code" type="text" autocapitalize="characters" autocomplete="off" maxlength="32" placeholder="GG-XXXX-XXXX-XXXX-XXXX" value=""><button class="ggv2-alt" onclick="ggv2.pairManual()">Vincular con código</button><div id="ggv2Alert" class="ggv2-alert hide" role="alert"></div><p class="ggv2-note">La cámara requiere abrir esta aplicación desde una dirección HTTPS en Chrome, Safari o Firefox, no desde la vista de un archivo de WhatsApp.</p>`, 'pair')}
 function parsePeer(input){const raw=String(input||'').trim();if(!raw)return null;try{const u=new URL(raw);const p=u.searchParams.get('ggpair');if(p)return parsePeer(p)}catch(e){}const compact=raw.toUpperCase().replace(/[^A-Z0-9]/g,'');if(compact.startsWith('GGP')&&compact.length===19&&/^[0-9A-F]+$/.test(compact.slice(3)))return 'gg-p-'+compact.slice(3);if(compact.startsWith('GG')&&compact.length===18&&/^[0-9A-F]+$/.test(compact.slice(2)))return 'gg-p-'+compact.slice(2);if(/^gg-p-[a-f0-9]{16}$/i.test(raw))return raw.toLowerCase();return null}
 function startPeer(){
@@ -123,7 +124,7 @@ function saveReceipt(s){if(!s.sessionId||!s.quantity||!s.vehicle)return;
 function localSend(data){if(localPumpWindow&&!localPumpWindow.closed){localPumpWindow.postMessage({gasgoLocal:258,data},'*');return true}return false}
 function releaseLocalConnection(){if(!connection?.local)return;connection=null;remoteState=null;localReady=false;upsertConnectButton()}
 function openLocalPump(id){
- if(typeof inPresentationDemo!=='function'||!inPresentationDemo()){openPair();return}
+ if(!useLocalDemo()){openPair();return}
  localPendingId=id;
  let w;
  try{w=window.open('./surtidor-demo.html?gglocal=1','gasgo-surtidor-demo','width=1080,height=880')}catch(e){}
@@ -157,7 +158,7 @@ window.addEventListener('message',event=>{
 });
 setInterval(()=>{if(connection?.local&&localPumpWindow?.closed){releaseLocalConnection();toast('Se ha cerrado el surtidor DEMO')}},1200);
 const formerStart=window.start;
-window.start=function(id){if(qrEntryActive){if(isConnecting)return;startConnectedOperation(id);return}if(typeof inPresentationDemo==='function'&&inPresentationDemo())return openLocalPump(id);startConnectedOperation(id)};
+window.start=function(id){if(isConnecting)return;if(useLocalDemo())return openLocalPump(id);startConnectedOperation(id)};
 window.ggv2={close,openPair,pairManual,retry,refreshLinkUI:syncLinkUI,scanPair:()=>requestScan('pair'),scanVerify:()=>requestScan('verify'),stopScan,confirm:confirmPump,verifyManual,showSession,unlink};
 upsertConnectButton();
 // Acceso directo desde el QR físico: abre GAS&GO y enlaza automáticamente.

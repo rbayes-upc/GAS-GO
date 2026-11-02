@@ -10,7 +10,7 @@ Desde la raíz del repositorio:
 python -m http.server 8000 --bind 127.0.0.1
 ```
 
-Abre `index.html` desde ese servidor. El botón DEMO abre el surtidor en otra pestaña del mismo navegador.
+Abre `index.html` desde ese servidor. En localhost o con archivos locales, el botón DEMO abre el surtidor en otra pestaña del mismo navegador. En la web publicada, DEMO utiliza la vinculación con el surtidor del ordenador y no abre otro surtidor.
 
 ## Despliegue automático en Netlify
 
