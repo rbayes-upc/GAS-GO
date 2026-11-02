@@ -24,6 +24,17 @@ Conecta este repositorio desde el sitio de Netlify mediante la opción de import
 
 Netlify desplegará los nuevos commits de `main` automáticamente. GitHub guarda el código y Netlify sirve la app y sus funciones.
 
+## Publicar directamente en GitHub Pages
+
+En el repositorio, abre **Settings → Pages** y selecciona **Deploy from a branch**, rama **main**, carpeta **/ (root)**. Guarda la configuración.
+
+- App: `https://rbayes-upc.github.io/GAS-GO/`
+- Surtidor: `https://rbayes-upc.github.io/GAS-GO/surtidor-demo.html`
+
+Estas direcciones estarán disponibles cuando GitHub Pages esté activado y termine el despliegue. Los commits nuevos en `main` se publicarán automáticamente. `.nojekyll` permite servir el proyecto estático sin procesarlo con Jekyll.
+
+El QR utiliza la dirección del sitio actual, por lo que abre la app del mismo proyecto en GitHub Pages. Las funciones de Netlify y sus cabeceras no se ejecutan en GitHub Pages: la consulta real por matrícula necesita un servidor aparte. El modo DEMO y el alta manual de vehículos no requieren esa función.
+
 ## Surtidor con QR
 
 1. Abre `/surtidor-demo.html` en el ordenador desde el sitio HTTPS de Netlify.
