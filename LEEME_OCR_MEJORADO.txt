@@ -1,0 +1,20 @@
+GAS&GO v2.7.1 · OCR guiado sin API de pago
+
+FULL > Mi vehículo > Con una foto
+
+1. Haz una foto nítida de la trasera con matrícula y emblemas.
+2. Pulsa «1 · Matrícula» y ARRASTRA un rectángulo sobre la placa.
+3. Pulsa «2 · Emblemas» y ARRASTRA un rectángulo sobre letras de marca, modelo o motor.
+4. Pulsa «Analizar las dos zonas». Se usa resolución original (sin reducir a 1600 px).
+5. Revisa los datos sugeridos, corrige los que fallen y confirma el combustible.
+
+El análisis OCR en navegador es gratis, pero no es visión artificial completa:
+- NO garantiza leer placas o emblemas borrosos, diminutos o con reflejos.
+- NO reconoce logotipos, colores ni motores solo mediante imagen.
+- NO adivina marca/modelo a partir de una matrícula española sin consulta externa.
+- Las fotos no se suben ni se conservan; las fichas se guardan en este navegador.
+- La primera carga del motor OCR necesita Internet en la versión FULL.
+
+La DEMO y el surtidor local no se modifican.
+Para NETLIFY: sube el contenido completo del ZIP a tu sitio.
+No necesitas OPENAI_API_KEY ni una API de pago.

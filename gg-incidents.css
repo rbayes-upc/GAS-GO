@@ -1,0 +1,67 @@
+/* GAS&GO v2.4.3 · Incidencias · aislado del mapa y del surtidor */
+#ggIncidentButton{display:inline-flex;align-items:center;justify-content:center;min-width:31px;min-height:37px;padding:0;color:#fff;flex-shrink:0}
+#ggIncidentButton svg{display:block;width:23px;height:23px}
+#ggIncidentButton:hover{color:#ffdf2e}
+#ggIncidentButton:focus-visible{outline:2px solid #ffdf2e;outline-offset:2px;border-radius:8px}
+.top-actions{align-items:center;gap:11px}
+@media(max-width:375px){.top-actions{gap:7px}.top-actions .iconbutton{font-size:20px}#ggIncidentButton{min-width:28px}}
+body.gg-inc-locked{overflow:hidden}
+#ggIncidentOverlay{position:fixed;inset:0;z-index:2147482500;background:rgba(0,36,27,.84);display:flex;align-items:center;justify-content:center;padding:12px;overscroll-behavior:contain;isolation:isolate}
+#ggIncidentOverlay *{box-sizing:border-box}
+#ggIncidentOverlay .gg-inc-panel{width:min(440px,100%);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;background:#fff;border-radius:22px;padding:18px 18px 22px;box-shadow:0 20px 65px #00160eb0;color:#163c30;font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+#ggIncidentOverlay .gg-inc-heading{display:flex;justify-content:space-between;gap:10px;align-items:start}
+#ggIncidentOverlay .gg-inc-heading strong{font-size:21px;line-height:1.25;letter-spacing:-.5px}
+#ggIncidentOverlay .gg-inc-muted{font-size:12px;line-height:1.5;color:#657c70;margin:5px 0 12px}
+#ggIncidentOverlay .gg-inc-close{border:0;background:#ebf4ee;border-radius:50%;color:#215c49;font-size:25px;width:36px;height:36px;line-height:1;flex-shrink:0}
+#ggIncidentOverlay .gg-inc-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;background:#ebf4ee;border-radius:12px;margin:12px 0 16px}
+#ggIncidentOverlay .gg-inc-tab{border:0;border-radius:9px;background:transparent;color:#245746;padding:10px 4px;font-size:13px;font-weight:780}
+#ggIncidentOverlay .gg-inc-tab.active{background:#034a3c;color:#fff}
+#ggIncidentOverlay .gg-inc-label{display:block;margin:14px 0 5px;font-weight:750;font-size:13px;color:#184538}
+#ggIncidentOverlay .gg-inc-input,#ggIncidentOverlay .gg-inc-textarea{display:block;width:100%;min-width:0;background:#fff;color:#183b30;border:1px solid #b6d0c2;border-radius:12px;padding:12px;font:inherit;font-size:15px}
+#ggIncidentOverlay .gg-inc-textarea{min-height:92px;resize:vertical;line-height:1.45}
+#ggIncidentOverlay :is(.gg-inc-input,.gg-inc-textarea):focus-visible{outline:2px solid #c6a000;outline-offset:1px}
+#ggIncidentOverlay .gg-inc-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#ggIncidentOverlay .gg-inc-photo-choice{display:flex;justify-content:center;align-items:center;text-align:center;gap:5px;border:1px solid #c0d7c6;border-radius:12px;background:#edf6f0;padding:13px 5px;font-size:13px;font-weight:750;color:#075d44;cursor:pointer}
+#ggIncidentOverlay .gg-inc-photo-choice:focus-within{outline:2px solid #d0ae16;outline-offset:2px}
+#ggIncidentOverlay .gg-inc-photo-choice input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+#ggIncidentOverlay .gg-inc-photo-preview{display:none;margin:12px 0 0;background:#edf5ef;border-radius:13px;padding:9px;position:relative}
+#ggIncidentOverlay .gg-inc-photo-preview.show{display:flex;align-items:center;gap:10px}
+#ggIncidentOverlay .gg-inc-photo-preview img{width:100px;height:94px;object-fit:cover;border-radius:9px;border:1px solid #bad3c0;background:#fff}
+#ggIncidentOverlay .gg-inc-photo-preview p{font-size:12px;color:#426655;margin:0 0 10px}
+#ggIncidentOverlay .gg-inc-remove{border:1px solid #c8d9cf;background:#fff;border-radius:9px;padding:7px 9px;color:#205b45;font-size:12px;font-weight:700}
+#ggIncidentOverlay .gg-inc-alert{padding:11px;background:#fff3c9;border-radius:11px;font-size:12px;line-height:1.45;color:#725612;margin:14px 0}
+#ggIncidentOverlay .gg-inc-error{border:1px solid #dfaeb1;color:#903d40;background:#fff1f1;border-radius:10px;font-size:13px;padding:9px 11px;margin:10px 0}
+#ggIncidentOverlay .gg-inc-submit,#ggIncidentOverlay .gg-inc-secondary{display:block;width:100%;min-height:47px;border:0;border-radius:12px;font-weight:850;font-size:14px;padding:12px 8px;margin-top:13px;cursor:pointer}
+#ggIncidentOverlay .gg-inc-submit{background:#ffdf2e;color:#103b2e}
+#ggIncidentOverlay .gg-inc-secondary{background:#eaf5ed;color:#0d6048}
+#ggIncidentOverlay .gg-inc-submit:disabled{opacity:.55;cursor:wait}
+#ggIncidentOverlay .gg-inc-entry{border:1px solid #d2e5d9;background:#fbfdfb;border-radius:14px;padding:12px;margin:10px 0}
+#ggIncidentOverlay .gg-inc-entry-header{display:flex;gap:8px;align-items:start;justify-content:space-between}
+#ggIncidentOverlay .gg-inc-entry h3{font-size:14px;margin:0 0 4px;line-height:1.3;color:#184638}
+#ggIncidentOverlay .gg-inc-entry small{font-size:11px;color:#728579}
+#ggIncidentOverlay .gg-inc-entry p{font-size:12px;margin:8px 0;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+#ggIncidentOverlay .gg-inc-entry-photo{display:block;width:100%;max-height:165px;object-fit:cover;border-radius:10px;margin-top:9px}
+#ggIncidentOverlay .gg-inc-local{font-size:10px;font-weight:750;color:#7b6422;background:#fff5cb;border-radius:7px;padding:5px 7px;white-space:nowrap}
+#ggIncidentOverlay .gg-inc-delete{border:1px solid #dfc8c8;color:#933e44;background:#fff7f7;border-radius:9px;padding:7px 10px;font-size:12px;margin-top:10px}
+#ggIncidentOverlay .gg-inc-count{font-size:11px;color:#657c70;display:block;text-align:right;margin-top:5px}
+#ggIncidentOverlay .gg-inc-success{padding:12px;border-radius:11px;background:#e3f7e8;color:#0b6445;font-size:13px;line-height:1.45;font-weight:700;margin-top:10px}
+/* Ajuste: cuatro iconos en la cabecera, también en móviles estrechos */
+@media(max-width:390px){
+ .header{padding-left:13px;padding-right:13px}
+ .header .brand{font-size:21px;gap:7px;white-space:nowrap}
+ .header .brand-logo{width:28px;height:28px}
+ .top-actions{gap:6px;flex-shrink:0}
+ .top-actions .iconbutton{font-size:20px;min-width:24px;padding:2px}
+ #ggIncidentButton{min-width:28px}
+}
+
+/* v2.4.4: selección rápida por historial o ubicación elegida desde el mapa */
+#ggIncidentOverlay .gg-inc-hint{font-size:11px;line-height:1.45;color:#688477;margin:5px 0 8px}
+#ggIncidentOverlay .gg-inc-pinned{padding:13px 14px;background:#e9f5ee;border:1px solid #bad8c9;border-radius:13px;margin:12px 0}
+#ggIncidentOverlay .gg-inc-pinned-label{display:block;color:#416b58;font-size:11px;margin-bottom:5px;font-weight:700}
+#ggIncidentOverlay .gg-inc-pinned strong{display:block;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+#ggIncidentOverlay .gg-inc-pinned small{display:block;font-size:12px;margin-top:5px;color:#547669}
+#ggIncidentOverlay .gg-inc-empty-recent{padding:12px 13px;background:#f4f8f5;border-radius:12px;color:#426454;font-size:13px;line-height:1.5;margin:11px 0 4px}
+#ggIncidentOverlay .gg-inc-map-link{border:1px solid #bdd9c8;margin:10px 0 5px;font-weight:750;min-height:47px}
+.gg-station-popup .gg-report-station{margin-top:8px!important;display:flex;justify-content:center;align-items:center;gap:7px;border:1px solid #bad6c9!important;color:#045944!important;background:#eff8f2!important}
+.gg-station-popup .gg-report-station:focus-visible{outline:2px solid #034a3c;outline-offset:2px}

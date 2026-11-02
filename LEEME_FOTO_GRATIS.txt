@@ -1,0 +1,28 @@
+GAS&GO v2.7.0 - lectura de matricula y emblemas sin API de pago
+
+QUE SE HA CAMBIADO
+- FULL > Mi vehiculo > Con una foto utiliza Tesseract.js, motor OCR gratuito en el navegador.
+- No llama a /.netlify/functions/vehicle-photo ni requiere OPENAI_API_KEY.
+- La fotografia no se transmite a GAS&GO ni se almacena.
+- El primer uso descarga Tesseract.js y su modelo de idioma desde CDN.
+- Los resultados son sugerencias de texto, no reconocimiento visual de logotipos.
+- El color, algunas marcas y el modelo exacto pueden quedar sin identificar.
+- El combustible requiere confirmacion explicita del usuario antes del guardado.
+
+COMO PROBARLO EN NETLIFY
+1. Descomprime el ZIP completo.
+2. Sube el CONTENIDO a tu sitio Netlify (o despliega con Git).
+3. En la version FULL, ve a Mi vehiculo > Con una foto.
+4. Haz una foto de la trasera con matricula y emblemas grandes y legibles.
+5. Pulsa Leer matricula y emblemas gratis.
+6. Revisa los resultados y corrige datos dudosos.
+
+LIMITACIONES
+- No hay IA visual remota: se identifica el texto visible, no el logotipo por imagen.
+- Puede fallar por reflejos, matricula demasiado pequena o mala resolucion.
+- La primera descarga requiere Internet en la version FULL.
+- El modo DEMO y surtidor local son exactamente los mismos que en v2.6.9.
+- Los vehiculos guardados quedan en el navegador, NO hay una base compartida.
+
+Sin cargos por consulta OCR. El alojamiento y la transferencia de Netlify pueden
+tener sus propios limites gratuitos según tu plan.

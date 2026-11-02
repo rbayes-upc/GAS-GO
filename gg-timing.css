@@ -1,0 +1,22 @@
+/* GAS&GO v2.4.5 · ocupación y tiempos de demostración */
+.gg245-metrics{background:#f5faf7;border:1px solid #d3e6da;border-radius:12px;margin:10px 0;padding:10px;font-size:11px;color:#064a3a}
+.gg245-capacity{display:flex;flex-direction:column;gap:3px;margin-bottom:9px}
+.gg245-label{font-size:10px;color:#577269;font-weight:700}.gg245-capacity b{font-size:12px;line-height:1.3}
+.gg245-metricrow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.gg245-metricrow>div{background:#fff;border:1px solid #e0ebe3;border-radius:9px;padding:7px 8px;min-width:0}
+.gg245-metricrow small{display:block;color:#5b716a;font-size:10px;line-height:1.25;margin-bottom:3px}
+.gg245-metricrow strong{display:block;color:#064735;font-size:13px;line-height:1.2;font-variant-numeric:tabular-nums}
+.gg245-metricrow .gg245-total{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;align-items:center;border-color:#efdf8f;background:#fff8dc}
+.gg245-total small{margin:0;color:#61520a}.gg245-total strong{color:#094f3e;white-space:nowrap}
+.gg245-caveat{font-size:9px;color:#647b70;line-height:1.35;margin-top:8px}
+.gg245-other{border-top:1px solid #d5e6d9;padding-top:7px;margin-top:8px;color:#246a52;font-size:10px}
+.gg245-sorting-note{font-size:10px;color:#546d64;margin:2px 3px 8px;line-height:1.3}
+.list-station-card .gg245-metrics{margin:8px 0}.gg-station-popup .gg245-metrics{margin:8px 0}
+.list-sort-label select{max-width:190px!important;max-height:44px}.list-toolbar{align-items:center}
+@media(max-width:375px){.list-sort-label select{max-width:160px!important}.gg245-metricrow .gg245-total{align-items:flex-start;flex-direction:column;gap:2px}}
+
+/* v2.4.6 · potencia desglosada del CSV y recarga parametrizable */
+.gg246-power{background:#e7f3eb;border:1px solid #c9e1d0;padding:8px;border-radius:9px;margin:0 0 8px;display:flex;flex-direction:column;gap:3px}
+.gg246-power small{font-size:10px;color:#4e6c5c}.gg246-power b{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+.gg246-power-choice strong{font-size:13px}.gg245-caveat{font-size:10px}
+.gg245-metricrow .gg245-total{grid-column:1/-1}

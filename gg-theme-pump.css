@@ -1,0 +1,53 @@
+/* GAS&GO v2.2.1 — Identidad visual (surtidor portátil)
+   El verde y el amarillo proceden del logo facilitado por el equipo. */
+:root{--gg-deep:#053B30;--gg-brand:#034A3C;--gg-rich:#0B6750;--gg-yellow:#FFDF2E;--gg-soft:#E9F7EE;--gg-line:#407763}
+html{background:#042F27}
+body{background:radial-gradient(ellipse at 6% 0%,#0E745A 0%,transparent 49%),linear-gradient(138deg,#032E26,#075440 72%,#063C30);color:#F4FFF8}
+.brand b{color:var(--gg-yellow)}
+.status{background:#145B49;color:#F5FFF7;border:1px solid #2F785E}
+.box{background:#0C4738;border:1px solid #407B65;box-shadow:0 8px 24px #001B1524}
+.box h2{color:#F7FFF9}
+.meter,.wrap.mode-electric .meter{background:linear-gradient(160deg,#F0FAF1,#E3F5E9);color:#123C30;border:5px solid #7AAB8A;box-shadow:inset 0 2px 8px #174C2D1B}
+.metric{color:#4F735F}
+.money,.mrow strong{color:#123F31}
+.mrow{border-top-color:#B8D8C0}
+.primary,.wrap.mode-electric .primary{background:var(--gg-yellow);color:#173A2B}
+.primary:hover:not(:disabled),.wrap.mode-electric .primary:hover:not(:disabled){background:#F2D02A}
+.secondary{background:#E4F4E8;color:#124632}
+.secondary:hover:not(:disabled){background:#F5FFF7}
+.danger{background:#B33B44;color:#fff}
+.supply{background:var(--gg-yellow);color:#143B2C;box-shadow:0 3px 14px #041b132c}
+.supply:hover:not(:disabled){background:#F2D02A}
+.supply.active{background:#159069;color:#fff}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #FFDF2E;outline-offset:2px}
+.info{color:#D1E9DC}
+.minor{color:#BFDECD}
+.qr{background:#fff}
+.code{color:#fff}
+.flag{background:#1A634F;border:1px solid #3D886C;color:#F9FFFA}
+.notice,.trad-warning{background:#5D4A23;border-color:#9B7B34;color:#FFF0C0}
+.subtle{background:#0A392F;border:1px solid #2E6753}
+.link,a{color:#FFE873}
+.label{color:#B3DBC3}
+.separator{border-top-color:#3B7961}
+.button-quiet{background:#1B6751;color:#F4FFF8}
+.mode-chip{background:#1F6A51;color:#F5FFF7}
+.mode-chip.ev{background:#E1F3E5;color:#0A5D45}
+.mode-details{color:#CFE7D7}
+.supply-note{background:#134D3B;border-color:#3F8268;color:#DDF7E5}
+#statusMsg{background:#063A2F;border:1px solid #246A50;color:#F4FFF8}
+.small-caps{color:#BEDBC9}
+.batteryhint{color:#C8E5D1}
+.trad-entry{background:#F2FAF3;color:#134D39;border-color:#AED5B9}
+.trad-entry:hover{background:#fff}
+.trad-flow{background:#063A30;border-color:#3B7860}
+.trad-flow h2{color:#fff}
+.trad-flow p{color:#D3E9D9}
+.trad-flow label{color:#E9FFF2}
+.trad-flow input,.trad-flow select{background:#FBFFFC;border-color:#B8D8C2;color:#143E31}
+.trad-flow input:focus,.trad-flow select:focus{outline:3px solid #ECCA2D}
+.trad-form-note{color:#BDDCCA!important}
+.trad-card{background:#125341;border-color:#398069}
+.trad-mini{color:#C3E2D0}
+.trad-ok{background:#0B5943;border-color:#46A37A;color:#E0FFF0}
+.trad-step{color:#FFE878}

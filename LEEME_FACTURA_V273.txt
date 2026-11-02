@@ -1,0 +1,39 @@
+GAS&GO v2.7.3 - FACTURA REDISEÑADA (FULL + DEMO)
+================================================
+Referencia visual: GASGO_Factura_Nueva_V2.pdf, facilitado por el equipo.
+
+QUE CAMBIA
+- El historial muestra una vista previa de la factura con el nuevo diseño Gas&Go.
+- El botón «Descargar factura PDF» produce un archivo A4 (PDF 1.4) con:
+    cabecera verde y logotipo, etiqueta amarilla, número y fecha;
+    resumen de estación / surtidor / vehículo;
+    bloques de emisor y cliente;
+    detalle por litros o kWh, precio unitario y descuentos;
+    pago, base imponible, IVA y total resaltado;
+    logotipo en el pie y aviso de demostración.
+- La misma función se utiliza en el modo FULL y en el modo DEMO.
+- Los datos se toman de la operación concreta, no son valores fijos de ejemplo.
+- El diseño también admite recarga eléctrica y descuentos.
+- La descarga funciona desde el navegador, sin librerías externas ni API.
+
+COMO PROBAR
+1. Descomprimir el paquete completo.
+2. Abrir index.html o desplegar los archivos completos en Netlify.
+3. Entrar en Historial, abrir una factura y pulsar «Descargar factura PDF».
+4. Probar tanto el acceso normal como el modo DEMO.
+
+LIMITACION DEL PROTOTIPO
+- FULL y DEMO registran operaciones y pagos de prueba; ninguna factura tiene
+  validez fiscal. Los datos de emisor son ficticios. No debe presentarse como
+  justificante de pago real.
+- La factura PDF es una página A4 de alta resolución con imagen integrada.
+  El texto es visual (no seleccionable como texto PDF).
+- Para facturación fiscal real habría que integrar los datos de un emisor real,
+  validación fiscal, numeración, registros y pagos verificados.
+
+ARCHIVOS NUEVOS
+- gg-invoice.js: motor PDF offline y vista previa.
+- gg-invoice.css: diseño responsivo de la vista previa.
+- logo-factura-cabecera.png y logo-factura-pie.png.
+
+El resto de módulos, el surtidor y la conexión local conservan su funcionalidad.

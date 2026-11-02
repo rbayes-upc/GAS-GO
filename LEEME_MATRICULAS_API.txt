@@ -1,0 +1,43 @@
+GAS&GO v2.6.7 | CONSULTA POR MATRÍCULA EN FULL
+=================================================
+
+QUÉ SE HA HECHO
+- Versión FULL: Mi vehículo -> Añadir vehículo por matrícula -> Consultar.
+- Se llama a una función de servidor de GAS&GO (Netlify) que consulta la API documentada de APIVehículo.
+- Devuelve marca, modelo, versión, fecha de matrícula, combustible y tipo cuando están disponibles.
+- Confirma o corrige los datos antes de guardarlos. Si falla la consulta, existe entrada manual.
+- Registro FULL: botón Buscar vehículo por matrícula en el paso de vehículo.
+- DEMO: SIN CAMBIOS, sin API y sin necesidad de Internet.
+- Surtidor local: SIN CAMBIOS.
+
+REQUISITOS PARA CONSULTA REAL
+1. Contratar/activar una cuenta y obtener clave API de https://apivehiculo.com/api-vehiculos
+2. Publicar la carpeta en Netlify con una integración que DESPLIEGUE FUNCIONES,
+   preferentemente conectando un repositorio de GitHub al sitio Netlify.
+   IMPORTANTE: Netlify Drop con una carpeta estática no garantiza desplegar
+   el código de netlify/functions. Recomendamos Git desde el panel web de Netlify.
+3. En el panel de Netlify, Environment variables, crear APIVEHICULO_KEY
+   con el valor secreto y el alcance de Functions / All (NO ponerlo en JS ni HTML).
+4. Volver a desplegar tras configurar la variable. La función debe quedar
+   accesible en /.netlify/functions/vehicle-lookup en el MISMO dominio de la app.
+
+ABRIR EN LOCAL
+Puedes seguir abriendo index.html con doble clic para desarrollar GAS&GO.
+En ese caso la consulta real muestra una indicación clara y permite el alta manual:
+NO se puede guardar una clave privada dentro de un archivo HTML local de forma segura.
+El botón DEMO sigue funcionando igual que antes, sin depender de Internet.
+
+ARCHIVOS CLAVE
+- gg-plate.js: vista FULL con búsqueda y confirmación.
+- netlify/functions/vehicle-lookup.mjs: consulta servidor-servidor.
+- netlify.toml: rutas de funciones en compilación Git.
+
+LIMITACIONES Y SEGURIDAD
+- La API exacta de VerificaCoche es privada/no está públicamente documentada.
+  Esta integración reproduce el modelo técnico, pero usa otro proveedor documentado.
+- El proveedor puede requerir pago por uso, no podemos garantizar la cobertura
+  de todas las matrículas. No se ha realizado una consulta live sin credenciales.
+- Para un sitio público con clave de pago, añade límites de solicitudes y autenticación
+  antes de exponer el endpoint a usuarios arbitrarios.
+- La función no entrega VIN, DNI ni datos del titular a la APP.
+- Respeta las condiciones del proveedor y protección de datos aplicable.

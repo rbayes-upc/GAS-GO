@@ -1,0 +1,31 @@
+/* GAS&GO Wallet — v2.4.8 */
+.ggw-hero{background:linear-gradient(145deg,#034A3C,#0D6A54);color:#fff;border-radius:21px;padding:20px;margin:12px 0 15px;box-shadow:0 8px 19px #034a3c22}
+.ggw-hero-label{font-weight:800;letter-spacing:1px;font-size:11px;color:#d9eee5}
+.ggw-hero-num{color:#FFDF2E;font-size:35px;font-weight:900;letter-spacing:-.8px;margin:8px 0 5px}
+.ggw-hero p{font-size:12px;line-height:1.5;margin:0;color:#e3f5ec}
+.ggw-add{margin:0 0 21px;font-size:15px}
+.ggw-section{font-size:14px;font-weight:850;color:#134b3d;margin:17px 2px 9px}
+.ggw-card{--company:#034A3C;border:1px solid #dbe9e2;border-top:5px solid var(--company);background:#fff;border-radius:17px;padding:16px;margin:11px 0;box-shadow:0 6px 20px #0d3a2b0d}
+.ggw-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:13px}
+.ggw-brand{font-size:13px;font-weight:850;color:var(--company)}
+.ggw-type{background:#eef4f0;color:#345b50;border-radius:30px;padding:5px 9px;font-size:10px;font-weight:700}
+.ggw-card>b{font-size:16px;display:block;color:#102d26}
+.ggw-card p{font-size:12px;color:#60796e;margin:7px 0}
+.ggw-balance{font-size:11px;color:#53685f;border-top:1px solid #e6eee9;padding-top:9px;margin-top:11px}
+.ggw-card-actions{margin-top:11px}.ggw-card-actions button{width:100%;font-size:12px;padding:10px}
+.ggw-empty{border:1px dashed #bfd8c8;border-radius:16px;text-align:center;padding:24px 16px;color:#416155;background:#f6fbf7}
+.ggw-empty>b{display:block;margin:7px 0}.ggw-empty p,.ggw-explain{font-size:12px;line-height:1.55}
+.ggw-two{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
+.ggw-station-hint{background:#eff9f3;border:1px solid #d2e5da;border-radius:11px;padding:10px;margin:10px 0 6px;display:grid;gap:6px;font-size:12px;color:#194d3b}
+.ggw-station-hint button{justify-self:start;color:#065a47;background:#e1f2e7;border:1px solid #a8d2bd;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:800}
+.ggw-station-hint small{font-size:10px;color:#546b5f}
+.ggw-detail-brand{font-weight:850;color:#08664e;margin:14px 0 8px}
+.ggw-secret{padding:13px;border-radius:10px;background:#f0f6f2;overflow-wrap:anywhere;letter-spacing:.9px;font-weight:800;margin:6px 0}
+.ggw-detail-balance{display:flex;justify-content:space-between;gap:14px;border-block:1px solid #e2eae4;padding:15px 0;margin-top:15px;font-size:12px}
+.ggw-detail-balance b{text-align:right;max-width:58%}
+.ggw-event{padding:9px 0;border-bottom:1px solid #e8efeb;display:grid;gap:3px;font-size:12px}
+.ggw-choice{margin:8px 0;font-size:12px;white-space:normal}
+.ggw-scan-button{margin-top:10px;font-size:12px!important;white-space:normal}
+.ggw-scan-area{background:#12382e;color:#fff;padding:9px;border-radius:13px;margin-top:8px;text-align:center}
+.ggw-scan-area video{width:100%;max-height:220px;object-fit:contain;border-radius:8px}
+.ggw-scan-area .tiny{color:#d5e8dd}

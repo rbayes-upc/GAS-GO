@@ -1,0 +1,38 @@
+GAS&GO v2.7.4 · ACCESO DIRECTO AL SURTIDOR DESDE QR
+==========================================================
+
+ESTRUCTURA: un único proyecto en Netlify, NO dos sitios separados.
+- APP del móvil: https://TU-SITIO.netlify.app/index.html
+- Surtidor ordenador: https://TU-SITIO.netlify.app/surtidor-demo.html
+
+CONFIGURACIÓN
+1. Publica todo el contenido de ESTA carpeta en el MISMO sitio Netlify.
+   Puedes usar un despliegue de archivos estáticos (arrastrar la carpeta),
+   ya que el canal de demo QR utiliza PeerJS en el navegador, sin funciones Netlify.
+2. En el ordenador, abre directamente /surtidor-demo.html desde la URL HTTPS.
+3. Espera a ver el QR y el estado «QR ACTIVO». No lo escanees hasta que aparezca.
+4. Escanea con la cámara estándar del móvil, no con el lector interno de la app.
+5. Se abre la APP del mismo sitio, activa el vehículo registrado y se conecta.
+   En la primera visita se emplea el usuario FICTICIO de demostración.
+6. Tras 5 segundos sin seleccionar B/C, se verifica automáticamente el método A.
+7. Usa «Agarra la manguera», mantén «Presiona para surtir» y «Finalizar».
+8. En el teléfono, Historial guarda el justificante ficticio.
+
+IMPORTANTE
+- No necesitas activar DEMO ni FULL ni escribir un código para entrar desde el QR.
+- El QR es un identificador de sesión temporal del surtidor que se renueva al recargar.
+- La comunicación utiliza PeerJS/WebRTC; Netlify aloja APP y surtidor en el
+  mismo dominio, pero el servidor público de PeerJS hace la señalización.
+- Ambos dispositivos necesitan Internet y los navegadores no deben bloquear WebRTC;
+  algunas redes corporativas y móviles pueden bloquear la conexión (falta TURN).
+- Esto es una DEMOSTRACIÓN, NO un sistema de cobro ni de identificación real.
+- No usar para surtidores físicos o autenticación de usuarios reales.
+- La modalidad local anterior, abriendo index.html con doble clic y DEMO,
+  continúa disponible sin QR.
+- La factura, Mi garaje, OCR, promociones y resto de funciones se conservan.
+
+SI LA PANTALLA MUESTRA ERROR DE RED
+- Recargar /surtidor-demo.html para regenerar el QR.
+- Comprobar que no estás abriendo el archivo local file://.
+- Comprobar que la librería PeerJS y QRCode no están bloqueadas por la red.
+- Probar en otro navegador o en una red sin restricciones WebRTC.

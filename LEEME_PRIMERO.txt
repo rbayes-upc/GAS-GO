@@ -1,0 +1,43 @@
+GAS&GO v2.6.6 — BÚSQUEDA POR MATRÍCULA (SOLO VERSIÓN COMPLETA)
+
+En la versión COMPLETA, abre Mi vehículo → Añadir por matrícula.
+1. Introduce una matrícula española válida.
+2. Abre VerificaCoche en otra pestaña (opcional, con Internet) y consulta allí la matrícula.
+3. Copia o transcribe marca, modelo y combustible y guárdalos en GAS&GO.
+4. El vehículo queda registrado localmente y pasa a ser el seleccionado. Se pueden guardar y seleccionar varios.
+
+IMPORTANTE: la app NO recibe datos automáticamente desde VerificaCoche.
+Su web no ofrece una API pública documentada para integrar consultas en este HTML local.
+No se consultan datos personales de titulares ni informes DGT desde la app.
+El resultado registrado es introducido y confirmado por el usuario, NO verificado por GAS&GO.
+El modo DEMO es exactamente el anterior, sin Internet y con la misma apertura automática del surtidor.
+
+GAS&GO v2.6.5 · Surtidor demo local · Finalización visible
+
+Nueva función: debajo del botón de manguera se ve «Finalizar repostaje».
+Se habilita tras suministrar combustible; al pulsarlo termina la operación y envía el resultado al historial de la APP.
+En recarga eléctrica cambia a «Finalizar recarga».
+
+GAS&GO v2.6.4 · Surtidor local · enlace corregido
+
+1. Extrae el ZIP completo en una carpeta.
+2. Abre index.html con doble clic y pulsa DEMO.
+3. El surtidor se abrirá en otra pestaña del MISMO navegador (permite ventanas emergentes).
+4. Durante los primeros 5 segundos puedes elegir B/C desde Más opciones.
+5. Sin elegir otro método, se activa A y aparece la bienvenida con el vehículo.
+6. Haz clic en «Agarra la manguera». A continuación, mantén pulsado «Presiona para surtir».
+7. Para finalizar, pulsa «Finalizar repostaje» debajo del botón de suministro. La operación se envía al historial de la APP.
+
+Los datos, los precios, el reconocimiento por cámaras, la verificación y el pago de este modo son simulados.
+La vinculación local usa mensajes entre pestañas del mismo navegador; NO funciona entre dos equipos diferentes.
+
+GAS&GO v2.6.2 — APP DEMO LOCAL + SURTIDOR
+
+1. Descomprime todo el ZIP en una misma carpeta; no renombres los archivos.
+2. Abre index.html con doble clic en Chrome o Edge.
+3. Pulsa DEMO. Se abre automáticamente surtidor-demo.html en otra pestaña del mismo navegador.
+4. En la APP, pulsa Home para desplegar el menú de 6 funciones. El menú funciona también al entrar en otras pantallas y volver.
+5. En la bienvenida se ha eliminado la barra de desplazamiento visible y ajustado el tamaño para mostrar Iniciar sesión, Registrarse y DEMO.
+6. El surtidor conserva la verificación A automática tras 5 segundos o selección de B/C durante el plazo.
+
+Si el navegador bloquea ventanas emergentes, autorízalas. La conexión local utiliza postMessage entre pestañas del mismo navegador y ordenador. NO une automáticamente un móvil físico con un portátil independiente. No hay pagos reales ni cámaras de reconocimiento reales: todo es simulación.

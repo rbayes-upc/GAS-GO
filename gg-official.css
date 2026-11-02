@@ -1,0 +1,12 @@
+/* GAS&GO v2.3: provenance labels and clear real/demo separation */
+.gg-source{flex:none;min-height:28px;display:flex;align-items:center;justify-content:space-between;gap:5px;background:#e7f5ef;border:1px solid #c1e5d1;color:#075943;border-radius:10px;padding:4px 8px;font-size:10px;line-height:1.25}
+.gg-source.gg-demo{background:#fff5d9;border-color:#f2df9e;color:#815c00}
+.gg-source>span:first-child{font-weight:800;white-space:nowrap}.gg-source>span:nth-child(2){flex:1;text-align:right;white-space:normal}.gg-source button{font-weight:850;font-size:17px;background:none;border:0;color:inherit;line-height:1;padding:2px 4px}
+.gg-real{font-size:10px;color:#07805a}.gg-sim{font-size:10px;color:#916307}.gg-station-source{font-size:11px;color:#496675;margin:6px 0}
+.gg-price-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0}.gg-price-pair>div{background:#e9f5ef;padding:9px;border-radius:9px;min-width:0}.gg-price-pair span{display:block;color:#517065;font-size:10px;font-weight:650}.gg-price-pair strong{display:block;font-size:15px;margin-top:2px;white-space:nowrap}.gg-price-pair small{font-size:10px;color:#547066}
+.gg-note{font-size:10px;color:#617886;line-height:1.35;margin:7px 0}.gg-popup-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.gg-popup-actions .btn{font-size:11px!important;padding:8px 5px!important}.gg-station-popup{max-height:66%!important}
+.gg-list-source{margin-bottom:8px}.gg-list-source .gg-source{margin:0}
+.list-actions .btn{min-width:0;flex:1;padding:8px 3px;font-size:10px}.list-price-row strong{font-size:15px!important;white-space:nowrap}
+.map-home{gap:6px}.map-home-title span{font-size:10px}
+
+.gg-source a{color:inherit;text-decoration:underline}

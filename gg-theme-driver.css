@@ -1,0 +1,145 @@
+/* GAS&GO v2.2.1 — Identidad cromática derivada del logo facilitado.
+   Solo presentación: sin modificar la lógica, eventos, IDs ni estados. */
+:root{
+  --gg-deep:#053B30;
+  --gg-brand:#034A3C;
+  --gg-rich:#0A654E;
+  --gg-accent:#FFDF2E;
+  --gg-accent-hover:#F3D025;
+  --gg-mint:#EAF5EF;
+  --gg-line:#D2E5D9;
+  --gg-ink:#143B32;
+  --gg-muted:#647A70;
+  --navy:#053B30;
+  --navy2:#0A5947;
+  --blue:#087256;
+  --yellow:#FFDF2E;
+  --text:#143B32;
+  --muted:#647A70;
+  --line:#D2E5D9;
+  --bg:#EEF5F0;
+  --green:#087256;
+}
+body{background:#E7F0E9;color:var(--gg-ink)}
+.device{background:#fff;box-shadow:0 0 38px #09382e24}
+.header{background:linear-gradient(130deg,#06392E 5%,#034A3C 62%,#08624D 100%);color:#fff}
+.header .brand b{color:var(--gg-accent)}
+.iconbutton{color:inherit}
+.top-actions .iconbutton:hover{color:var(--gg-accent)}
+.footnav{background:#fff;border-top-color:#DCEAE0}
+.home{background:var(--gg-deep);color:#fff}
+.home .house{color:var(--gg-accent)}
+.title,.map-home-title strong,.sectionlabel{color:var(--gg-ink)}
+.sub,.muted,.small.muted,.map-footer,.map-count{color:var(--gg-muted)}
+.card,.station-result,.list-station-card{border-color:var(--gg-line);box-shadow:0 4px 14px #0b473714}
+.soft{background:linear-gradient(150deg,#F0F8F2,#fff)}
+.sectionlabel{color:#336857}
+.btn{background:#E8F4EB;color:#075A46}
+.btn.primary{background:var(--gg-accent);color:#14392C}
+.btn.primary:hover:not(:disabled){background:var(--gg-accent-hover)}
+.btn.dark{background:var(--gg-deep);color:white}
+.btn.ghost{background:#fff;border-color:#CCDCD1;color:#164D3C}
+.btn.ghost:hover:not(:disabled){background:#F0F7F2}
+.btn:focus-visible,.home:focus-visible,.iconbutton:focus-visible,.mapcontrols button:focus-visible,.gps-locate:focus-visible{outline:3px solid #F3CA20;outline-offset:2px}
+.pill{background:#DCF2E5;color:#0B644B}
+.pill.green{background:#DDF7E7;color:#087250}
+.pill.yellow{background:#FFF4BB;color:#785C00}
+.circle{background:#E0F2E7;color:#087255}
+.circle.yellow{background:#FFF1B7;color:#826200}
+.circle.green{background:#E0F5E8;color:#096C50}
+.circle.pink{background:#F9E9ED;color:#9A3952}
+.circle.purple{background:#EEE8F6;color:#74529D}
+.chev{color:#789789}
+.item{border-bottom-color:#DEEBE0}
+.notice{background:#FFF5CA;color:#755800}
+.pricegrid>div,.metric,.list-price-row>div,.station-facts span{background:#F0F8F3}
+.pricegrid b,.metric b,.list-price-row strong{color:#0A5541}
+.tabbar{background:#ECF4EE}
+.tabbar button{color:#416B59}
+.tabbar button.active{background:var(--gg-brand);color:#fff}
+input[type=text],input[type=number],select,.select,input[type=date],.map-search{border-color:#BCD5C3;outline-color:#D4AE1B}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:#D8B31E}
+.toggle:checked{background:var(--gg-rich)}
+.progress>div{background:var(--gg-rich)}
+.mapframe{border-color:#C7DFCE;background:#E5EEE5}
+.mapcontrols button{color:#164738;background:#fff}
+.mapcontrols .map-filter-btn{color:#174938}
+.gps-locate{color:#0A6048;background:#fff}
+.map-status{color:#315B4D;background:#F9FCF9F2}
+.geo-map .map-tile-failure{border-color:#D2E5D9;color:#245447}
+.mapframe .leaflet-control-zoom a{color:#0B523F!important;background:#fff!important}
+.geo-pin{background:#07513E;color:#fff}
+.geo-pin.ev{background:#0C7B62;color:#fff}
+.geo-pin.mixed{background:var(--gg-accent);color:#14392C}
+.geo-pin.full{opacity:.62}
+.mapdetails{background:#fff}
+.mapdetails .metric{background:#EFF7F1}
+.stock.ok{color:#0B7854}
+.stock.bad{color:#AC3445}
+.station-list-screen{background:#F2F7F3}
+.list-sort-label{color:#3E6856}
+.list-sort-label select{border-color:#CADFD0;color:#153D31}
+.list-summary button{color:#0C674E}
+.star-btn{background:#FFF3C2;color:#927000}
+.filter-available input,.available input{accent-color:var(--gg-rich)}
+.map-search{background:#F3F8F4}
+.map-search span,.map-search button{color:#2E7056}
+.sheet{background:#fff;box-shadow:0 -8px 32px #073c2e30}
+.handle{background:#9BAD9F}
+.modal{background:#05251fc4}
+.modalcontent{background:#fff;color:var(--gg-ink)}
+.filter-x{background:#EDF4EE;color:#2C5D47}
+.toast,.repost-toast{background:#064436;color:#fff}
+.repost-toast .repost-icon{background:#D8F6DF;color:#066448}
+.welcome-brand{color:var(--gg-deep)}
+.welcome-brand span{color:#C09600}
+.welcome-note{color:var(--gg-muted)}
+.plate,.profilebox{background:#ECF6ED;color:#154835}
+.reg-warning{background:#FFF3C8;color:#6A570F}
+.onboard .stepchips span.active{background:var(--gg-rich)}
+.step.current{background:#DFF1E5;color:#086248}
+.step.finished{background:#E3F6E8;color:#0D6D50}
+.sim-visual{background:linear-gradient(145deg,#05372E,#0E6451)}
+.sim-camera-corners{border-color:#FFD83E;box-shadow:0 0 22px #ffdf2e36}
+.sim-scanline{background:#F8DD55;box-shadow:0 0 12px #ffdf2e75}
+.sim-status{background:#EBF4EC;color:var(--gg-ink)}
+.sim-status.ok{background:#E0F6E9;color:#0C654C}
+.sim-status.warning{background:#FFF1C2;color:#745800}
+.sim-dot{background:#0C8261;box-shadow:0 0 0 5px #0c826122}
+.nfcBadge,.nfc-device{background:#EDF8F1;color:#0E5D46;border-color:#B5D9C3}
+.nfc-phone{background:linear-gradient(150deg,#138066,#074436)}
+.nfc-reader{color:#0E684F}
+.nfc-ring{border-color:#21A77B}
+.authcheck,.auth-id{background:#EEF7F0}
+.auth-choices button{background:#E5F3E9;color:#14563F}
+.sim-link,.back{color:#076E53}
+.fuel-option{background:#F1F8F2;border-color:#BFD9C8}
+.fuel-measures>div{background:#E9F5EC}
+.fuel-measures strong{color:#134634}
+.hold-button{background:var(--gg-accent);color:#12392C;box-shadow:0 7px 18px #c2aa2638}
+.hold-button.holding{background:#0C8261;color:#fff}
+.virtual-pump{background:linear-gradient(160deg,#074F3E,#032F27);box-shadow:0 10px 22px #034a3c35}
+.pump-screen{background:#E7F7ED;border-color:#6E9E86;color:#163E32}
+.pump-label{color:#4D6F60}
+.pump-data{border-top-color:#C1D8C7}
+.pump-art{background:#0B5541}
+.pump-resume{background:#E5F5E8;color:#0B6046}
+.pump-fuel-chip{background:#053C2F;border-color:#4F9077}
+.pump-help{color:#5C7669}
+.onboard .reggrid,.card .receipt{color:var(--gg-ink)}
+/* Componente de vinculación móvil, cargado tras gg-driver.css */
+#ggv2ConnectBtn.ggv2-online:after{border-color:var(--gg-deep);background:#FFE034}
+#ggv2Overlay{background:rgba(3,38,30,.96)!important}
+#ggv2Overlay .ggv2-card{color:var(--gg-ink);border:1px solid #CDE1D4}
+#ggv2Overlay .ggv2-brand,#ggv2Overlay h2,#ggv2Overlay b{color:var(--gg-deep)}
+#ggv2Overlay .ggv2-brand span{color:#C79C00}
+#ggv2Overlay #ggv2X{background:#E9F3EC;color:#1D5542}
+#ggv2Overlay p{color:#557265}
+#ggv2Overlay input{border-color:#BAD6C4;color:var(--gg-ink)}
+#ggv2Overlay .ggv2-main{background:var(--gg-accent);color:#12392C}
+#ggv2Overlay .ggv2-alt{background:#EAF5ED;color:#0F6049;border-color:#CBE2D2}
+#ggv2Overlay .ggv2-state{background:#EAF5ED;color:#0C6249}
+#ggv2Overlay .ggv2-camera{background:#053D30}
+#ggv2Overlay .ggv2-reticle{border-color:#FFDF2E}
+#ggv2Overlay .ggv2-spinner{border-color:#D6EBDD;border-top-color:#0A7056}
+@media(prefers-reduced-motion:reduce){.sim-camera-corners,.sim-scanline{animation:none}}
