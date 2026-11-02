@@ -12,14 +12,14 @@ CONFIGURACIÓN
 2. En el ordenador, abre directamente /surtidor-demo.html desde la URL HTTPS.
 3. Espera a ver el QR y el estado «QR ACTIVO». No lo escanees hasta que aparezca.
 4. Escanea con la cámara estándar del móvil, no con el lector interno de la app.
-5. Se abre la APP del mismo sitio, activa el vehículo registrado y se conecta.
-   En la primera visita se emplea el usuario FICTICIO de demostración.
+5. Se abre la bienvenida de la APP del mismo sitio: DEMO, Iniciar sesión o Registrarse.
+   Al elegir DEMO/login o completar el registro, se intenta conectar con el surtidor del QR.
 6. Tras 5 segundos sin seleccionar B/C, se verifica automáticamente el método A.
 7. Usa «Agarra la manguera», mantén «Presiona para surtir» y «Finalizar».
 8. En el teléfono, Historial guarda el justificante ficticio.
 
 IMPORTANTE
-- No necesitas activar DEMO ni FULL ni escribir un código para entrar desde el QR.
+- El QR conserva el surtidor mientras eliges DEMO, login o registro; no hay que escribir un código.
 - El QR es un identificador de sesión temporal del surtidor que se renueva al recargar.
 - La comunicación utiliza PeerJS/WebRTC; Netlify aloja APP y surtidor en el
   mismo dominio, pero el servidor público de PeerJS hace la señalización.

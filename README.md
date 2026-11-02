@@ -33,13 +33,13 @@ En el repositorio, abre **Settings → Pages** y selecciona **Deploy from a bran
 
 Estas direcciones estarán disponibles cuando GitHub Pages esté activado y termine el despliegue. Los commits nuevos en `main` se publicarán automáticamente. `.nojekyll` permite servir el proyecto estático sin procesarlo con Jekyll.
 
-El QR utiliza la dirección del sitio actual, por lo que abre la app del mismo proyecto en GitHub Pages. Las funciones de Netlify y sus cabeceras no se ejecutan en GitHub Pages: la consulta real por matrícula necesita un servidor aparte. El modo DEMO y el alta manual de vehículos no requieren esa función.
+El QR utiliza la dirección del sitio actual, por lo que abre la bienvenida de la app del mismo proyecto en GitHub Pages y conserva el surtidor durante la elección de DEMO, login o registro. Las funciones de Netlify y sus cabeceras no se ejecutan en GitHub Pages: la consulta real por matrícula necesita un servidor aparte. El modo DEMO y el alta manual de vehículos no requieren esa función.
 
 ## Surtidor con QR
 
 1. Abre `/surtidor-demo.html` en el ordenador desde el sitio HTTPS de Netlify.
 2. Espera a que aparezcan el QR y el estado «QR ACTIVO».
-3. Escanéalo con la cámara del móvil: abrirá `/index.html` en el mismo sitio e intentará vincular la app con esa sesión del surtidor.
+3. Escanéalo con la cámara del móvil: abrirá la bienvenida de `/index.html` en el mismo sitio. Elige DEMO, Iniciar sesión o completa Registrarse; después la app intentará vincularse con esa sesión del surtidor.
 
 Ambos dispositivos necesitan Internet. El enlace usa PeerJS/WebRTC y bibliotecas CDN; algunas redes pueden bloquearlo. Recargar el surtidor genera una sesión nueva. La conexión real entre dos dispositivos debe validarse tras el despliegue.
 

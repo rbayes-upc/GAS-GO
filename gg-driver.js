@@ -34,6 +34,7 @@ function startPeer(){
  if(peer?.open)return Promise.resolve(peer);
  if(peerInitPromise)return peerInitPromise;
  if(typeof Peer!=='function')return Promise.reject(Error('La biblioteca PeerJS no se ha cargado. Comprueba Internet y que el navegador no bloquee cdn.jsdelivr.net.'));
+ if(peer){try{peer.destroy()}catch(e){}peer=null;}
  peerInitPromise=new Promise((resolve,reject)=>{
   const p=new Peer(undefined,{debug:0});peer=p;let complete=false;
   const timeout=setTimeout(()=>fail('El servicio de enlace tarda demasiado. Prueba de nuevo.'),13000);
@@ -53,10 +54,10 @@ function startPeer(){
 }
 async function connect(id){if(isLinked()){close();return}if(isConnecting)return;const target=parsePeer(id);if(!target){showProblem('El código o el QR no corresponde a un surtidor GAS&GO válido.');return}
  lastTarget=target;isConnecting=true;syncLinkUI();stopCamera();show(`<h2>Conectando dispositivos</h2><p>Buscando el surtidor en el portátil…</p><div class="ggv2-spinner" aria-hidden="true"></div><p id="ggFeedback" class="ggv2-note">Esperando el servicio PeerJS y la respuesta del surtidor. Esta vinculación NO usa la contraseña de inicio de sesión.</p><div id="ggv2Alert" class="ggv2-alert hide"></div><p class="ggv2-note">Si falla la conexión, podrás reintentar o explorar GAS&GO sin enlazar el surtidor.</p>`,'connecting');
- try{const p=await startPeer();const c=p.connect(target,{reliable:true,serialization:'json'});connection=c;const timer=setTimeout(()=>{if(connection===c&&!c.open){showProblem('No hay respuesta del surtidor. Puede ser un QR antiguo o una red que bloquea WebRTC. Genera un QR nuevo y prueba con ambos dispositivos conectados al mismo Wi-Fi.');isConnecting=false;syncLinkUI();c.close()}},17000);connTimer=timer;
+ try{const p=await startPeer();log('Servicio de enlace conectado. Estableciendo comunicación con el surtidor…');const c=p.connect(target,{reliable:true,serialization:'json'});connection=c;const timer=setTimeout(()=>{if(connection===c&&!c.open){showProblem('El servicio de enlace responde, pero no se ha podido abrir la comunicación entre dispositivos. Mantén el surtidor abierto y prueba ambos dispositivos en el mismo Wi-Fi o con la conexión compartida del móvil. Después pulsa Reintentar conexión.');connection=null;isConnecting=false;connTimer=null;syncLinkUI();c.close()}},45000);connTimer=timer;
  c.on('open',()=>{clearTimeout(timer);connTimer=null;isConnecting=false;if(connection!==c)return;upsertConnectButton();c.send({type:'hello',version:2,...currentProfile()});close();toast('✓ Móvil vinculado al surtidor');if(pendingStation!==null){const id=pendingStation;pendingStation=null;setTimeout(()=>startConnectedOperation(id),650)}});
  c.on('data',handleData);c.on('close',()=>{if(connection!==c)return;connection=null;clearTimeout(timer);connTimer=null;isConnecting=false;upsertConnectButton();if(remoteState?.status==='fueling')toast('Conexión perdida. El surtidor detendrá el suministro.');if((overlayMode==='connecting'||overlayMode==='session')&&!$('ggv2Alert')?.textContent)showProblem('Conexión con el portátil interrumpida. Vuelve a vincular mediante QR.')});
- c.on('error',e=>{clearTimeout(timer);isConnecting=false;syncLinkUI();showProblem(pairErrorMessage(e)+(e?.type?' · '+e.type:''))});
+ c.on('error',e=>{if(connection!==c)return;clearTimeout(timer);connTimer=null;connection=null;isConnecting=false;syncLinkUI();showProblem(pairErrorMessage(e)+(e?.type?' · '+e.type:''));try{c.close()}catch(err){}});
  }catch(e){isConnecting=false;syncLinkUI();showProblem(e.message||'No fue posible vincular los dispositivos')}
 }
 function pairManual(){connect($('ggv2Code')?.value||'')}
@@ -95,7 +96,7 @@ function handleData(msg){if(!msg||typeof msg!=='object')return;if(msg.type==='re
  if(remoteState.status==='finished')saveReceipt(remoteState);
  else if(remoteState.status==='authorized'&&before?.status!==remoteState.status){toast('✓ Surtidor autorizado')}
  if(remoteState.status==='emergency'&&before?.status!==remoteState.status)toast('Suministro detenido en el surtidor');showState();upsertConnectButton()}}
-function startConnectedOperation(id){const s=STATIONS.find(st=>st.id===id);if(!s){toast('Estación no disponible');return}
+function startConnectedOperation(id){const s=qrEntryActive&&id===9001?PRESENTATION_STATION_BASE:STATIONS.find(st=>st.id===id);if(!s){toast('Estación no disponible');return}
  const fuel=data.fuel||'Gasolina 95',isEV=fuel==='Eléctrico',valid=isEV?s.ev>0:fuel==='Diésel'?s.diesel!=null:s.gas!=null,free=isEV?s.evFree:s.free;
  if(!valid){toast('La estación no admite el suministro de tu vehículo');return}if(!(free>0)){toast('No quedan puntos libres de este servicio');return}
  if(!isLinked()){pendingStation=id;openPair();return}
@@ -156,7 +157,7 @@ window.addEventListener('message',event=>{
 });
 setInterval(()=>{if(connection?.local&&localPumpWindow?.closed){releaseLocalConnection();toast('Se ha cerrado el surtidor DEMO')}},1200);
 const formerStart=window.start;
-window.start=function(id){if(typeof inPresentationDemo==='function'&&inPresentationDemo())return openLocalPump(id);startConnectedOperation(id)};
+window.start=function(id){if(qrEntryActive){if(isConnecting)return;startConnectedOperation(id);return}if(typeof inPresentationDemo==='function'&&inPresentationDemo())return openLocalPump(id);startConnectedOperation(id)};
 window.ggv2={close,openPair,pairManual,retry,refreshLinkUI:syncLinkUI,scanPair:()=>requestScan('pair'),scanVerify:()=>requestScan('verify'),stopScan,confirm:confirmPump,verifyManual,showSession,unlink};
 upsertConnectButton();
 // Acceso directo desde el QR físico: abre GAS&GO y enlaza automáticamente.
@@ -167,19 +168,17 @@ function bootstrapPumpQRCode(){
  const target=parsePeer(params.get('ggpair'));
  if(!target){toast('El QR del surtidor no es válido. Escanea uno nuevo.');return}
  qrEntryActive=true;
- // Usar una estación de demostración interna; sin abrir una segunda pestaña de surtidor.
- if(typeof setDemoStation==='function'){
-  data.presentationDemo=true;
-  setDemoStation();save();
- }
- // Si este dispositivo ya tiene un vehículo, conservamos sus datos;
- // si es una primera visita, el prototipo usa el perfil ficticio como demostración.
- if(!data.profile||!data.customVehicle){
-  if(typeof useDemoProfile==='function')useDemoProfile();
- }else{go('Home')}
- // La conexión WebRTC la inicia automáticamente la APP desde el QR.
- pendingStation=9001;
- setTimeout(()=>connect(target),150);
+ // Mantener la bienvenida: el usuario elige DEMO, login o registro.
+ // El alta y el login del prototipo terminan en completeRegistration.
+ const originalRegistration=window.completeRegistration;
+ let entered=false;
+ window.completeRegistration=function(){
+  originalRegistration();
+  if(entered)return;
+  entered=true;pendingStation=9001;
+  connect(target);
+ };
+ go('Bienvenida');
 }
 bootstrapPumpQRCode();
 
