@@ -137,7 +137,8 @@ function answer(msg){if(!msg||typeof msg!=='object')return;if(msg.type==='hello'
  }
 }
 function handleConnection(c){if(connection?.open){c.on('open',()=>{c.send({type:'notice',message:'Surtidor ya vinculado con otro móvil'});c.close()});return}
- connection=c;linkedProfile=null;c.on('open',()=>{paint();broadcast();c.send({type:'request-profile'})});c.on('data',answer);c.on('close',()=>{if(connection!==c)return;connection=null;clearAutoMethod();if(!guestMode()){halt();if(session.status==='fueling')session.status='paused'}paint()});c.on('error',err=>{console.warn('Conexión móvil:',err);paint()})}
+ const previous=connection;connection=c;if(previous&&previous!==c){try{previous.close()}catch(e){}}
+ linkedProfile=null;c.on('open',()=>{if(connection!==c)return;paint();broadcast();c.send({type:'request-profile'})});c.on('data',msg=>{if(connection===c)answer(msg)});c.on('close',()=>{if(connection!==c)return;connection=null;clearAutoMethod();if(!guestMode()){halt();if(session.status==='fueling')session.status='paused'}paint()});c.on('error',err=>{if(connection!==c)return;console.warn('Conexión móvil:',err);paint()})}
 function method(which,isAutomatic=false){if(session.status!=='verifying'||!connected()||session.method!==null||!['A','B','C'].includes(which))return;clearAutoMethod();session.method=which;if(which==='A'){
  session.status='verifying';$('statusMsg').textContent=isAutomatic?'No se ha elegido un método alternativo. Ejecutando el método A automáticamente…':'Comprobando BLE + UWB + token firmado (simulación)…';$('methodpanel').classList.add('hide');clearTimeout(verifierTimer);verifierTimer=setTimeout(()=>{if(session.status==='verifying'&&session.method==='A'&&connected()){session.status='authorized';broadcast();showWelcomeModal();}},20);
  }else if(which==='B'){session.status='awaiting_confirmation';broadcast()}
@@ -252,6 +253,7 @@ const ggTraditional={cancel:cancelTraditional,membership,loyalty,confirmCard,pro
 // Enlace remoto: un único Netlify aloja la APP y el surtidor.
 // PeerJS ofrece el canal WebRTC entre móvil y ordenador; Netlify sirve el sitio HTTPS.
 const netlifyPumpMode=(location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname))&&!new URLSearchParams(location.search).has('gglocal');
+let signalReconnectTimer=null,signalReconnectAttempts=0;
 function remotePairURL(){const url=new URL('./index.html',location.href);url.search='';url.hash='';url.searchParams.set('ggpair',peerId);url.searchParams.set('ggentry','surtidor');return url.href}
 function updateNetworkPanel(message,ready=false){
  const el=$('qrNetworkPanel');if(!el)return;
@@ -270,34 +272,60 @@ function paintRemoteQR(){
  catch(e){root.textContent='No se pudo generar el QR. Utiliza el enlace visible.'}
 }
 function initRemotePump(){
+ clearTimeout(signalReconnectTimer);signalReconnectAttempts=0;
  setPeerServiceStatus('connecting');
  updateNetworkPanel('Iniciando el surtidor online…');
  if(typeof Peer!=='function'){setPeerServiceStatus('error');updateNetworkPanel('No carga PeerJS. Comprueba Internet o los bloqueadores y recarga.');return}
  try{peer=new Peer(peerId,{debug:0});}catch(e){setPeerServiceStatus('error');updateNetworkPanel('Error al iniciar la conexión: '+e.message);return}
+ const activePeer=peer;
+ function recoverSignaling(){
+  if(peer!==activePeer||activePeer.destroyed)return;
+  clearTimeout(signalReconnectTimer);
+  setPeerServiceStatus('disconnected');
+  if(signalReconnectAttempts>=3){updateNetworkPanel('No se ha recuperado el servicio de enlace. Pulsa «Generar nuevo QR».',connected());return}
+  const delay=1500*Math.pow(2,signalReconnectAttempts++);
+  updateNetworkPanel('Reconectando el surtidor con el servicio de enlace…',connected());
+  signalReconnectTimer=setTimeout(()=>{
+   if(peer!==activePeer||activePeer.destroyed||!activePeer.disconnected)return;
+   try{activePeer.reconnect()}catch(e){recoverSignaling();return}
+   signalReconnectTimer=setTimeout(()=>{
+    if(peer!==activePeer||activePeer.open)return;
+    if(activePeer.disconnected){recoverSignaling();return}
+    setPeerServiceStatus('error');updateNetworkPanel('El servicio de enlace no responde. Pulsa «Generar nuevo QR» para volver a intentarlo.',connected());
+   },8000);
+  },delay);
+ }
  peer.on('open',id=>{
+  if(peer!==activePeer)return;
+  clearTimeout(signalReconnectTimer);signalReconnectAttempts=0;
   peerId=id;setPeerServiceStatus('ready','Surtidor online. Esperando móvil.');
-  paintRemoteQR();updateNetworkPanel('Escanea el QR con la cámara normal del móvil.');
+  paintRemoteQR();updateNetworkPanel(connected()?'Móvil conectado.':'Escanea el QR con la cámara normal del móvil.',connected());
  });
  peer.on('connection',c=>{
+  if(peer!==activePeer){c.close();return}
   if(connection?.open){c.on('open',()=>{c.send({type:'notice',message:'Este surtidor está ocupado.'});c.close()});return}
   handleConnection(c);
+  updateNetworkPanel('Móvil localizado. Abriendo la comunicación entre dispositivos…');
   c.on('open',()=>{
+    if(peer!==activePeer||connection!==c)return;
     updateNetworkPanel('Móvil conectado. Autenticando el vehículo…',true);
     $('qrLinkBadge').textContent='MÓVIL ENLAZADO';
   });
   c.on('close',()=>{
+    if(peer!==activePeer||connection&&connection!==c)return;
     updateNetworkPanel('Móvil desconectado. Escanea el QR para volver a conectar.');
     if(peer?.open)paintRemoteQR();
   });
  });
  peer.on('error',e=>{
+  if(peer!==activePeer)return;
   setPeerServiceStatus('error');
   const t=String(e?.type||'');
   console.warn('GAS&GO PeerJS surtidor:',e);
   if(t==='unavailable-id'){updateNetworkPanel('Otro surtidor utiliza este código. Pulsa «Generar nuevo QR».');return}
-  updateNetworkPanel('Conexión no disponible ('+(t||'red')+'). Comprueba la red y genera otro QR.');
+  updateNetworkPanel('Conexión no disponible ('+(t||'red')+'). Comprueba la red y genera otro QR.',connected());
  });
- peer.on('disconnected',()=>{setPeerServiceStatus('disconnected');if(!connected())updateNetworkPanel('Conexión con el servidor interrumpida. Pulsa «Generar nuevo QR» para reconectar.')});
+ peer.on('disconnected',recoverSignaling);
 }
 $('qrNetworkRefresh')?.addEventListener('click',()=>{if(connected()){if(!confirm('¿Desvincular el móvil y cambiar el QR?'))return;try{connection.close()}catch(e){}connection=null;reset()}
  try{peer?.destroy()}catch(e){}peer=null;code=hexToken().slice(0,16);peerId='gg-p-'+code;initRemotePump()});

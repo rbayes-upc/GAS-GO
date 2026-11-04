@@ -10,11 +10,13 @@ function currentProfile(){const pp=data.profile||{},cv=data.customVehicle||{};re
 function reportProfile(){if(isLinked())connection.send({type:'profile',...currentProfile()})}
 const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const log=msg=>{const el=$('ggFeedback');if(el)el.textContent=msg};
+function connectionStage(title,message){const el=$('ggConnectionTitle');if(el)el.textContent=title;log(message);}
 const actionText={idle:'Disponible',verifying:'Verificando',awaiting_confirmation:'Confirmación necesaria',awaiting_fallback:'Verificación alternativa',authorized:'Autorizado',fueling:'Suministrando',paused:'Pausado',finished:'Finalizado',emergency:'Suministro detenido'};
 function upsertConnectButton(){const nav=document.querySelector('.top-actions');if(nav&&!$('ggv2ConnectBtn')){const button=document.createElement('button');button.id='ggv2ConnectBtn';button.type='button';button.className='iconbutton';button.title='Vincular surtidor';button.setAttribute('aria-label','Vincular surtidor virtual');button.style.fontSize='21px';button.textContent='🔗';button.addEventListener('click',openPair);nav.prepend(button)}const b=$('ggv2ConnectBtn');if(b){b.classList.toggle('ggv2-online',isLinked());b.title=isLinked()?'Surtidor virtual conectado':typeof inPresentationDemo==='function'&&inPresentationDemo()?'Abrir surtidor DEMO local':'Vincular surtidor virtual'}syncLinkUI()}
 function show(content,mode='pair'){stopCamera();overlayMode=mode;let wrap=$('ggv2Overlay');if(!wrap){wrap=document.createElement('div');wrap.id='ggv2Overlay';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');document.body.append(wrap)}wrap.innerHTML=`<div class="ggv2-card"><div class="ggv2-head"><div class="ggv2-brand">⛽ GAS<span>&</span>GO</div><button id="ggv2X" type="button" aria-label="Cerrar ventana" onclick="ggv2.close()">×</button></div>${content}</div>`;document.body.classList.add('ggv2-lock');$('ggv2X')?.focus({preventScroll:true})}
 function close(){stopCamera();overlayMode=null;$('ggv2Overlay')?.remove();document.body.classList.remove('ggv2-lock');}
 function showProblem(message){log(message);const box=$('ggv2Alert');if(box){box.textContent=message;box.classList.remove('hide')}if(overlayMode==='connecting'){
+ const title=$('ggConnectionTitle');if(title)title.textContent='No se ha podido enlazar';$('ggv2Overlay')?.querySelector('.ggv2-spinner')?.remove();
  const card=$('ggv2Overlay')?.querySelector('.ggv2-card');if(card&&!$('ggv250Retry'))card.insertAdjacentHTML('beforeend',`<button id="ggv250Retry" class="ggv2-main" type="button" onclick="ggv2.retry()">Reintentar conexión</button><button class="ggv2-alt" type="button" onclick="ggv2.close()">Entrar sin conectar el surtidor</button>`)
  }}
 function syncLinkUI(){const chip=$('ggv250PairHint');if(!chip)return;chip.classList.toggle('hide',!isLinked()&&!isConnecting);chip.classList.toggle('ggv250-waiting',!isLinked());chip.textContent=isLinked()?'✓ Surtidor 02 vinculado automáticamente.':'Conectando con el surtidor…'}
@@ -41,7 +43,7 @@ function startPeer(){
   const timeout=setTimeout(()=>fail('El servicio de enlace tarda demasiado. Prueba de nuevo.'),13000);
   function fail(message){if(complete)return;complete=true;clearTimeout(timeout);peerInitPromise=null;if(peer===p)peer=null;try{p.destroy()}catch(e){}reject(Error(message))}
   p.on('open',()=>{if(complete)return;complete=true;clearTimeout(timeout);peerInitPromise=null;resolve(p)});
-  p.on('error',err=>{console.warn('PeerJS:',err);
+  p.on('error',err=>{if(peer!==p)return;console.warn('PeerJS:',err);
    if(!p.open){fail(pairErrorMessage(err));return}
    if(isConnecting&&connection&&!connection.open){
      clearTimeout(connTimer);connTimer=null;isConnecting=false;
@@ -49,15 +51,15 @@ function startPeer(){
      try{connection.close()}catch(e){}
    }
   });
-  p.on('disconnected',()=>{if(!isLinked())upsertConnectButton()});
+  p.on('disconnected',()=>{if(!complete)fail('Se ha perdido la conexión con el servicio de enlace. Pulsa Reintentar conexión.');if(!isLinked())upsertConnectButton()});
  });
  return peerInitPromise;
 }
 async function connect(id){if(isLinked()){close();return}if(isConnecting)return;const target=parsePeer(id);if(!target){showProblem('El código o el QR no corresponde a un surtidor GAS&GO válido.');return}
- lastTarget=target;isConnecting=true;syncLinkUI();stopCamera();show(`<h2>Conectando dispositivos</h2><p>Buscando el surtidor en el portátil…</p><div class="ggv2-spinner" aria-hidden="true"></div><p id="ggFeedback" class="ggv2-note">Esperando el servicio PeerJS y la respuesta del surtidor. Esta vinculación NO usa la contraseña de inicio de sesión.</p><div id="ggv2Alert" class="ggv2-alert hide"></div><p class="ggv2-note">Si falla la conexión, podrás reintentar o explorar GAS&GO sin enlazar el surtidor.</p>`,'connecting');
- try{const p=await startPeer();log('Servicio de enlace conectado. Estableciendo comunicación con el surtidor…');const c=p.connect(target,{reliable:true,serialization:'json'});connection=c;const timer=setTimeout(()=>{if(connection===c&&!c.open){showProblem('El servicio de enlace responde, pero no se ha podido abrir la comunicación entre dispositivos. Mantén el surtidor abierto y prueba ambos dispositivos en el mismo Wi-Fi o con la conexión compartida del móvil. Después pulsa Reintentar conexión.');connection=null;isConnecting=false;connTimer=null;syncLinkUI();c.close()}},45000);connTimer=timer;
- c.on('open',()=>{clearTimeout(timer);connTimer=null;isConnecting=false;if(connection!==c)return;upsertConnectButton();c.send({type:'hello',version:2,...currentProfile()});close();toast('✓ Móvil vinculado al surtidor');if(pendingStation!==null){const id=pendingStation;pendingStation=null;setTimeout(()=>startConnectedOperation(id),650)}});
- c.on('data',handleData);c.on('close',()=>{if(connection!==c)return;connection=null;clearTimeout(timer);connTimer=null;isConnecting=false;upsertConnectButton();if(remoteState?.status==='fueling')toast('Conexión perdida. El surtidor detendrá el suministro.');if((overlayMode==='connecting'||overlayMode==='session')&&!$('ggv2Alert')?.textContent)showProblem('Conexión con el portátil interrumpida. Vuelve a vincular mediante QR.')});
+ lastTarget=target;isConnecting=true;syncLinkUI();stopCamera();show(`<h2 id="ggConnectionTitle">Conectando con el servicio de enlace</h2><p>Buscando el surtidor en el portátil…</p><div class="ggv2-spinner" aria-hidden="true"></div><p id="ggFeedback" class="ggv2-note">Esperando el servicio PeerJS y la respuesta del surtidor. Esta vinculación NO usa la contraseña de inicio de sesión.</p><div id="ggv2Alert" class="ggv2-alert hide"></div><p class="ggv2-note">Si falla la conexión, podrás reintentar o explorar GAS&GO sin enlazar el surtidor.</p>`,'connecting');
+ try{const p=await startPeer();connectionStage('Enlazando con el surtidor','Servicio de enlace conectado. Esperando que el surtidor acepte la conexión…');const c=p.connect(target,{reliable:true,serialization:'json'});connection=c;const timer=setTimeout(()=>{if(connection===c&&!c.open){showProblem('El servicio de enlace responde, pero no se ha podido abrir la comunicación entre dispositivos. Mantén el surtidor abierto y prueba ambos dispositivos en el mismo Wi-Fi o con la conexión compartida del móvil. Después pulsa Reintentar conexión.');connection=null;isConnecting=false;connTimer=null;syncLinkUI();c.close()}},45000);connTimer=timer;
+ c.on('open',()=>{if(connection!==c)return;clearTimeout(timer);connTimer=null;isConnecting=false;upsertConnectButton();c.send({type:'hello',version:2,...currentProfile()});close();toast('✓ Móvil vinculado al surtidor');if(pendingStation!==null){const id=pendingStation;pendingStation=null;setTimeout(()=>{if(connection===c&&c.open)startConnectedOperation(id)},650)}});
+ c.on('data',msg=>{if(connection===c)handleData(msg)});c.on('close',()=>{if(connection!==c)return;connection=null;clearTimeout(timer);connTimer=null;isConnecting=false;upsertConnectButton();if(remoteState?.status==='fueling')toast('Conexión perdida. El surtidor detendrá el suministro.');if((overlayMode==='connecting'||overlayMode==='session')&&!$('ggv2Alert')?.textContent)showProblem('Conexión con el portátil interrumpida. Vuelve a vincular mediante QR.')});
  c.on('error',e=>{if(connection!==c)return;clearTimeout(timer);connTimer=null;connection=null;isConnecting=false;syncLinkUI();showProblem(pairErrorMessage(e)+(e?.type?' · '+e.type:''));try{c.close()}catch(err){}});
  }catch(e){isConnecting=false;syncLinkUI();showProblem(e.message||'No fue posible vincular los dispositivos')}
 }

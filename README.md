@@ -35,6 +35,12 @@ Estas direcciones estarán disponibles cuando GitHub Pages esté activado y term
 
 El QR utiliza la dirección del sitio actual, por lo que abre la bienvenida de la app del mismo proyecto en GitHub Pages y conserva el surtidor durante la elección de DEMO, login o registro. Las funciones de Netlify y sus cabeceras no se ejecutan en GitHub Pages: la consulta real por matrícula necesita un servidor aparte. El modo DEMO y el alta manual de vehículos no requieren esa función.
 
+## Diagnóstico de vinculación
+
+La app distingue «Conectando con el servicio de enlace» de «Enlazando con el surtidor». El surtidor muestra «Móvil localizado» al recibir la solicitud y «MÓVIL ENLAZADO» cuando abre el canal de datos. Si pierde la señalización, intenta reconectar conservando la sesión; si no lo consigue, indica que hay que generar otro QR. Los eventos de intentos anteriores no deben modificar una conexión nueva.
+
+La prueba `node tests/pairing-recovery.cjs` requiere Playwright disponible para Node y Chromium en `/usr/bin/chromium`. Usa señalización y conexiones simuladas para comprobar reconexión, sesiones antiguas, tiempos de espera y reintentos. No valida la disponibilidad del servidor público PeerJS ni la conectividad WebRTC entre redes o dispositivos reales.
+
 ## Surtidor con QR
 
 1. Abre `/surtidor-demo.html` en el ordenador desde el sitio HTTPS de Netlify.
