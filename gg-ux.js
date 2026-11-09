@@ -141,6 +141,10 @@ function simplify(content){
   const favorite=card.querySelector('button[onclick^="fav("]'),incident=card.querySelector('.gg-report-station,button[onclick^="ggIncidents.openWithStation("]');
   if(favorite)secondary.append(favorite);
   if(incident&&!card.matches('.gg-station-popup'))secondary.append(incident);
+  if(card.matches('.gg-station-popup')){
+   const row=card.querySelector('.gg-popup-actions'),arrival=card.querySelector(':scope > button[onclick^="start("]');
+   if(row&&arrival){row.classList.add('gg-primary-actions');row.append(arrival)}
+  }
   const actions=card.querySelector('.ggdc-secondary');if(actions&&actions.children.length===1)actions.classList.add('gg-single-secondary');
  }
 }

@@ -7,4 +7,4 @@
 #ggAppMore .gg-more-action{display:block;padding:13px 12px;color:#123e31;text-align:left}
 #ggAppMore .gg-more-action:hover,#ggAppMore .gg-more-action:active,#ggAppMore .gg-more-action:focus-visible{color:#123e31;background:#edf6f1}
 #ggAppMore .gg-more-action:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
-.gg-station-popup>.btn.primary.block{width:calc((100% - 6px)/2);padding:8px 5px!important;font-size:11px!important;border:1px solid transparent}
+.gg-station-popup .gg-primary-actions>.btn{width:100%;margin:0!important}.gg-station-popup .gg-primary-actions>.btn.primary{border:1px solid transparent}
