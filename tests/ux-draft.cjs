@@ -17,7 +17,8 @@ await p.evaluate(()=>{
  {...base,id:13,name:'Carga Tipo 2',gas:null,diesel:null,ev:.3,type:'electric',dist:3},
  {...base,id:14,name:'Ambos servicios',gas:1.7,diesel:1.55,ev:.4,dist:4},
  {...base,id:15,name:'Carga CCS2',gas:null,diesel:null,ev:.5,evConnector:'CCS2',type:'electric',dist:5}]);
- data.presentationDemo=false;data.customVehicle=null;data.fuel='Gasolina 95';filterFuel='Todos';go('Home');
+ // Aislar las pruebas de edición de la migración de vehículos de ejemplo.
+ data.plateVehicles=[];data.presentationDemo=false;data.customVehicle=null;data.fuel='Gasolina 95';filterFuel='Todos';go('Home');
 });
 assert.equal(await p.locator('#content > .gg-back').count(),0);
 assert.deepEqual(await p.evaluate(()=>shownStations().map(s=>s.id)),[11,14]);

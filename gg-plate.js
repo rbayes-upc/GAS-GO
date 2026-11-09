@@ -13,6 +13,22 @@ const emojiFor=(type,fuel)=>fuel==='Eléctrico'?'🔋':type==='Moto'?'🛵':'�
 const modelLabel=v=>[v.brand||'',v.model||''].filter(Boolean).join(' ')||'Sin modelo';
 const stored=()=>Array.isArray(data.plateVehicles)?data.plateVehicles:[];
 function sync(){if(!Array.isArray(data.plateVehicles))data.plateVehicles=[];return data.plateVehicles}
+function ensureExampleVehicles(){
+ if(!full()||Number(data.garageExamplesVersion)>=1)return;
+ const examples=[
+  {name:'Coche gasolina (ejemplo)',brand:'SEAT',model:'Ibiza',plate:'1101BCD',fuel:'Gasolina 95'},
+  {name:'Coche diésel (ejemplo)',brand:'Peugeot',model:'308 BlueHDi',plate:'2202FGH',fuel:'Diésel'},
+  {name:'Coche eléctrico (ejemplo)',brand:'Tesla',model:'Model 3',plate:'3303JKL',fuel:'Eléctrico',connector:'CCS2'},
+  {name:'Híbrido enchufable (ejemplo)',brand:'SEAT',model:'León e-HYBRID',plate:'4404MNP',fuel:'Híbrido enchufable',combustionFuel:'Gasolina 95',connector:'Tipo 2'}
+ ];
+ const rows=sync(),plates=new Set(rows.map(v=>norm(v.plate)));
+ if(data.customVehicle?.plate)plates.add(norm(data.customVehicle.plate));
+ for(const v of examples){
+  if(plates.has(v.plate))continue;
+  rows.push({...v,kind:'Coche',emoji:emojiFor('Coche',v.fuel),origin:'garage_example_v1'});plates.add(v.plate);
+ }
+ data.garageExamplesVersion=1;save();
+}
 let draft=null,photoData=null,photoObjectUrl=null,mode='garage',activeAnalysis=0,pendingRegistrationVehicle=null,ocrScriptPromise=null;
 let editingPlate=null,editingActive=false;
 let cropActive='plate',cropDragging=false,cropStartPoint=null;
@@ -29,6 +45,7 @@ function chronologyAlert(yearText,registration){
 function newDraft(){return {name:'',brand:'',model:'',version:'',color:'',kind:'Coche',plate:'',registration:'',fuel:'',suggestedFuel:'',year:'',badges:'',origin:'manual',confidence:'',notes:'',photo:false}}
 function cleanPhoto(){if(photoObjectUrl){URL.revokeObjectURL(photoObjectUrl);photoObjectUrl=null}photoData=null}
 function screen(){if(!full())return '';
+ ensureExampleVehicles();
  const current=data.customVehicle,items=stored();
  const active=current?`<div class="card gg-vehicle-current"><div class="gg-vehicle-current-heading"><span class="pill green">✓ Vehículo seleccionado</span><span class="gg-vehicle-emoji">${esc(current.emoji||'🚙')}</span></div><h2>${esc(current.name||'Mi vehículo')}</h2><p class="muted small">${esc(current.model||'')} · ${esc(current.plate||'')}</p><b>${esc(current.fuel||'Sin combustible')}</b><button type="button" class="btn ghost block gg-edit-current" onclick="GGPlate.editCurrent()">Editar vehículo</button></div>`:'';
  const choices=`<div class="gg-vehicle-choices"><button class="gg-vehicle-choice" onclick="GGPlate.openManual()"><span class="gg-choice-icon">✎</span><strong>Manualmente</strong><small>Rellena los datos de tu vehículo</small></button><button class="gg-vehicle-choice gg-photo-choice" onclick="GGPlate.openPhoto()"><span class="gg-choice-icon">▣</span><strong>Con una foto</strong><small>Selecciona matrícula y emblemas</small></button></div>`;
@@ -272,7 +289,7 @@ function store(){if(!full()||!draft)return;const read=id=>String($(id)?.value||'
  editingPlate=null;editingActive=false;draft=null;cleanPhoto();closeModal();go('Mi vehículo');toast(edited?'Cambios del vehículo guardados':'Vehículo confirmado y guardado');
 }
 function apply(v){if(!full())return;data.customVehicle={name:v.name,model:modelLabel(v),plate:v.plate,fuel:v.fuel,emoji:v.emoji,brand:v.brand,kind:v.kind,version:v.version,color:v.color,origin:v.origin,combustionFuel:v.combustionFuel,connector:v.connector};data.vehicle=v.name;data.fuel=v.fuel;save();try{window.ggv2?.refreshLinkUI?.()}catch(e){}}
-function persistRegistrationVehicle(){if(!full()||!pendingRegistrationVehicle)return;const v=pendingRegistrationVehicle;pendingRegistrationVehicle=null;const rows=sync();const ix=rows.findIndex(item=>item.plate===v.plate);if(ix>=0)rows[ix]=v;else rows.push(v);apply(v)}
+function persistRegistrationVehicle(){if(!full())return;ensureExampleVehicles();if(!pendingRegistrationVehicle)return;const v=pendingRegistrationVehicle;pendingRegistrationVehicle=null;const rows=sync();const ix=rows.findIndex(item=>item.plate===v.plate);if(ix>=0)rows[ix]=v;else rows.push(v);apply(v)}
 function select(i){if(!full())return;const v=stored()[i];if(!v)return;apply(v);render();toast('Vehículo seleccionado')}
 function remove(i){if(!full())return;const rows=sync(),v=rows[i];if(!v||!confirm(`¿Eliminar ${v.name} (${v.plate}) de GAS&GO?`))return;rows.splice(i,1);if(data.customVehicle?.plate===v.plate){if(rows.length)apply(rows[0]);else{data.customVehicle=null;data.vehicle='Moto principal';data.fuel='Gasolina 95'}}save();render();toast('Vehículo eliminado')}
 function editVehicle(v){

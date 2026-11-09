@@ -4,6 +4,8 @@ La versión FULL utiliza Google Material Symbols Outlined en navegación, vehíc
 
 FULL muestra el vehículo activo con cambio rápido, filtros propios de repostaje o recarga, el precio del servicio elegido en las fichas y edición de vehículos guardados. Las correcciones del garaje no reescriben facturas anteriores. `node tests/full-features.cjs` comprueba esos recorridos, los conflictos de matrícula y que DEMO conserva sus controles. El suministro sigue controlándose desde el surtidor; no se añade seguimiento obligatorio en el móvil.
 
+El garaje FULL incorpora una vez por navegador cuatro vehículos ficticios de ejemplo: gasolina 95, diésel, eléctrico CCS2 e híbrido enchufable de gasolina con Tipo 2. No cambia la selección actual, respeta matrículas existentes y no vuelve a crear ejemplos eliminados o editados. `node tests/garage-examples.cjs` comprueba la inicialización, persistencia y selección por combustible y conector. DEMO conserva su garaje anterior.
+
 Prototipo de app y surtidor virtual. Las operaciones, los pagos y la identificación son simulados.
 
 ## Desarrollo local
