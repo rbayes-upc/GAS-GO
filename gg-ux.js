@@ -281,7 +281,6 @@ window.render=function(){
   }
   if(!shownStations().length)content.insertAdjacentHTML('beforeend','<p class="gg-empty" role="status">No hay estaciones compatibles con tu vehículo y los filtros actuales. Prueba otra zona o restablece los filtros.</p>');
   if(hybrid()&&energyMode()==='both')content.insertAdjacentHTML('beforeend','<p class="small muted">Ordenadas por distancia. Selecciona Repostar o Recargar para comparar precios del mismo servicio.</p>');
-  if(!inPresentationDemo()&&!userPosition)content.insertAdjacentHTML('beforeend','<p class="small muted" id="ggLocationHint">Pulsa «Mi ubicación» para mostrar tu posición real como un punto azul.</p>');
   if(!locationChecked&&!inPresentationDemo()&&navigator.permissions){locationChecked=true;navigator.permissions.query({name:'geolocation'}).then(p=>{if(p.state==='granted')locateUser()}).catch(()=>{})}
   const gps=content.querySelector('.gps-locate');if(gps){gps.disabled=locationPending;gps.textContent=locationPending?'Buscando ubicación…':'⌖ Mi ubicación';gps.setAttribute('aria-busy',String(locationPending))}
   if(!inPresentationDemo()){vehicleCard(content);if(energyMode()==='both'&&$('listSort')){$('listSort').value='dist';$('listSort').disabled=true}}
