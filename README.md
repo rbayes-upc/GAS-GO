@@ -1,5 +1,7 @@
 # GAS&GO
 
+La versión FULL utiliza Google Material Symbols Outlined en navegación, vehículos y controles. DEMO conserva sus emojis originales. Los SVG y su licencia Apache-2.0 se incluyen en `assets/google-material-symbols`; se cargan desde un paquete local, sin fuentes ni CDN adicionales. `node tests/google-icons.cjs` comprueba el cambio entre modos y las ventanas dinámicas (requiere las mismas dependencias de navegador que las otras pruebas UX).
+
 Prototipo de app y surtidor virtual. Las operaciones, los pagos y la identificación son simulados.
 
 ## Desarrollo local
