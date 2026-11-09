@@ -296,6 +296,11 @@ window.completeRegistration=function(){
  originalRegistration();syncEnergy();
 };
 window.ggUX={chooseVehicle,pickVehicle,back,energyFields,toggleEnergyFields,setEnergy,energyMode,selectStation,openStation,drawStations};
+document.addEventListener('click',event=>{
+ if(page!=='Home'||!menu||!event.target.closest?.('.mapframe'))return;
+ // Capturar el toque antes de Leaflet: cerrar el menú sin seleccionar una estación.
+ event.preventDefault();event.stopImmediatePropagation();toggleHome();
+},true);
 setupMoreMenu();
 render();
 })();
