@@ -15,7 +15,9 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.equal(await p.evaluate(()=>data.plateVehicles.length),4);
  console.log('PASS an existing FULL session initializes examples on quick selection and Home without visiting the garage');
  const history=await p.evaluate(()=>JSON.stringify(data.history));
- await p.locator('.footnav .home').click();await p.locator('#menugrid').getByRole('button',{name:/Mi garaje/}).click();assert.equal(await p.locator('.gg-plate-saved').count(),4);
+ await p.locator('.footnav .home').click();await p.locator('#menugrid').getByRole('button',{name:/Mi garaje/}).click();assert.equal(await p.locator('.gg-plate-saved').count(),4);assert.equal(await p.locator('.gg-plate-saved').first().evaluate(el=>el.getBoundingClientRect().top < document.querySelector('.gg-plate-intro').getBoundingClientRect().top),true);
+ assert.equal(await p.locator('.gg-plate-saved').first().evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<innerHeight}),true);
+ console.log('PASS saved vehicles appear before the add form and the first vehicle is visible without scrolling');
  await p.evaluate(()=>{window.loadRealStations=async()=>{};const base={lat:41.39,lng:2.16,free:1,total:2,evFree:1,evTotal:2,dist:1,area:'Prueba',kw:50};STATIONS.splice(0,STATIONS.length,...[
  {...base,id:901,name:'Gasolina',gas:1.6,diesel:null,ev:0},
  {...base,id:902,name:'Diésel',gas:null,diesel:1.5,ev:0},
