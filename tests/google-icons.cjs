@@ -37,9 +37,16 @@ await p.evaluate(()=>go('Historial'));await p.getByRole('button',{name:'Ver y de
 assert.equal(await p.locator('.gg-invoice-preview .gg-google-icon').count(),0);
 await p.getByRole('button',{name:'Cerrar',exact:true}).click();
 await p.evaluate(()=>go('Home'));await p.evaluate(()=>{selectedStation=11;render()});
-const star=p.locator('.gg-station-popup button[onclick^="fav("]');await p.locator('.gg-station-popup .gg-secondary-details > summary').click();
+const star=p.locator('.gg-station-popup button[onclick^="fav("]');
+assert.equal(await star.isVisible(),true);assert.equal(await star.evaluate(el=>!!el.closest('details')),false);
+assert.equal(await star.getAttribute('aria-pressed'),'false');assert.match(await star.getAttribute('aria-label'),/Guardar en favoritos/);
+assert.equal(await star.evaluate(el=>el.parentElement.classList.contains('gg-popup-heading')),true);
 assert.equal(await star.locator('[data-gg-icon="star"]').count(),1);await star.click();
 await p.locator('.gg-station-popup [data-gg-icon="star_filled"]').waitFor({state:'attached'});
+assert.equal(await star.getAttribute('aria-pressed'),'true');assert.match(await star.getAttribute('aria-label'),/Quitar de favoritos/);
+assert.equal(await p.evaluate(()=>data.favorites.includes(11)),true);
+await star.click();assert.equal(await star.getAttribute('aria-pressed'),'false');assert.equal(await p.evaluate(()=>data.favorites.includes(11)),false);
+assert.equal(await p.locator('.gg-station-popup button[onclick^="fav("]').count(),1);
 assert.equal(await p.locator('.gg-station-popup .gg-primary-actions').getByRole('button',{name:/Simular llegada/}).count(),1);
 console.log('PASS FULL Google navigation, garage and dynamic dialogs; text, input and receipt data preserved; favorite state remains visible');
 await p.evaluate(()=>go('Bienvenida'));await p.getByRole('button',{name:/DEMO.*acceso rápido/}).click();

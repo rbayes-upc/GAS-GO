@@ -308,7 +308,19 @@ function simplify(content){
   const secondary=card.querySelector('.gg-secondary-details');if(!secondary)continue;
   const service=card.querySelector('.gg-service-summary');if(service)secondary.before(service);
   const favorite=card.querySelector('button[onclick^="fav("]'),incident=card.querySelector('.gg-report-station,button[onclick^="ggIncidents.openWithStation("]');
-  if(favorite)secondary.append(favorite);
+  if(favorite){
+   if(!inPresentationDemo()&&card.matches('.gg-station-popup')){
+    const station=STATIONS.find(s=>s.id===Number(card.dataset.stationId)),saved=data.favorites.includes(station?.id);
+    const heading=card.querySelector('h4'),close=card.querySelector(':scope > .close');
+    if(heading){
+     const header=document.createElement('div');header.className='gg-popup-heading';heading.before(header);header.append(heading);
+     favorite.className='gg-station-favorite';favorite.type='button';favorite.textContent=saved?'★':'☆';
+     favorite.setAttribute('aria-pressed',String(saved));
+     const label=(saved?'Quitar de favoritos: ':'Guardar en favoritos: ')+(station?.name||'esta estación');favorite.setAttribute('aria-label',label);favorite.title=label;
+     header.append(favorite);if(close){close.type='button';close.setAttribute('aria-label','Cerrar ficha de la estación');header.append(close)}
+    }
+   }else secondary.append(favorite);
+  }
   if(incident&&!card.matches('.gg-station-popup'))secondary.append(incident);
   if(card.matches('.gg-station-popup')){
    const row=card.querySelector('.gg-popup-actions'),arrival=card.querySelector(':scope > button[onclick^="start("]');
