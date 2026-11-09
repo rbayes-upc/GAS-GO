@@ -1,0 +1,4 @@
+.gg-pref-button{margin:10px 0 0}.gg-pref-context{padding:12px;border-radius:12px;background:#eef7f0;color:#164a37}
+#ggPreferenceForm input,#ggPreferenceForm select{width:100%;padding:12px;border:1px solid #b7cfc1;border-radius:12px;background:white;color:#123e31;font-size:16px}
+#ggPreferenceError{color:#922c22;line-height:1.5}.gg-offline-banner{flex-shrink:0;padding:12px;margin:8px 0;border:1px solid #b28638;border-radius:12px;background:#fff8e9;color:#604000;overflow-wrap:anywhere}
+.gg-offline-banner p{font-size:13px;line-height:1.5;margin:6px 0}.gg-offline-banner .btn{margin-top:5px;color:#604000}.gg-offline-settings h2{font-size:19px}

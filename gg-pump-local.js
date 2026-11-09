@@ -21,6 +21,11 @@ function setPeerServiceStatus(status,detail=''){
 const isEV=()=>session.fuel==='Eléctrico';
 const connected=()=>!!connection?.open;
 const guestMode=()=>session.source==='traditional_guest';
+const validLimit=value=>Number.isFinite(Number(value))&&Number(value)>=1&&Number(value)<=300?Math.round(Number(value)*100)/100:null;
+const validPayment=value=>['Visa •••• 4821','Mastercard •••• 1056','PayPal (demo)','Bizum (demo)','Visa (demo)','Mastercard (demo)'].includes(value)?value:null;
+const quantityLimit=()=>session.maxAmount?Math.floor(session.maxAmount/session.price*1000+1e-8)/1000:Infinity;
+const limitReached=()=>!!session.maxAmount&&session.quantity>=quantityLimit()-1e-8;
+
 const canOperate=()=>guestMode()||connected();
 function clearWelcomeTimers(){clearTimeout(welcomeTimer);clearTimeout(welcomeAutoCloseTimer);welcomeTimer=null;welcomeAutoCloseTimer=null;}
 function closeWelcomeModal(){const modal=$('welcomeModal'); if(modal) modal.classList.add('hide'); clearWelcomeTimers();}
@@ -78,6 +83,11 @@ function paint(){
  const welcome=$('welcomeBanner');if(welcome){const hasProfile=!!(linkedProfile&&linkedProfile.name);const detected=(linkedProfile?.vehicleDetected||[linkedProfile?.vehicleName||linkedProfile?.vehicle||s.vehicle||'Vehículo de prueba',linkedProfile?.vehicleModel||'',linkedProfile?.vehiclePlate||''].filter(Boolean).join(' · ')).trim();const showWelcome=connected()&&hasProfile&&s.source==='app'&&s.status!=='finished';welcome.classList.toggle('hide',!showWelcome);if(showWelcome){welcome.innerHTML='<b>Bienvenido, '+escapeText(linkedProfile.name)+'</b><div class="mini">Las cámaras del surtidor han reconocido el vehículo vinculado a tu cuenta de GAS&GO.</div><div class="detected"><strong>Vehículo detectado</strong><span>'+escapeText(detected||s.vehicle||'Vehículo de prueba')+'</span><span>'+escapeText(s.fuel||linkedProfile.fuel||'Gasolina 95')+'</span></div>';}else welcome.innerHTML='';}
  const messages={idle:connected()?'Surtidor enlazado · esperando la operación demo':'Surtidor disponible · esperando móvil',verifying:s.method==='A'?'Método A activado · verificando automáticamente (simulación)…':'Vehículo recibido · puedes escoger B o C antes de que se active A automáticamente',awaiting_confirmation:'Esperando confirmación del surtidor en el móvil',awaiting_fallback:'Introduce el código temporal en la app para completar el método C',authorized:ev?'Autorizado · ya puedes iniciar la recarga':'Autorizado · ya puedes habilitar el repostaje',fueling:ev?'Recarga eléctrica en curso':'Suministro habilitado · mantén pulsado para repostar',paused:ev?'Recarga pausada':'Suministro pausado',finished:guestMode()?'Operación finalizada · importe realmente suministrado registrado':'Operación finalizada · recibo comunicado al móvil',emergency:'Parada de emergencia simulada · suministro detenido'};
  $('statusMsg').textContent=messages[s.status]||'';
+ let preferences=$('ggOperationPreferences');if(!preferences){preferences=document.createElement('div');preferences.id='ggOperationPreferences';preferences.setAttribute('role','status');$('controls').before(preferences)}
+ const showPreferences=!guestMode()&&!!s.vehicle&&(!!s.payment||!!s.maxAmount);
+ preferences.classList.toggle('hide',!showPreferences);
+ preferences.textContent=showPreferences?[s.payment?'Pago: '+s.payment+' · simulado':'',s.maxAmount?'Límite: '+euro(s.maxAmount)+' antes de descuentos':'',limitReached()&&s.status!=='finished'?'Límite alcanzado. Finaliza para guardar tu factura.':''].filter(Boolean).join(' · '):'';
+
  $('supplyNote').textContent=ev?'Recarga acelerada: 1 segundo de demostración equivale a 1 minuto de carga. El importe se calcula con los kWh realmente simulados.':'Mantén pulsado el botón de suministro para repostar; al soltarlo se detiene el flujo. La parada de emergencia solo afecta a esta demostración.';
  if(s.promoId&&['fuel','ev','double','redeem'].includes(s.promoId))$('supplyNote').textContent+=' Promoción de prueba activa: '+({fuel:'−0,05 €/L',ev:'−0,03 €/kWh',double:'puntos dobles',redeem:'canje de 500 puntos por 2 €'})[s.promoId]+'.';
  if(s.status==='idle')$('supplyNote').textContent='Método A automático por defecto. Al llegar un vehículo demo, podrás escoger B o C durante 5 segundos.';
@@ -96,17 +106,17 @@ function paint(){
  $('traditionalFlow').classList.toggle('hide',!traditionalLocked());
  $('traditionalEntry').classList.toggle('hide',traditionalLocked()||!['idle','finished','emergency'].includes(s.status));
  if(traditionalLocked())paintTraditional();
- $('startBtn').disabled=!canOperate()||!['authorized','paused'].includes(s.status);
+ $('startBtn').disabled=!canOperate()||limitReached()||!['authorized','paused'].includes(s.status);
  $('pauseBtn').disabled=!canOperate()||s.status!=='fueling';
  $('pauseBtn').textContent=ev?'⏸ Pausar recarga':'⏸ Pausar repostaje';
  const supplyBtn=$('supplyBtn');
  supplyBtn.classList.remove('hide');
  if(ev){
-   supplyBtn.disabled=!canOperate()||!['authorized','fueling','paused'].includes(s.status);
+   supplyBtn.disabled=!canOperate()||limitReached()||!['authorized','fueling','paused'].includes(s.status);
    supplyBtn.textContent=s.status==='fueling'?'⚡ Cargando…':'⚡ Iniciar recarga';
    supplyBtn.classList.remove('ready');
  }else{
-   supplyBtn.disabled=!canOperate()||!['authorized','fueling','paused'].includes(s.status);
+   supplyBtn.disabled=!canOperate()||limitReached()||!['authorized','fueling','paused'].includes(s.status);
    if(!hoseLifted){ supplyBtn.textContent='⛽ Agarra la manguera'; supplyBtn.classList.remove('ready','active'); }
    else { supplyBtn.textContent=s.status==='fueling'?'⛽ Presiona para surtir':'⛽ Presiona para surtir'; supplyBtn.classList.add('ready'); }
  }
@@ -128,7 +138,7 @@ function answer(msg){if(!msg||typeof msg!=='object')return;if(msg.type==='hello'
  clearAutoMethod();closeWelcomeModal();hoseLifted=false;session={status:'verifying',sessionId:hexToken(),method:null,vehicle:v,fuel,station:String(msg.station||'Estación GAS&GO').slice(0,90),amount:0,quantity:0,
  price:Number.isFinite(price)&&price>.1&&price<5?price:ev?.35:1.59,
  powerKW:ev&&Number.isFinite(power)&&power>=1&&power<=1000?power:ev?75:null,powerSource:msg.powerSource==='ripree'?'ripree':'demo',
- connector:ev?'CCS2':null,nonce:'',fallbackCode:'',finishedAt:null,clientReady:true,source:'app',promoId:null,vehicleName:typeof msg.vehicleName==='string'?msg.vehicleName.slice(0,80):'',vehicleModel:typeof msg.vehicleModel==='string'?msg.vehicleModel.slice(0,80):'',vehiclePlate:typeof msg.vehiclePlate==='string'?msg.vehiclePlate.slice(0,24):'',vehicleDetected:typeof msg.vehicleDetected==='string'?msg.vehicleDetected.slice(0,140):'',loyaltyProgram:['Repsol','BP','Moeve','Otra'].includes(msg.loyaltyProgram)?msg.loyaltyProgram:null,loyaltyCardRef:typeof msg.loyaltyCardRef==='string'?msg.loyaltyCardRef.slice(0,80):null,loyaltyCardSuffix:typeof msg.loyaltyCardSuffix==='string'?msg.loyaltyCardSuffix.slice(-4):null,subtotal:0,discount:0,maxAmount:null,loyalty:false,paymentStatus:''};broadcast();startAutoMethodCountdown();return}
+ connector:ev?'CCS2':null,nonce:'',fallbackCode:'',finishedAt:null,clientReady:true,source:'app',promoId:null,vehicleName:typeof msg.vehicleName==='string'?msg.vehicleName.slice(0,80):'',vehicleModel:typeof msg.vehicleModel==='string'?msg.vehicleModel.slice(0,80):'',vehiclePlate:typeof msg.vehiclePlate==='string'?msg.vehiclePlate.slice(0,24):'',vehicleDetected:typeof msg.vehicleDetected==='string'?msg.vehicleDetected.slice(0,140):'',loyaltyProgram:['Repsol','BP','Moeve','Otra'].includes(msg.loyaltyProgram)?msg.loyaltyProgram:null,loyaltyCardRef:typeof msg.loyaltyCardRef==='string'?msg.loyaltyCardRef.slice(0,80):null,loyaltyCardSuffix:typeof msg.loyaltyCardSuffix==='string'?msg.loyaltyCardSuffix.slice(-4):null,subtotal:0,discount:0,maxAmount:validLimit(msg.maxAmount),payment:validPayment(msg.payment),loyalty:false,paymentStatus:''};broadcast();startAutoMethodCountdown();return}
  if(msg.sessionId!==session.sessionId)return;
  if(msg.type==='confirm'&&session.status==='awaiting_confirmation'&&session.method==='B'){session.status='authorized';broadcast()}
  else if(msg.type==='verify'&&session.status==='awaiting_fallback'&&session.method==='C'){
@@ -145,16 +155,16 @@ function method(which,isAutomatic=false){if(session.status!=='verifying'||!conne
  else {const adv=$('advancedMenu');if(adv)adv.open=true;session.status='awaiting_fallback';session.nonce=hexToken();session.fallbackCode=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');broadcast()}
 }
 function start(){
- if(!canOperate()||!['authorized','paused'].includes(session.status))return;
+ if(!canOperate()||limitReached()||!['authorized','paused'].includes(session.status))return;
  halt();session.status='fueling';broadcast();
  if(isEV()){
   charge=setInterval(()=>{
    if(!canOperate()||session.status!=='fueling'){halt();return}
    // Aceleración educativa: 1 s de tiempo real = 1 min de carga simulada.
    const delta=(Math.min(session.powerKW||75,150)*.82)/60; // Entrega ficticia: máximo 150 kW del vehículo demo y 82 % de potencia nominal.
-   session.quantity=Number(Math.min(80,session.maxAmount?session.maxAmount/session.price:80,session.quantity+delta).toFixed(3));
+   session.quantity=Number(Math.min(80,quantityLimit(),session.quantity+delta).toFixed(3));
    computeTotal();
-   if(session.quantity>=Math.min(80,session.maxAmount?session.maxAmount/session.price:80)-.0001){halt();session.status='paused';}
+   if(session.quantity>=Math.min(80,quantityLimit())-.0001){halt();session.status='paused';}
    broadcast();
   },1000);
  }
@@ -162,7 +172,7 @@ function start(){
 function pause(){if(session.status!=='fueling'||!canOperate())return;halt();session.status='paused';broadcast()}
 function finish(){if(!canOperate()||!['fueling','paused'].includes(session.status)||session.quantity<=0)return;halt();session.status='finished';session.finishedAt=new Date().toISOString();hoseLifted=false;if(guestMode())saveGuestPayment();broadcast()}
 function emergency(){if(!['fueling','paused','authorized'].includes(session.status))return;halt();hoseLifted=false;session.status='emergency';broadcast()}
-function sendSupply(){if(session.status!=='fueling'||!canOperate()||isEV())return;const limit=session.maxAmount?session.maxAmount/session.price:Infinity;session.quantity=Number(Math.min(limit,session.quantity+.035).toFixed(3));computeTotal();if(session.maxAmount&&session.quantity*session.price>=session.maxAmount-.005){stopHold();session.status='paused'}broadcast()}
+function sendSupply(){if(session.status!=='fueling'||!canOperate()||isEV())return;const limit=quantityLimit();session.quantity=Number(Math.min(limit,session.quantity+.035).toFixed(3));computeTotal();if(limitReached()){stopHold();session.status='paused'}broadcast()}
 $('traditionalEntry').addEventListener('click',openTraditional);
 $('startBtn').addEventListener('click',start);
 $('pauseBtn').addEventListener('click',pause);
@@ -210,7 +220,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopHold()}
 const traditionalProducts={gas:{fuel:'Gasolina 95',price:1.59,powerKW:null,connector:null},diesel:{fuel:'Diésel',price:1.51,powerKW:null,connector:null},ev:{fuel:'Eléctrico',price:.35,powerKW:75,connector:'CCS2'}};
 let traditionalDraft={loyalty:false,cardId:'',product:'gas',full:false,amount:30};
 function escapeText(t){return String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function normalizeProfile(msg){return {name:String(msg.profileName||'').trim().slice(0,70),vehicle:String(msg.vehicle||'').trim().slice(0,80),vehicleName:String(msg.vehicleName||msg.vehicle||'').trim().slice(0,80),vehicleModel:String(msg.vehicleModel||'').trim().slice(0,80),vehiclePlate:String(msg.vehiclePlate||'').trim().slice(0,24),vehicleDetected:String(msg.vehicleDetected||'').trim().slice(0,140),fuel:['Gasolina 95','Diésel','Eléctrico'].includes(msg.fuel)?msg.fuel:'Gasolina 95'}}
+function normalizeProfile(msg){return {name:String(msg.profileName||'').trim().slice(0,70),vehicle:String(msg.vehicle||'').trim().slice(0,80),vehicleName:String(msg.vehicleName||msg.vehicle||'').trim().slice(0,80),vehicleModel:String(msg.vehicleModel||'').trim().slice(0,80),vehiclePlate:String(msg.vehiclePlate||'').trim().slice(0,24),vehicleDetected:String(msg.vehicleDetected||'').trim().slice(0,140),maxAmount:validLimit(msg.maxAmount),payment:validPayment(msg.payment),fuel:['Gasolina 95','Diésel','Eléctrico'].includes(msg.fuel)?msg.fuel:'Gasolina 95'}}
 function wizard(html){$('traditionalFlow').innerHTML=html+`<div style="margin-top:22px"><button class="button-quiet" type="button" onclick="ggTraditional.cancel()">← Volver al surtidor</button></div>`}
 function openTraditional(){if(!['idle','finished','emergency'].includes(session.status))return; if(session.status!=='idle')reset();traditionalStep='membership';traditionalDraft={loyalty:false,cardId:'',product:'gas',full:false,amount:30};paint()}
 function cancelTraditional(){if(session.status==='fueling'||session.status==='paused')return;if(guestMode())reset();else{traditionalStep=null;paint()}}
@@ -234,7 +244,7 @@ function amountInput(v){if(!traditionalDraft.full){const limit=$('tradLimit');if
 function setAmount(){const raw=$('tradAmount')?.value;const amount=traditionalDraft.full?150:Number(raw);if(!Number.isFinite(amount)||amount<.5||amount>150){alert('Introduce un importe entre 0,50 € y 150 €.');return}traditionalDraft.amount=Number(amount.toFixed(2));traditionalStep='card';paint()}
 function approveCard(){if(traditionalStep!=='card')return;const product=traditionalProducts[traditionalDraft.product],maxAmount=traditionalDraft.full?150:traditionalDraft.amount;session={status:'authorized',sessionId:hexToken(),method:'traditional',vehicle:'Cliente sin GAS&GO',fuel:product.fuel,station:'Surtidor 02 · modo tradicional',amount:0,quantity:0,price:product.price,powerKW:product.powerKW,connector:product.connector,nonce:'',fallbackCode:'',finishedAt:null,clientReady:false,source:'traditional_guest',maxAmount,loyalty:traditionalDraft.loyalty,loyaltyCardId:traditionalDraft.loyalty?traditionalDraft.cardId:null,paymentStatus:'Fondos verificados (simulación)',loyaltyPoints:0};traditionalStep='approved';broadcast()}
 function beginSupply(){if(traditionalStep!=='approved'||!guestMode()||session.status!=='authorized')return;traditionalStep=null;broadcast()}
-function memberConfirm(){if(!connected()||!linkedProfile?.name){paint();return}const fuel=linkedProfile.fuel,ev=fuel==='Eléctrico';session={status:'awaiting_fallback',sessionId:hexToken(),method:'C',vehicle:linkedProfile.vehicle||'Vehículo GAS&GO',fuel,station:'GAS&GO · Surtidor 02',amount:0,quantity:0,price:ev?.35:fuel==='Diésel'?1.51:1.59,powerKW:ev?75:null,connector:ev?'CCS2':null,nonce:hexToken(),fallbackCode:String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0'),finishedAt:null,clientReady:true,source:'traditional_member',maxAmount:null,loyalty:false,paymentStatus:'Pago ficticio automático'};traditionalStep=null;broadcast()}
+function memberConfirm(){if(!connected()||!linkedProfile?.name){paint();return}const fuel=linkedProfile.fuel,ev=fuel==='Eléctrico';session={status:'awaiting_fallback',sessionId:hexToken(),method:'C',vehicle:linkedProfile.vehicle||'Vehículo GAS&GO',fuel,station:'GAS&GO · Surtidor 02',amount:0,quantity:0,price:ev?.35:fuel==='Diésel'?1.51:1.59,powerKW:ev?75:null,connector:ev?'CCS2':null,nonce:hexToken(),fallbackCode:String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0'),finishedAt:null,clientReady:true,source:'traditional_member',vehiclePlate:linkedProfile.vehiclePlate,maxAmount:linkedProfile.maxAmount,payment:linkedProfile.payment,loyalty:false,paymentStatus:'Pago ficticio automático'};traditionalStep=null;broadcast()}
 function saveGuestPayment(){
  if(session.paymentStatus==='Pago ficticio completado')return;
  const key='gasgo_guest_operations_demo';let rows=[];

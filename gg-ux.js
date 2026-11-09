@@ -28,7 +28,7 @@ function rememberFull(){
  data.favoriteStations=data.favoriteStations||{};
  let favoritesChanged=false;
  for(const id of data.favorites){const station=findStationById(id);if(station&&!station.ggFavoriteSnapshot&&JSON.stringify(data.favoriteStations[id])!==JSON.stringify(station)){data.favoriteStations[id]=structuredClone(station);favoritesChanged=true}}
- const snapshot={profile:data.profile,vehicle:data.vehicle,customVehicle:data.customVehicle,fuel:data.fuel};
+ const snapshot={profile:data.profile,vehicle:data.vehicle,customVehicle:data.customVehicle,fuel:data.fuel,payment:data.payment};
  data.vehicleMapFilters=data.vehicleMapFilters||{};
  const key=preferenceKey(),filters=currentFilters();
  if(favoritesChanged||JSON.stringify(data.fullSession)!==JSON.stringify(snapshot)||JSON.stringify(data.vehicleMapFilters[key])!==JSON.stringify(filters)){
@@ -38,7 +38,7 @@ function rememberFull(){
 const originalLogin=window.welcomeLogin;
 window.welcomeLogin=function(){
  // Pasar por el alta existente conserva la vinculación iniciada desde el QR.
- const snapshot=data.fullSession?structuredClone(data.fullSession):(!inPresentationDemo()&&data.profile&&data.customVehicle?{profile:data.profile,vehicle:data.vehicle,customVehicle:data.customVehicle,fuel:data.fuel}:null);
+ const snapshot=data.fullSession?structuredClone(data.fullSession):(!inPresentationDemo()&&data.profile&&data.customVehicle?{profile:data.profile,vehicle:data.vehicle,customVehicle:data.customVehicle,fuel:data.fuel,payment:data.payment}:null);
  if(!snapshot){originalLogin();return}
  resumingFull=true;try{originalLogin();Object.assign(data,snapshot);lastVehicleIdentity=null;syncEnergy();save()}finally{resumingFull=false}
  render();window.ggv2?.refreshLinkUI?.();
