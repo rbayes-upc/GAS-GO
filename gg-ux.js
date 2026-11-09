@@ -13,18 +13,103 @@ const hybrid=()=>data.customVehicle?.fuel===HYBRID&&data.vehicle===data.customVe
 const preferenceKey=()=>data.customVehicle?.plate||data.vehicle;
 function energyMode(){return hybrid()?(data.energyPreferences?.[preferenceKey()]||'fuel'):data.fuel==='Eléctrico'?'charge':'fuel'}
 function combustion(){return hybrid()?data.customVehicle.combustionFuel||'Gasolina 95':data.fuel}
+// Preferencias por vehículo: se conservan también al visitar el modo DEMO.
+let resumingFull=false;
+function currentFilters(){return {mapSearch,onlyAvailable,mapSort,maxPrice,chargeConnectorFilter,minimumChargePower}}
+function restoreFilters(){
+ const f=data.vehicleMapFilters?.[preferenceKey()];if(!f)return;
+ mapSearch=String(f.mapSearch||'');onlyAvailable=!!f.onlyAvailable;
+ mapSort=['dist','price','free','fastest','wait','time'].includes(f.mapSort)?f.mapSort:'dist';
+ maxPrice=Math.max(0,Number(f.maxPrice)||0);chargeConnectorFilter=connectors.includes(f.chargeConnectorFilter)?f.chargeConnectorFilter:'';minimumChargePower=Math.max(0,Number(f.minimumChargePower)||0);
+ if(energyMode()==='both'){mapSort='dist';maxPrice=0}
+}
+function rememberFull(){
+ if(resumingFull||inPresentationDemo()||['Bienvenida','Registro'].includes(page))return;
+ data.favoriteStations=data.favoriteStations||{};
+ let favoritesChanged=false;
+ for(const id of data.favorites){const station=findStationById(id);if(station&&!station.ggFavoriteSnapshot&&JSON.stringify(data.favoriteStations[id])!==JSON.stringify(station)){data.favoriteStations[id]=structuredClone(station);favoritesChanged=true}}
+ const snapshot={profile:data.profile,vehicle:data.vehicle,customVehicle:data.customVehicle,fuel:data.fuel};
+ data.vehicleMapFilters=data.vehicleMapFilters||{};
+ const key=preferenceKey(),filters=currentFilters();
+ if(favoritesChanged||JSON.stringify(data.fullSession)!==JSON.stringify(snapshot)||JSON.stringify(data.vehicleMapFilters[key])!==JSON.stringify(filters)){
+  data.fullSession=structuredClone(snapshot);data.vehicleMapFilters[key]=filters;save();
+ }
+}
+const originalLogin=window.welcomeLogin;
+window.welcomeLogin=function(){
+ // Pasar por el alta existente conserva la vinculación iniciada desde el QR.
+ const snapshot=data.fullSession?structuredClone(data.fullSession):(!inPresentationDemo()&&data.profile&&data.customVehicle?{profile:data.profile,vehicle:data.vehicle,customVehicle:data.customVehicle,fuel:data.fuel}:null);
+ if(!snapshot){originalLogin();return}
+ resumingFull=true;try{originalLogin();Object.assign(data,snapshot);lastVehicleIdentity=null;syncEnergy();save()}finally{resumingFull=false}
+ render();window.ggv2?.refreshLinkUI?.();
+};
+const originalFav=window.fav;
+window.fav=function(id){
+ if(!inPresentationDemo()){
+  data.favoriteStations=data.favoriteStations||{};
+  if(data.favorites.includes(id))delete data.favoriteStations[id];
+  else{const s=findStationById(id);if(s)data.favoriteStations[id]=structuredClone(s)}
+ }
+ originalFav(id);
+};
+const originalFavorites=window.favorites;
+window.favorites=function(){
+ if(inPresentationDemo())return originalFavorites();
+ const cards=data.favorites.map(id=>{
+  const fresh=findStationById(id),s=fresh||data.favoriteStations?.[id];
+  if(!s)return `<section class="card gg-favorite"><h2>Estación guardada</h2><p>Sus datos no están disponibles en esta zona del mapa.</p><button class="btn ghost" onclick="fav(${Number(id)})">Quitar de favoritos</button></section>`;
+  const services=[];
+  if(energyMode()!=='charge'&&compatibleFuel(s))services.push({name:combustion(),price:combustion()==='Diésel'?s.diesel:s.gas,unit:'€/L',source:s.officialSource?'Precio publicado':'Precio simulado'});
+  if(energyMode()!=='fuel'&&compatibleCharge(s,true))services.push({name:'Recarga eléctrica',price:s.ev,unit:'€/kWh',source:'Tarifa simulada'});
+  return `<section class="card gg-favorite"><div class="row between"><h2>${esc(s.name)}</h2><button type="button" class="iconbutton" aria-label="Quitar ${esc(s.name)} de favoritos" onclick="fav(${Number(id)})">★</button></div><p class="small muted">${esc(s.area||'')}${!fresh||s.ggFavoriteSnapshot?' · Datos guardados, pueden haber cambiado':''}</p>${services.map(v=>`<div class="gg-favorite-price"><span>${esc(v.name)}</span><strong>${Number(v.price).toLocaleString('es-ES',{minimumFractionDigits:3})} ${v.unit}</strong><small>${v.source}</small></div>`).join('')||'<p class="gg-empty">Sin servicio compatible con el vehículo y el servicio seleccionados.</p>'}<button type="button" class="btn ghost block" onclick="ggUX.openFavorite(${Number(id)})">Ver estación en el mapa</button></section>`;
+ }).join('');
+ return title('Favoritos',`Precios para ${esc(data.vehicle||'tu vehículo')}.`)+(cards||'<div class="card empty"><h2>Aún no tienes favoritos</h2><p>Guarda una estación desde su ficha en el mapa.</p></div>')+'<button type="button" class="btn primary block" onclick="go(\'Home\')">Explorar estaciones</button>';
+};
+function openFavorite(id){
+ if(!findStationById(id)){
+  const s=data.favoriteStations?.[id];if(!s)return;
+  STATIONS.push({...s,ggFavoriteSnapshot:true});toast('Mostrando los últimos datos guardados de esta estación');
+ }
+ const s=findStationById(id);if(s?.lat&&s?.lng)mapCenter={lat:s.lat,lng:s.lng};
+ goStation(id);
+}
+let locationError=false,linkError='';
+window.addEventListener('gg-link-error',event=>{linkError=String(event.detail||'Se ha perdido el enlace con el surtidor.');if(!inPresentationDemo()&&page==='Home')render()});
+window.addEventListener('gg-link-online',()=>{linkError='';if(!inPresentationDemo()&&page==='Home')render()});
+function showErrors(content){
+ if(inPresentationDemo())return;
+ if(locationError)content.insertAdjacentHTML('afterbegin',`<section class="gg-error-banner" role="alert"><p>${esc(geoStatus)}</p><button type="button" class="btn ghost" onclick="locateUser()">Reintentar ubicación</button></section>`);
+ if(linkError)content.insertAdjacentHTML('afterbegin',`<section class="gg-error-banner" role="alert"><p>${esc(linkError)} Reintenta el enlace para consultar el estado del surtidor.</p><button type="button" class="btn ghost" onclick="ggv2.retry()">Reintentar conexión</button></section>`);
+}
+function accessibleActions(root){
+ if(inPresentationDemo())return;
+ root.querySelectorAll('.item[onclick]').forEach(el=>{if(el.querySelector('button,input,select,a'))return;el.setAttribute('role','button');el.tabIndex=0});
+}
+document.addEventListener('keydown',event=>{
+ if(inPresentationDemo())return;
+ if((event.key==='Enter'||event.key===' ')&&event.target.matches('.item[role="button"]')){event.preventDefault();event.target.click()}
+ const dialog=document.querySelector('#overlay [role="dialog"]');if(!dialog)return;
+ if(event.key==='Escape'){event.preventDefault();closeModal();return}
+ if(event.key!=='Tab')return;
+ const controls=[...dialog.querySelectorAll('button,input,select,textarea,a[href],[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);
+ const first=controls[0],last=controls.at(-1);if(!first)return;
+ if(event.shiftKey&&(document.activeElement===first||!dialog.contains(document.activeElement))){event.preventDefault();last.focus()}
+ else if(!event.shiftKey&&(document.activeElement===last||!dialog.contains(document.activeElement))){event.preventDefault();first.focus()}
+});
+
 function syncEnergy(){
  const identity=[data.vehicle,data.customVehicle?.plate,hybrid()?HYBRID:data.fuel,data.customVehicle?.connector,data.customVehicle?.combustionFuel].join('|');
- if(identity!==lastVehicleIdentity){filterFuel='Todos';maxPrice=0;chargeConnectorFilter='';minimumChargePower=0;selectedStation=null;lastVehicleIdentity=identity}
+ if(identity!==lastVehicleIdentity){filterFuel='Todos';maxPrice=0;chargeConnectorFilter='';minimumChargePower=0;selectedStation=null;lastVehicleIdentity=identity;if(!inPresentationDemo())restoreFilters()}
  if(!hybrid())return;
  const fuel=energyMode()==='charge'?'Eléctrico':combustion();
  if(data.fuel!==fuel){data.fuel=fuel;save()}
 }
-function compatibleCharge(s){
+function compatibleCharge(s,vehicleOnly=false){
  if(!(s.ev>0))return false;
  const connector=data.customVehicle?.name===data.vehicle?data.customVehicle.connector:null;
  const published=String(s.evConnector||'').split(',').map(x=>x.trim());
  if(connector&&!published.includes(connector))return false;
+ if(vehicleOnly)return true;
  if(chargeConnectorFilter&&!published.includes(chargeConnectorFilter))return false;
  return !minimumChargePower||chargePower(s)>=minimumChargePower;
 }
@@ -255,20 +340,20 @@ window.showRepostNotification=function(amount,receiptId){
 window.locateUser=function(){
  if(inPresentationDemo()){geoStatus='Ubicación simulada: estás en la estación de demostración.';render();toast(geoStatus);return}
  if(locationPending)return;
- if(!navigator.geolocation){geoStatus='Tu navegador no permite obtener la ubicación.';render();return}
- locationPending=true;geoStatus='Buscando tu ubicación…';if(page==='Home')render();
+ if(!navigator.geolocation){locationError=true;geoStatus='Tu navegador no permite obtener la ubicación. Puedes seguir explorando el mapa.';render();return}
+ locationError=false;locationPending=true;geoStatus='Buscando tu ubicación…';if(page==='Home')render();
  navigator.geolocation.getCurrentPosition(position=>{
   locationPending=false;userPosition={lat:position.coords.latitude,lng:position.coords.longitude};mapCenter={...userPosition};geoStatus='Tu ubicación está marcada en azul.';
   if(page==='Home')render();loadRealStations(mapCenter);
  },error=>{
-  locationPending=false;userPosition=null;
+  locationPending=false;locationError=true;userPosition=null;
   geoStatus=error.code===1?'Ubicación denegada. Activa el permiso del navegador para ver tu punto azul.':error.code===3?'La ubicación tarda demasiado. Pulsa «Mi ubicación» para reintentar.':'No se ha podido obtener tu ubicación. Puedes reintentar o explorar el mapa.';
   if(page==='Home')render();toast(geoStatus);
  },{enableHighAccuracy:true,timeout:14000,maximumAge:60000});
 };
 const originalRender=window.render;
 window.render=function(){
- syncEnergy();originalRender();
+ syncEnergy();rememberFull();originalRender();
  const content=$('content');
  if(!['Home','Bienvenida'].includes(page))content.insertAdjacentHTML('afterbegin','<button class="gg-back" type="button" onclick="ggUX.back()" aria-label="Volver a la pantalla anterior">← Volver</button>');
  if(page==='Ayuda'&&!inPresentationDemo())content.insertAdjacentHTML('beforeend',`<section class="card" id="ggHelpData"><h2>Información de los datos</h2><p class="small muted">Las operaciones, la disponibilidad y los tiempos de espera son simulados. Las fuentes y el estado de los datos del mapa se muestran aquí.</p><p class="small muted">${esc(geoStatus)}</p>${fullDataInformation||'<p class="small muted">Abre el mapa para consultar sus fuentes de datos.</p>'}</section>`);
@@ -286,18 +371,30 @@ window.render=function(){
   if(!locationChecked&&!inPresentationDemo()&&navigator.permissions){locationChecked=true;navigator.permissions.query({name:'geolocation'}).then(p=>{if(p.state==='granted')locateUser()}).catch(()=>{})}
   const gps=content.querySelector('.gps-locate');if(gps){gps.disabled=locationPending;gps.textContent=locationPending?'Buscando ubicación…':'⌖ Mi ubicación';gps.setAttribute('aria-busy',String(locationPending))}
   if(!inPresentationDemo()){vehicleCard(content);if(energyMode()==='both'&&$('listSort')){$('listSort').value='dist';$('listSort').disabled=true}}
-  simplify(content);showCompletion(content);
+  simplify(content);showCompletion(content);showErrors(content);
  }
+ accessibleActions(content);
 };
 const originalModal=window.modal;
-window.modal=function(html){originalModal('<button type="button" class="gg-back" onclick="closeModal()">← Volver</button>'+html)};
+let modalReturnFocus=null;
+window.modal=function(html){
+ if(!document.querySelector('#overlay [role="dialog"]'))modalReturnFocus=document.activeElement;
+ originalModal('<button type="button" class="gg-back" onclick="closeModal()">← Volver</button>'+html);
+ if(!inPresentationDemo()){
+  const dialog=document.querySelector('#overlay [role="dialog"]'),heading=dialog?.querySelector('h2');
+  if(heading){heading.id=heading.id||'ggDialogTitle';dialog.setAttribute('aria-labelledby',heading.id)}
+  accessibleActions(dialog);dialog?.querySelector('button')?.focus({preventScroll:true});
+ }
+};
+const originalCloseModal=window.closeModal;
+window.closeModal=function(){originalCloseModal();if(!inPresentationDemo()&&modalReturnFocus?.isConnected)modalReturnFocus.focus({preventScroll:true});modalReturnFocus=null};
 const originalRegistration=window.completeRegistration;
 window.completeRegistration=function(){
  regCache();
  if(regDraft.fuel===HYBRID&&!connectors.includes(regDraft.connector)){toast('Selecciona el conector de tu híbrido enchufable');regStep=2;render();return}
  originalRegistration();syncEnergy();
 };
-window.ggUX={chooseVehicle,pickVehicle,back,energyFields,toggleEnergyFields,setEnergy,energyMode,selectStation,openStation,drawStations};
+window.ggUX={openFavorite,chooseVehicle,pickVehicle,back,energyFields,toggleEnergyFields,setEnergy,energyMode,selectStation,openStation,drawStations};
 document.addEventListener('click',event=>{
  if(page!=='Home'||!menu||!event.target.closest?.('.mapframe'))return;
  // Capturar el toque antes de Leaflet: cerrar el menú sin seleccionar una estación.

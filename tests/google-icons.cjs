@@ -33,7 +33,7 @@ await p.getByRole('button',{name:/Manualmente/}).click();
 await p.locator('#ggvName').fill('Mi 🚙 coche');assert.equal(await p.locator('#ggvName').inputValue(),'Mi 🚙 coche');
 assert.equal(await p.locator('.gg-choice-icon .gg-google-icon').count()>0,true);
 await p.getByRole('button',{name:'Cancelar',exact:true}).click();
-await p.evaluate(()=>go('Historial'));await p.getByRole('button',{name:/Ver factura PDF/}).first().click();
+await p.evaluate(()=>go('Historial'));await p.getByRole('button',{name:'Ver y descargar factura',exact:true}).first().click();
 assert.equal(await p.locator('.gg-invoice-preview .gg-google-icon').count(),0);
 await p.getByRole('button',{name:'Cerrar',exact:true}).click();
 await p.evaluate(()=>go('Home'));await p.evaluate(()=>{selectedStation=11;render()});

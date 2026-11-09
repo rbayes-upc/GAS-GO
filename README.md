@@ -56,3 +56,13 @@ La prueba `node tests/pairing-recovery.cjs` requiere Playwright disponible para 
 Ambos dispositivos necesitan Internet. El enlace usa PeerJS/WebRTC y bibliotecas CDN; algunas redes pueden bloquearlo. Recargar el surtidor genera una sesión nueva. La conexión real entre dos dispositivos debe validarse tras el despliegue.
 
 La consulta real de matrículas requiere configurar `APIVEHICULO_KEY` de forma segura en Netlify. No guardes claves en GitHub ni en archivos del navegador. La consulta es opcional para el modo DEMO.
+
+## Mejoras de uso en FULL
+
+- Se conserva en este navegador el último vehículo de FULL y sus filtros del mapa (precio, disponibilidad, búsqueda, orden, conector y potencia). La elección de servicio del híbrido también se mantiene. Visitar DEMO no sustituye estas preferencias; al volver a iniciar sesión se recuperan. La bienvenida y la entrada desde QR conservan su recorrido.
+- Favoritos muestra los precios de los servicios compatibles con el vehículo seleccionado. Guarda una copia de la estación para consultarla cuando no esté en el conjunto actual del mapa; esas copias se señalan como datos guardados que pueden haber cambiado. Las tarifas eléctricas siguen siendo simuladas.
+- Historial distingue repostajes y recargas, muestra litros o kWh cuando constan, y permite combinar vehículo histórico y servicio con los filtros de fecha e importe. La factura conserva los datos de la operación original y se puede descargar en PDF.
+- Los fallos de ubicación y la pérdida del enlace muestran avisos con reintento en Home. El reintento de enlace no envía otra llegada ni genera una factura; recupera la comunicación. Desvincular voluntariamente no muestra un fallo.
+- FULL incorpora controles de al menos 44 px de alto, foco visible, navegación de acciones con teclado, foco contenido en los diálogos y cierre con Escape, campos de 16 px y ajustes para pantallas pequeñas y movimiento reducido.
+
+Validación: `node tests/full-polish.cjs`, `node tests/pairing-recovery.cjs` y `node tests/refuel-iteration.cjs`. La primera prueba cubre persistencia, favoritos, filtros de historial, PDF, reintento de ubicación y teclado/tamaños de pantalla. La segunda usa conexiones simuladas; la tercera ejecuta el repostaje DEMO con el surtidor local y su factura real de prueba.

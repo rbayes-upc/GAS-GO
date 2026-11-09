@@ -36,4 +36,13 @@ const {chromium}=require('playwright');const fs=require('fs');const path=require
  await pump.evaluate(()=>testPeers[1].drop());await pump.clock.fastForward(1500);await pump.clock.fastForward(8001);
  assert.equal(await pump.locator('#qrLinkBadge').innerText(),'SIN CONEXIÓN');assert.match(await pump.locator('#qrNetworkStatus').innerText(),/no responde/);
  console.log('PASS a stalled reconnect ends with an actionable error');
+ const full=await c.newPage();await full.clock.install();await full.goto(url);await full.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await full.evaluate(()=>testPeers[0].start());await full.getByRole('heading',{name:'Enlazando con el surtidor',exact:true}).waitFor();await full.evaluate(()=>testConnections[0].start());await full.clock.fastForward(651);
+ await full.evaluate(()=>{testConnections[0].emit('data',{type:'state',state:{sessionId:'full-recovery',status:'authorized',vehicle:data.vehicle,fuel:data.fuel}});testConnections[0].close()});
+ assert.match(await full.locator('.gg-error-banner').innerText(),/Conexión con el surtidor interrumpida/);const before=await full.evaluate(()=>data.history.length);
+ await full.getByRole('button',{name:'Reintentar conexión',exact:true}).click();await full.getByRole('heading',{name:'Enlazando con el surtidor',exact:true}).waitFor();await full.evaluate(()=>testConnections[1].start());assert.equal(await full.locator('.gg-error-banner').count(),0);assert.equal(await full.evaluate(()=>testConnections[1].sent.some(m=>m.type==='arrival')),false);assert.equal(await full.evaluate(()=>data.history.length),before);
+ await full.evaluate(()=>ggv2.unlink());assert.equal(await full.locator('.gg-error-banner').count(),0);
+ // Al volver desde un QR, recuperar FULL también debe ejecutar el enlace existente.
+ await full.reload();await full.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await full.evaluate(()=>testPeers[0].start());await full.getByRole('heading',{name:'Enlazando con el surtidor',exact:true}).waitFor();assert.equal(await full.evaluate(()=>testConnections.length),1);
+ assert.deepEqual(errors,[]);console.log('PASS FULL lost-link banner retries without duplicate arrival/receipt, deliberate unlink stays quiet and returning login retains QR pairing');
+
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exit(1)});
