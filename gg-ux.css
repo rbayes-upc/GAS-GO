@@ -39,7 +39,8 @@
 .gg-full-icons .gg-station-favorite[aria-pressed=true]{background:#FFDF2E;border-color:#FFDF2E;color:#14392c}
 .gg-full-icons .gg-station-popup .gg-popup-heading>.close{position:static;flex-shrink:0;min-width:44px;height:44px;margin:0;padding:8px}
 
-.gg-vehicle-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.gg-vehicle-actions{display:flex;flex-direction:row;gap:6px;flex-shrink:0}
+.gg-active-vehicle>div:first-child{flex:1;min-width:0}
 .gg-full-icons .station-list-screen .list-summary{justify-content:space-between;margin:4px 0 8px}
 
 /* Compatibilidad con una plantilla anterior mientras se actualizan los archivos. */
