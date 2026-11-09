@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#053B30">
+<title>GAS&GO · Centro de control</title>
+<link rel="icon" href="../logo-gasgo.jpeg"><link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+<a href="#main" class="skip-link">Saltar al contenido</a>
+<aside class="sidebar" aria-label="Navegación principal">
+ <a class="brand" href="./index.html" aria-label="GAS&GO Centro de control"><img src="../logo-cabecera-gg.png" alt="GAS&GO"><span>CENTRO DE CONTROL</span></a>
+ <div class="workspace"><span class="workspace-symbol">G</span><div><strong>Mi red de estaciones</strong><small>Espacio de demostración</small></div><span class="workspace-dot"></span></div>
+ <p class="nav-label">SUPERVISIÓN</p><nav id="navigation"></nav>
+ <div class="sidebar-bottom"><div class="pilot-note"><span class="pilot-dot"></span><strong>Modo demostración</strong><p>Una vista de tu operación.<br>Datos simulados, sin equipos conectados.</p></div><button class="profile-button" id="profileButton" aria-label="Preferencias del panel"><span class="avatar">AM</span><span><strong>Ana Martí</strong><small>Responsable de operaciones</small></span><span data-icon="settings"></span></button></div>
+</aside>
+<div class="workspace-main">
+ <header class="topbar"><div class="breadcrumbs"><span>Mi red</span><span class="breadcrumb-divider">/</span><strong id="breadcrumb">Visión general</strong></div><div class="topbar-actions"><button class="search-trigger" id="searchButton"><span data-icon="search"></span><span>Buscar en el panel</span><kbd>⌘ K</kbd></button><span class="demo-label"><i></i> Datos simulados</span><button class="icon-button notification-button" id="notificationsButton" aria-label="Ver incidencias pendientes"><span data-icon="bell"></span><span class="notification-dot"></span></button></div></header>
+ <main id="main" tabindex="-1"><div id="dashboard"></div></main>
+ <footer class="page-footer"><span>GAS&GO Control <span class="footer-divider">/</span> Prototipo de supervisión</span><button id="scopeButton">Sobre esta demostración <span data-icon="arrow_up_right"></span></button></footer>
+</div>
+<dialog id="detailDialog" class="detail-dialog" aria-labelledby="detailTitle"><div id="detailContent"></div></dialog>
+<dialog id="searchDialog" class="search-dialog" aria-label="Buscar en el centro de control"><div class="command-input"><span data-icon="search"></span><input id="commandQuery" type="search" placeholder="Estación, operación o incidencia…" autocomplete="off" aria-label="Buscar estación, operación o incidencia"><button class="icon-button" id="closeSearch" aria-label="Cerrar búsqueda">×</button></div><div id="commandResults"></div><div class="command-footer">Busca por nombre, identificador o matrícula <kbd>ESC</kbd></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="../gg-google-icons-data.js"></script><script src="./data.js?v=1"></script><script src="./app.js?v=1"></script>
+</body></html>
