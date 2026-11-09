@@ -41,6 +41,22 @@ stations.forEach((s,site)=>{
   sessions.push({id:'GG-'+String(3000+site*500+rank),station:s.id,equipment:(product==='Electricidad'?'E0':'S0')+(rank%(product==='Electricidad'?2:4)+1),status,method,product,unit,quantity,amount:Number((quantity*price).toFixed(2)),userId:identified?(rank%4<2?'U-'+String((rank*7+site*3)%20+1).padStart(3,'0'):'U-'+(1000+site*200+rank)):null,plate:identified?'•••• '+['MTR','BCD','FGH','JKL','MNP','EVG'][rank%6]:null,events});
  }});
 });
+// Intentos y cambios de método explícitos. El método final por sí solo no permite
+// inferir si se empezó en A ni atribuir un éxito a un cambio.
+for(const s of sessions){
+ const requested=s.events.find(e=>e.name==='authorization_requested');if(!requested)continue;
+ const success=s.events.find(e=>e.name==='authorization_succeeded'),failure=s.events.find(e=>e.name==='authorization_failed'),abandoned=s.events.find(e=>e.name==='session_abandoned');
+ const identified=Date.parse(s.events.find(e=>e.name==='vehicle_identified').at),rank=Number(s.id.split('-')[1]);
+ const path=success&&s.method!=='A'&&rank%20>=10?(s.method==='B'?['A','B']:rank%40>=30?['A','B','C']:['A','C']):[s.method];
+ requested.method=path[0];
+ path.forEach((method,i)=>{
+  const attemptId='auth-'+(i+1),start=identified+(i===0?100:i===1?3200:8300);
+  s.events.push({name:'authorization_attempt_started',at:new Date(start).toISOString(),method,attemptId});
+  if(i<path.length-1){const end=identified+(i===0?3000:8100);s.events.push({name:'authorization_attempt_failed',at:new Date(end).toISOString(),method,attemptId,code:'METHOD_TIMEOUT'});s.events.push({name:'authorization_method_changed',at:new Date(end+100).toISOString(),from:method,to:path[i+1],reason:'timeout_fallback'})}
+  else if(success||failure||abandoned){const terminal=success||failure||abandoned;s.events.push({name:success?'authorization_attempt_succeeded':failure?'authorization_attempt_failed':'authorization_attempt_cancelled',at:new Date(Date.parse(terminal.at)-1).toISOString(),method,attemptId,...(failure?{code:'AUTH_TIMEOUT'}:{})})}
+ });
+ s.events.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at));
+}
 // Historial de sesiones ficticias: mismo esquema de eventos, sin extraer datos de la app.
 // Se reparten durante el día; los filtros recortan los eventos al corte consultado.
 const archivedSessions=[];

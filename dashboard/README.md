@@ -4,15 +4,15 @@ Panel web independiente para entender cuánto se usa GAS&GO, cómo se completa e
 
 ## Abrir
 
-Servir la raíz del repositorio con un servidor estático y abrir `/dashboard/`. En Pages: `https://rbayes-upc.github.io/GAS-GO/dashboard/?v=3`. Sin compilación, claves ni peticiones a servicios externos. Se reutilizan el logotipo y el catálogo local de Material Symbols (Apache-2.0); la app y el surtidor originales no se modifican ni se cargan.
+Servir la raíz del repositorio con un servidor estático y abrir `/dashboard/`. En Pages: `https://rbayes-upc.github.io/GAS-GO/dashboard/?v=4`. Sin compilación, claves ni peticiones a servicios externos. Se reutilizan el logotipo y el catálogo local de Material Symbols (Apache-2.0); la app y el surtidor originales no se modifican ni se cargan.
 
 ## Vistas
 
-- **Visión general:** sesiones GAS&GO, operaciones completadas, autorización automática e importe asociado; gráfica de actividad, recorrido de la misma cohorte, comparación entre estaciones, incidencias del servicio y personas que lo usan.
+- **Visión general:** diferencias entre pasos clasificadas en avances, fallos, cierres y pendientes; sesiones GAS&GO, operaciones completadas, autorización automática e importe asociado; gráfica de actividad, recorrido de la misma cohorte, comparación entre estaciones, incidencias del servicio y personas que lo usan.
 - **Estaciones:** tasas de finalización y método A, usuarios únicos con operación, tiempo hasta autorizar, facturas e importe GAS&GO de cada estación.
 - **Sesiones GAS&GO:** registro paginado de 20 en 20, búsqueda y filtros por resultado, paso alcanzado o error de factura. El detalle muestra exactamente los eventos registrados, sin inventar pasos que no ocurrieron.
 - **Incidencias del servicio:** grupos por estación y evento de enlace, autorización o factura. Cada aviso lleva a sus sesiones afectadas. El seguimiento es local y reversible y no altera los eventos ni los resultados de las sesiones.
-- **Rendimiento:** tiempos medio y percentil 95 hasta autorizar, métodos A/B/C, usuarios, repetición del día, facturas y volúmenes por servicio. Litros y kWh se mantienen separados.
+- **Rendimiento:** comparación de intentos por método, sus resultados, tiempos y cambios explícitos A/B/C; tiempos medio y percentil 95 hasta autorizar, métodos A/B/C, usuarios, repetición del día, facturas y volúmenes por servicio. Litros y kWh se mantienen separados.
 - **Periodos globales:** Hoy, Ayer y Últimos 7 días aplican a métricas, cohortes, usuarios, tablas, incidencias, búsquedas, gráficas y exportaciones.
 - **Comparación y definiciones:** los cuatro indicadores principales muestran la variación con una ventana anterior equivalente; el botón «?» explica fórmula, cifras actuales y base anterior. «Cómo se compara» aclara los cortes temporales.
 - **Exportación:** CSV de todas las coincidencias del filtro, no solo la página visible; avisos agrupados o resumen del periodo por estación. Los resúmenes incluyen inicio y fin de ventana en ISO y los registros incluyen el inicio de sesión en ISO. La gráfica permite consultar su tabla de datos.
@@ -41,7 +41,7 @@ No se conoce la actividad fuera de GAS&GO. No se muestra cuota de adopción sobr
 
 ## Datos de demostración y futura integración
 
-La instantánea ficticia corresponde al 9 de noviembre de 2026, 13:42 en Madrid: tres estaciones; en «Hoy», 286 sesiones, 256 operaciones completadas, 267 autorizaciones, 253 facturas generadas y 147 usuarios únicos con operación. Los pasos del día se generan como eventos temporales coherentes; ninguna marca temporal está después del corte. Se incluyen trece días anteriores de sesiones generadas, con identificadores de sesión únicos y usuarios anonimizados estables. Los históricos también tienen eventos completos y se filtran como cualquier otra sesión; no se mezclan agregados históricos con datos detallados.
+La instantánea ficticia corresponde al 9 de noviembre de 2026, 13:42 en Madrid: tres estaciones; en «Hoy», 286 sesiones, 256 operaciones completadas, 267 autorizaciones, 253 facturas generadas y 147 usuarios únicos con operación. Los pasos y escenarios de cambio de método se generan como eventos temporales coherentes de demostración; ninguna marca temporal está después del corte. Se incluyen trece días anteriores de sesiones generadas, con identificadores de sesión únicos y usuarios anonimizados estables. Los históricos también tienen eventos completos y se filtran como cualquier otra sesión; no se mezclan agregados históricos con datos detallados.
 
 ### Ventanas comparables
 
@@ -57,6 +57,32 @@ No hay telemetría real, instrumentación en la app, control físico, pagos, rei
 
 Una futura conexión requiere capturar los eventos de cada sesión con identificadores estables, estación, marcas temporales y resultado, y un identificador de usuario anonimizado que permita deduplicar. Se debe validar la disponibilidad de cada señal y sus denominadores antes de mostrar indicadores reales. La generación y la solicitud de descarga de una factura son eventos distintos.
 
+## Diferencias entre pasos
+
+Al pulsar un paso posterior al inicio se toma como base la cohorte que llegó al paso anterior. `analytics.js` clasifica cada sesión en un grupo excluyente:
+
+- **Avanzaron:** existe el evento del paso de destino, aunque haya otro fallo más adelante.
+- **Con fallo:** falta el destino y hay un evento de error explícito de esa transición (enlace, identificación, autorización, suministro o factura).
+- **Cerradas sin completar:** falta el destino y se registró un cierre explícito de sesión.
+- **Pendientes:** no consta destino, error de esa transición ni cierre antes del corte. No demuestra abandono ni actividad física todavía en curso.
+
+Los cuatro grupos suman la base del paso anterior y se pueden abrir como filtros del registro de sesiones. En «Hoy», la diferencia de identificación son 2 cierres y 5 pendientes; la de factura son 3 errores sobre suministros ya completados. Un error de factura no se convierte en abandono del repostaje.
+
+## Intentos y alternativas A/B/C
+
+Los fixtures incluyen `authorization_attempt_started`, `authorization_attempt_succeeded`, `authorization_attempt_failed`, `authorization_attempt_cancelled` y `authorization_method_changed`. Un identificador de intento es local a su sesión; la clave analítica compuesta sesión/intento es única en todo el historial. Un método final C no implica que se haya empezado con A: solo se cuentan intentos y cambios explícitos.
+
+- **Tasa por intento:** autorizados / iniciados del método, incluyendo cancelados y pendientes en la base. Es distinta de la cuota de autorizaciones que terminan por A del indicador principal.
+- **Duración media resuelta:** inicio del intento a autorización o fallo. Excluye cancelaciones, pendientes y la espera previa al método. Un intento posterior no hereda el tiempo de espera del anterior.
+- **Sesiones frente a intentos:** las celdas muestran intentos; al pulsarlas se listan sesiones únicas que contienen al menos uno con ese resultado. Su estado global puede ser «Completada» aunque un intento A haya fallado.
+- **Cambios:** cada pareja A→B, A→C o B→C abre las sesiones con ese evento. A→B→C aparece en dos parejas; no se suman como usuarios o sesiones únicos. «Autorizadas después» describe una secuencia temporal, no causalidad.
+- **Cortes históricos:** un intento cuyo resultado ocurre después del corte sigue pendiente; no se anticipa su éxito ni su duración final.
+- **Exportación:** la comparación CSV incluye estación, ventana, numeradores, denominadores y tiempos. Los registros CSV incluyen el filtro analítico aplicado, cantidad de intentos y cambios registrados.
+
+Son escenarios simulados de un posible registro de eventos, no transiciones observadas ni una nueva capacidad instrumentada en la app o en el surtidor actuales. Una integración real necesita capturar y validar estos eventos; no se los reconstruye a partir del método final.
+
 ## Verificación
 
-`node tests/dashboard.cjs` con Playwright y Chromium en `/usr/bin/chromium`. Verifica la cohorte, ponderación de tasas y tiempos, deduplicación de usuarios por periodo, ventanas anteriores equivalentes y exclusión de resultados futuros en cada corte, filtros por estación, incidencias y sesiones afectadas, paginación/exportación, errores de factura separados del resultado del suministro, búsqueda, persistencia propia y anchos de 1440, 1024, 768, 430 y 375 px. Comprueba que no hay peticiones externas, excepciones de navegador ni cambios en el almacenamiento de la app.
+`node tests/dashboard-analytics.cjs` comprueba particiones excluyentes, reintentos del mismo método, cancelaciones, cambios encadenados, cortes temporales e identificadores de intento.
+
+`node tests/dashboard.cjs` con Playwright y Chromium en `/usr/bin/chromium`. Verifica la cohorte, ponderación de tasas y tiempos, deduplicación de usuarios por periodo, ventanas anteriores equivalentes y exclusión de resultados futuros en cada corte, filtros por estación, incidencias y sesiones afectadas, análisis de pasos y métodos con sus filtros y CSV, paginación/exportación, errores de factura separados del resultado del suministro, búsqueda, persistencia propia y anchos de 1440, 1024, 768, 430 y 375 px. Comprueba que no hay peticiones externas, excepciones de navegador ni cambios en el almacenamiento de la app.
