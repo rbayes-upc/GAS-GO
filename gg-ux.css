@@ -8,3 +8,5 @@
 #ggAppMore .gg-more-action:hover,#ggAppMore .gg-more-action:active,#ggAppMore .gg-more-action:focus-visible{color:#123e31;background:#edf6f1}
 #ggAppMore .gg-more-action:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
 .gg-station-popup .gg-primary-actions>.btn{width:100%;margin:0!important}.gg-station-popup .gg-primary-actions>.btn.primary{border:1px solid transparent}
+
+.gg-demo-user-dot{position:absolute;left:calc(48% + 24px);top:calc(40% + 20px);width:20px;height:20px;transform:translate(-50%,-50%);z-index:4;pointer-events:none}.device.home-open .gg-demo-user-dot{visibility:hidden}

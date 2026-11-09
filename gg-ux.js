@@ -169,7 +169,7 @@ window.showRepostNotification=function(amount,receiptId){
  completionTimer=setTimeout(dismissCompletion,3000);if(page==='Home')render();
 };
 window.locateUser=function(){
- if(inPresentationDemo()){toast('El mapa DEMO es ilustrativo. Tu posición real se muestra en el mapa de la versión completa.');return}
+ if(inPresentationDemo()){geoStatus='Ubicación simulada: estás en la estación de demostración.';render();toast(geoStatus);return}
  if(locationPending)return;
  if(!navigator.geolocation){geoStatus='Tu navegador no permite obtener la ubicación.';render();return}
  locationPending=true;geoStatus='Buscando tu ubicación…';if(page==='Home')render();
