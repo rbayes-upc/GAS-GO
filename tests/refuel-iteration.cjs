@@ -1,0 +1,43 @@
+const {chromium}=require('playwright');const http=require('node:http');const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');
+(async()=>{
+ const server=http.createServer((req,res)=>{const file=path.join(root,decodeURIComponent(new URL(req.url,'http://local').pathname));const full=fs.existsSync(file)&&fs.statSync(file).isDirectory()?path.join(file,'index.html'):file;if(!full.startsWith(root+path.sep)||!fs.existsSync(full)){res.writeHead(404);res.end();return}res.setHeader('Content-Type',full.endsWith('.html')?'text/html':full.endsWith('.js')?'text/javascript':full.endsWith('.css')?'text/css':full.endsWith('.png')?'image/png':'application/octet-stream');fs.createReadStream(full).pipe(res)});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=`http://127.0.0.1:${server.address().port}/`;
+ const b=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+ try{
+ const c=await b.newContext({viewport:{width:430,height:932}});const errors=[];c.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
+ const app=await c.newPage();await app.goto(url,{waitUntil:'domcontentloaded'});
+ const popup=app.waitForEvent('popup');await app.getByRole('button',{name:/DEMO.*acceso rápido/}).click();const pump=await popup;await pump.setViewportSize({width:1280,height:900});
+ await pump.locator('#welcomeModal').waitFor({state:'visible',timeout:20000});assert.match(await pump.locator('#stateBadge').innerText(),/Autorizado/);
+ assert.equal(await pump.locator('#ggFirstRefuelGuide').count(),0);await pump.locator('#welcomeClose').click();
+ await pump.locator('#supplyBtn').click();await pump.getByRole('heading',{name:'Tu primer repostaje, en tres pasos'}).waitFor();
+ assert.equal(await pump.locator('#quantity').innerText(),'0,00 L');assert.match(await pump.locator('#supplyBtn').innerText(),/Agarra/);
+ await pump.getByRole('button',{name:'Volver',exact:true}).click();await pump.locator('#supplyBtn').click();assert.equal(await pump.locator('#ggFirstRefuelGuide').isVisible(),true);
+ await pump.screenshot({path:'/workspace/gasgo-dev/iteration-v2-guide.png'});
+ await pump.getByRole('button',{name:'Entendido',exact:true}).click();assert.equal(await pump.locator('#ggFirstRefuelGuide').count(),0);assert.match(await pump.locator('#supplyBtn').innerText(),/Presiona/);
+ console.log('PASS automatic A authorization unchanged; first-time guide before hose, cancel and continue');
+ const box=await pump.locator('#supplyBtn').boundingBox();await pump.mouse.move(box.x+box.width/2,box.y+box.height/2);await pump.mouse.down();
+ await pump.waitForFunction(()=>parseFloat(document.getElementById('quantity').textContent.replace(',','.'))>.3);await pump.mouse.up();await pump.locator('#finishVisibleBtn').click();
+ await app.getByRole('button',{name:'Ver y descargar factura',exact:true}).waitFor();assert.match(await pump.locator('#stateBadge').innerText(),/Finalizado/);
+ const receipt=await app.evaluate(()=>JSON.parse(localStorage.getItem('gasgo_demo')).history.filter(x=>x.id?.startsWith('GG2-')).at(-1));assert.ok(receipt.amount>0&&receipt.liters>0);
+ assert.equal(await app.locator('#ggCompletionCard').isVisible(),true);
+ await app.screenshot({path:'/workspace/gasgo-dev/iteration-v2-completed.png'});
+ await app.getByRole('button',{name:'Ver y descargar factura',exact:true}).click();assert.equal((await app.locator('.gg-inv-ref').innerText()).trim(),receipt.invoiceNumber);
+ await app.waitForTimeout(3100);assert.equal(await app.locator('#ggCompletionCard').count(),0);assert.equal(await app.locator('.gg-invoice-preview').isVisible(),true);
+ const download=app.waitForEvent('download');await app.getByRole('button',{name:/Descargar factura PDF/}).click();const file=await download;const pdf=fs.readFileSync(await file.path());assert.equal(pdf.subarray(0,5).toString(),'%PDF-');
+ await app.getByRole('button',{name:'Cerrar',exact:true}).click();await app.locator('.footnav .home').click();await app.locator('#menugrid').getByRole('button',{name:/Historial/}).click();
+ const index=await app.evaluate(id=>JSON.parse(localStorage.getItem('gasgo_demo')).history.findIndex(x=>x.id===id),receipt.id);await app.locator(`button[onclick="viewReceipt('idx-${index}')"]`).click();assert.equal((await app.locator('.gg-inv-ref').innerText()).trim(),receipt.invoiceNumber);
+ await app.locator('#overlay .gg-back').click();await app.locator('#content > .gg-back').click();
+ console.log('PASS actual refuel, 3-second completion without closing invoice, direct PDF download and same invoice through History');
+ await app.locator('#ggAppMore > summary').click();assert.equal(await app.getByRole('button',{name:'Configuración',exact:true}).isVisible(),true);assert.equal(await app.getByRole('button',{name:'Comunicar una incidencia',exact:true}).isVisible(),true);
+ await app.getByRole('button',{name:'Configuración',exact:true}).click();assert.equal(await app.locator('#content > .gg-back').isVisible(),true);assert.equal(await app.locator('#ggAppMore').getAttribute('open'),null);await app.locator('#content > .gg-back').click();
+ console.log('PASS secondary header actions remain available and back restores Home');
+ assert.equal(await app.locator('#ggCompletionCard').count(),0);await app.locator('.gg-demo-map-marker').click();await app.getByRole('button',{name:/Abrir surtidor demo/}).click();
+ await pump.locator('#welcomeModal').waitFor({state:'visible',timeout:20000});await pump.locator('#welcomeClose').click();await pump.locator('#supplyBtn').click();assert.equal(await pump.locator('#ggFirstRefuelGuide').count(),0);assert.match(await pump.locator('#supplyBtn').innerText(),/Presiona/);
+ await pump.locator('#advancedMenu > summary').click();await pump.getByRole('button',{name:'Ver guía de repostaje',exact:true}).click();assert.equal(await pump.locator('#ggFirstRefuelGuide').isVisible(),true);await pump.getByRole('button',{name:'Entendido',exact:true}).click();
+ const secondBox=await pump.locator('#supplyBtn').boundingBox();await pump.locator('#advancedMenu > summary').click();await pump.mouse.move(secondBox.x+secondBox.width/2,secondBox.y+secondBox.height/2);await pump.mouse.down();await pump.waitForFunction(()=>parseFloat(document.getElementById('quantity').textContent.replace(',','.'))>.3);await pump.mouse.up();await pump.locator('#finishVisibleBtn').click();
+ await app.getByRole('button',{name:'Ver y descargar factura',exact:true}).waitFor();await app.waitForTimeout(3100);assert.equal(await app.locator('#ggCompletionCard').count(),0);
+ console.log('PASS completion also expires after 3 seconds without user interaction');
+ assert.deepEqual(errors,[]);console.log('PASS guide remembered for later visits and available again in More options; no browser exceptions');
+ }finally{await b.close();await new Promise(r=>server.close(r))}
+})().catch(e=>{console.error(e);process.exit(1)});
