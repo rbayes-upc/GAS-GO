@@ -26,8 +26,10 @@ const skip='script,style,svg,input,textarea,select,option,pre,code,.status,.gg-i
 let refreshing=false;
 const observer=new MutationObserver(()=>refresh());
 function isFull(){return typeof inPresentationDemo==='function'&&!inPresentationDemo()}
-function icon(symbol,original){
- const [name,label]=choices[symbol];const source=data[name];
+function icon(symbol,original,context){
+ const [defaultName,label]=choices[symbol];
+ const name=symbol==='⚡'&&context?.closest('.geo-pin.ev')?'bolt':defaultName;
+ const source=data[name];
  if(!source)return document.createTextNode(original);
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
  svg.setAttribute('viewBox',source.viewBox);svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
@@ -56,7 +58,7 @@ function replaceText(){
    }
   }
   const fragment=document.createDocumentFragment();let cursor=0;
-  for(const match of matches){if(match.index>cursor)fragment.append(document.createTextNode(text.slice(cursor,match.index)));fragment.append(icon(match[1],match[0]));cursor=match.index+match[0].length}
+  for(const match of matches){if(match.index>cursor)fragment.append(document.createTextNode(text.slice(cursor,match.index)));fragment.append(icon(match[1],match[0],node.parentElement));cursor=match.index+match[0].length}
   if(cursor<text.length)fragment.append(document.createTextNode(text.slice(cursor)));node.replaceWith(fragment);
  }
 }

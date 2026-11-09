@@ -6,3 +6,4 @@
 .gg-full-icons .footnav .house .gg-google-icon{width:23px;height:23px}
 .gg-full-icons .geo-pin .gg-google-icon{width:22px;height:22px;vertical-align:middle}
 .gg-full-icons .gg-vehicle-choice .gg-choice-icon .gg-google-icon{width:30px;height:30px}
+.gg-full-icons .geo-pin.ev,.gg-full-icons .geo-pin.mixed,.gg-full-icons .gg-map-cluster-charging{background:var(--gg-accent,#FFDF2E);color:#14392C}

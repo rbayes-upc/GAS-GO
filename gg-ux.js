@@ -91,16 +91,32 @@ function drawStations(map,layer){
   for(const group of cells.values()){
    const s=group[0],cluster=group.length>1;
    const position=cluster?[group.reduce((n,x)=>n+x.lat,0)/group.length,group.reduce((n,x)=>n+x.lng,0)/group.length]:[s.lat,s.lng];
-   const ev=energyMode()==='charge'||!compatibleFuel(s);
-   const icon=L.divIcon({className:'',html:cluster?`<button class="gg-map-cluster" aria-label="Ver ${group.length} estaciones">${group.length}</button>`:`<div class="geo-pin ${ev?'ev':''}" aria-label="${esc(s.name)}">${ev?'⚡':'⛽'}</div>`,iconSize:[34,34],iconAnchor:[17,17]});
-   L.marker(position,{icon}).addTo(layer).on('click',()=>{
+   const mixed=s.ev>0&&(Number(s.gas)>0||Number(s.diesel)>0),ev=s.ev>0&&!mixed;
+   const hasCharging=group.some(station=>station.ev>0);
+   const icon=L.divIcon({className:'',html:cluster?`<button class="gg-map-cluster ${hasCharging?'gg-map-cluster-charging':''}" aria-label="Ver ${group.length} estaciones${hasCharging?', con recarga eléctrica':''}">${group.length}</button>`:`<div class="geo-pin ${ev?'ev':mixed?'mixed':''}" aria-label="${esc(s.name)}">${ev?'⚡':'⛽'}</div>`,iconSize:[34,34],iconAnchor:[17,17]});
+   const marker=L.marker(position,{icon,autoPanOnFocus:false}).addTo(layer);
+   marker.getElement()?.addEventListener('mousedown',event=>{
+    // Leaflet restaura el scroll de la ventana, pero el mapa vive en un panel
+    // con scroll propio. Enfocar sin desplazar evita perder el clic del marcador.
+    event.stopPropagation();event.currentTarget.focus({preventScroll:true});
+   });
+   marker.getElement()?.addEventListener('focus',event=>{
+    if(event.currentTarget.matches(':focus-visible'))map.panInside(position,{padding:[20,20]});
+   });
+   marker.getElement()?.addEventListener('keydown',event=>{
+    if(event.target!==event.currentTarget||!['Enter',' '].includes(event.key))return;
+    event.preventDefault();event.stopPropagation();marker.fire('click');
+   });
+   marker.on('click',()=>{
     if(!cluster){selectStation(s.id);return}
     if(map.getZoom()<18){map.setView(position,map.getZoom()+2);return}
     modal(`<h2>Estaciones en esta ubicación</h2>${group.map(x=>`<button class="btn block" onclick="closeModal();ggUX.selectStation(${x.id})">${esc(x.name)}</button>`).join('')}`);
    });
   }
  };
- draw();map.on('zoomend moveend',draw);
+ // La cuadrícula depende del zoom, no del centro: no reemplazar un marcador
+ // durante el enfoque/paneo que puede producirse entre pulsar y soltar el ratón.
+ draw();map.on('zoomend',draw);
 }
 function setupMoreMenu(){
  const header=document.querySelector('.top-actions');if(!header||$('ggAppMore'))return;
