@@ -10,4 +10,8 @@ La salida congela la cesta, genera un pago ficticio y envía el recibo al client
 
 Recargar durante un pago interrumpe la simulación y permite reintentar sin producir un recibo duplicado. Los recibos completados se conservan y se sincronizan al reconectar la app. Para producción serán necesarios acreditación real y consentimiento, vinculación segura de persona y productos, sensores y correlación espacio-temporal, backend de cobro con idempotencia, cumplimiento de privacidad, recibos fiscales y gestión de excepciones.
 
-Verificación: `node tests/take-go-engine.cjs`; `node tests/take-go.cjs` (requiere Playwright y Chromium).
+En **Perfil → Método de pago** están Visa, Mastercard, PayPal y Bizum con el mismo formato de GAS&GO adaptado a la paleta marrón. El método predeterminado se guarda y se aplica al iniciar la siguiente visita; el método de una visita abierta permanece fijo.
+
+En **Perfil → Límites de compra** se pueden establecer topes opcionales diarios, semanales (lunes a domingo) y mensuales, en periodos naturales de Europe/Madrid. Vacío significa sin límite; 0 € bloquea compras. Se acumulan únicamente compras completadas, con cualquier método, en este navegador. Se comparte el registro entre las tiendas virtuales mediante `takego_spending_v1` y se serializa la comprobación final/pago con Web Locks. Se vuelve a comprobar justo antes del pago, incluso si se cambian los límites durante la visita. Igualar el tope está permitido; superarlo no genera pago ni recibo. Los cambios de navegador o dispositivo no comparten límites sin un backend.
+
+Verificación: `node tests/take-go-engine.cjs`; `node tests/take-go-spending.cjs`; `node tests/take-go.cjs` (requiere Playwright y Chromium).

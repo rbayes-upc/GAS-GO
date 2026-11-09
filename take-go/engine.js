@@ -8,20 +8,22 @@ const PRODUCTS=[
  {id:'croissant',name:'Croissant de mantequilla',detail:'Un pequeño capricho · 65 g',category:'Para picar',cents:150,kind:'pastry',color:'#d6a56b'},
  {id:'juice',name:'Zumo de naranja',detail:'Una dosis de sol · 250 ml',category:'Bebidas',cents:220,kind:'carton',color:'#dcad73'}
 ];
-const CARDS=['Visa •••• 4821','Mastercard •••• 1056'];
-const allowedProfile=p=>p&&p.id==='TG-DEMO-ALEX'&&CARDS.includes(p.payment);
+const CARDS=['Visa •••• 4821','Mastercard •••• 1056','PayPal (demo)','Bizum (demo)'];
+const Spending=typeof module==='object'&&module.exports?require('./spending.js'):window.TakeGoSpending;
+const allowedProfile=p=>p&&p.id==='TG-DEMO-ALEX'&&CARDS.includes(p.payment)&&(p.limits===undefined||Spending.valid(p.limits));
 const copy=value=>JSON.parse(JSON.stringify(value));
 class Store{
  constructor(saved=null,options={}){
   this.clock=options.clock||(()=>Date.now());this.id=options.id||(()=>crypto.randomUUID());
   this.state=saved?.version===1?copy(saved):{version:1,storeId:this.id(),phase:'ready',visitId:null,profile:null,pendingProfile:null,method:'A',code:null,units:PRODUCTS.flatMap((p,i)=>Array.from({length:3},(_,n)=>({id:p.id+'-'+(n+1),sku:p.id,visionKey:'VIS-'+String(i*3+n+1).padStart(3,'0'),rfidKey:'EPC-TG-'+p.id.toUpperCase()+'-'+String(n+1).padStart(3,'0'),vision:{location:'shelf',sequence:0},rfid:{location:'shelf',sequence:0}}))),seen:[],events:[],receipt:null,receipts:[],checkout:null,sequence:0,note:'',entryAt:null,authorizedAt:null,paymentAttempts:0};
+  this.state.limits=Spending.normalize(this.state.limits);
   this.state.receipts=Array.isArray(this.state.receipts)?this.state.receipts:[];
   if(this.state.receipt&&!this.state.receipts.some(r=>r.id===this.state.receipt.id))this.state.receipts.push(copy(this.state.receipt));
   if(this.state.phase==='identifying'){this.state.phase='ready';this.state.note='La acreditación de prueba se interrumpió. Puedes volver a entrar.';this.event('recovery','Acreditación interrumpida; puedes volver a entrar')}
   if(['exiting','paying'].includes(this.state.phase)){this.state.phase=this.state.checkout?'payment_failed':'shopping';this.state.note='La comprobación se interrumpió. No se ha registrado un pago; puedes reintentar.';this.event('recovery','Comprobación interrumpida; no se registra ningún pago')}
  }
  event(type,message,extra={}){this.state.events.push({id:this.id(),type,message,at:this.clock(),...extra});this.state.events=this.state.events.slice(-60);this.state.sequence++}
- profile(p){if(!allowedProfile(p))return false;this.state.pendingProfile={id:p.id,name:'Alex García',payment:p.payment};if(this.state.phase==='ready')this.state.profile=copy(this.state.pendingProfile);this.event('profile','Perfil de demostración disponible');return true}
+ profile(p){if(!allowedProfile(p))return false;this.state.pendingProfile={id:p.id,name:'Alex García',payment:p.payment,limits:Spending.normalize(p.limits)};this.state.limits=Spending.normalize(p.limits);if(this.state.phase==='ready')this.state.profile=copy(this.state.pendingProfile);this.event('profile','Perfil de demostración disponible');return true}
  start(method='A'){
   if(this.state.phase!=='ready'||!allowedProfile(this.state.pendingProfile||this.state.profile)||!['A','B','C'].includes(method))return false;
   this.state.profile=copy(this.state.pendingProfile||this.state.profile);this.state.visitId=this.id();this.state.method=method;this.state.code=String(parseInt(this.id().replace(/[^a-f0-9]/gi,'').slice(-6)||'1',16)%1000000).padStart(6,'0');this.state.phase=method==='A'?'identifying':method==='B'?'confirmation':'code';this.state.entryAt=this.clock();this.state.note='';this.state.receipt=null;this.state.checkout=null;this.state.paymentAttempts=0;this.event('entry','Presencia de una persona simulada en el acceso · método '+method);return true;
@@ -48,18 +50,23 @@ class Store{
   if(visit!==this.state.visitId||this.state.phase!=='exiting')return false;const basket=this.basket();
   if(basket.pending.length){this.state.phase='reviewing';this.state.note='Hay lecturas pendientes. No se inicia ningún pago.';this.event('review','Las lecturas de cámara y RFID todavía no coinciden');return false}
   if(!basket.quantity){this.state.phase='left_empty';this.state.note='Has salido sin productos. No hay ningún cobro.';this.event('empty_exit','Salida sin compra; no se genera recibo');return true}
+  if(!this.checkLimit(basket.totalCents))return false;
   this.state.checkout={id:this.id(),visitId:visit,rows:basket.rows.map(({id,name,cents,quantity})=>({sku:id,name,cents,quantity})),totalCents:basket.totalCents,profile:copy(this.state.profile)};this.state.phase='paying';this.state.paymentAttempts++;this.event('payment_started','Pago de demostración iniciado');return true;
  }
  payment(visit,success=true){
   if(visit!==this.state.visitId||this.state.phase!=='paying'||!this.state.checkout)return false;
+  if(!this.checkLimit(this.state.checkout.totalCents))return false;
   if(!success){this.state.phase='payment_failed';this.state.note='El pago de prueba no se ha completado. No hay cobro ni recibo.';this.event('payment_failed','Pago simulado rechazado');return false}
-  const c=this.state.checkout;this.state.receipt={id:'TG-'+c.id,visitId:visit,store:'TAKE&GO · Estación Diagonal',customer:c.profile.name,payment:c.profile.payment,method:this.state.method,rows:copy(c.rows),totalCents:c.totalCents,paidAt:this.clock(),entryAt:this.state.entryAt,simulated:true};if(!this.state.receipts.some(r=>r.id===this.state.receipt.id))this.state.receipts.push(copy(this.state.receipt));this.state.receipts=this.state.receipts.slice(-50);this.state.phase='complete';this.state.note='Compra de demostración completada. Tu recibo ya está disponible.';this.event('payment_completed','Pago simulado completado · recibo '+this.state.receipt.id);return copy(this.state.receipt);
+  const c=this.state.checkout;this.state.receipt={id:'TG-'+c.id,visitId:visit,store:'TAKE&GO · Estación Diagonal',customer:c.profile.name,payment:c.profile.payment,method:this.state.method,rows:copy(c.rows),totalCents:c.totalCents,paidAt:this.clock(),entryAt:this.state.entryAt,simulated:true};if(!this.state.receipts.some(r=>r.id===this.state.receipt.id))this.state.receipts.push(copy(this.state.receipt));this.state.phase='complete';this.state.note='Compra de demostración completada. Tu recibo ya está disponible.';this.event('payment_completed','Pago simulado completado · recibo '+this.state.receipt.id);return copy(this.state.receipt);
  }
  retryPayment(){if(this.state.phase!=='payment_failed'||!this.state.checkout)return false;this.state.phase='paying';this.state.paymentAttempts++;this.state.note='Reintentando el mismo pago de demostración…';this.event('payment_retry','Reintento del mismo pago simulado');return true}
- reviseBasket(){if(this.state.phase!=='payment_failed')return false;this.state.phase='shopping';this.state.checkout=null;this.state.note='Sin pago registrado. Puedes revisar y devolver productos.';this.event('basket_reopened','Cesta reabierta tras un pago de prueba no completado');return true}
+ reviseBasket(){if(!['payment_failed','limit_exceeded'].includes(this.state.phase))return false;this.state.phase='shopping';this.state.checkout=null;this.state.note='Sin pago registrado. Puedes revisar y devolver productos.';this.event('basket_reopened','Cesta reabierta tras un pago de prueba no completado');return true}
  newVisit(){if(!['complete','left_empty'].includes(this.state.phase))return false;for(const u of this.state.units){u.vision={location:'shelf',sequence:0};u.rfid={location:'shelf',sequence:0}}this.state.phase='ready';this.state.profile=copy(this.state.pendingProfile||this.state.profile);this.state.visitId=null;this.state.code=null;this.state.checkout=null;this.state.receipt=null;this.state.seen=[];this.state.note='';this.event('new_visit','Preparada una nueva visita de demostración');return true}
+ spending(amount=0){return Spending.report(this.state.receipts,this.state.limits,this.clock(),amount)}
+ checkLimit(amount){const exceeded=this.spending(amount).filter(p=>p.exceeded);if(!exceeded.length)return true;this.state.phase='limit_exceeded';this.state.checkout=null;this.state.note='Compra sin cobrar: supera el límite '+exceeded.map(p=>({daily:'diario',weekly:'semanal',monthly:'mensual'}[p.key])).join(', ')+'. Devuelve productos o ajusta tus límites en Perfil.';this.event('limit_exceeded',this.state.note);return false}
+ mergeReceipts(rows){for(const r of rows||[])if(r&&r.simulated===true&&typeof r.id==='string'&&Number.isSafeInteger(r.totalCents)&&r.totalCents>0&&Number.isFinite(r.paidAt)&&!this.state.receipts.some(x=>x.id===r.id))this.state.receipts.push(copy(r))}
  snapshot(){return copy(this.state)}
- publicState(){const s=this.state;return {version:1,storeId:s.storeId,sequence:s.sequence,phase:s.phase,visitId:s.visitId,method:s.method,profile:s.profile?copy(s.profile):null,note:s.note,entryAt:s.entryAt,authorizedAt:s.authorizedAt,basket:this.basket(),receipt:s.receipt?copy(s.receipt):null,receipts:copy(s.receipts),events:s.events.map(({sensorKey,...e})=>e),checkoutTotal:s.checkout?.totalCents??null,paymentAttempts:s.paymentAttempts}}
+ publicState(){const s=this.state;return {version:1,storeId:s.storeId,sequence:s.sequence,phase:s.phase,visitId:s.visitId,method:s.method,profile:s.profile?copy(s.profile):null,note:s.note,entryAt:s.entryAt,authorizedAt:s.authorizedAt,basket:this.basket(),receipt:s.receipt?copy(s.receipt):null,receipts:copy(s.receipts),events:s.events.map(({sensorKey,...e})=>e),checkoutTotal:s.checkout?.totalCents??null,paymentAttempts:s.paymentAttempts,spending:this.spending(this.basket().totalCents)}}
 }
 return {PRODUCTS,CARDS,Store};
 });
