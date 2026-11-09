@@ -66,3 +66,13 @@ La consulta real de matrículas requiere configurar `APIVEHICULO_KEY` de forma s
 - FULL incorpora controles de al menos 44 px de alto, foco visible, navegación de acciones con teclado, foco contenido en los diálogos y cierre con Escape, campos de 16 px y ajustes para pantallas pequeñas y movimiento reducido.
 
 Validación: `node tests/full-polish.cjs`, `node tests/pairing-recovery.cjs` y `node tests/refuel-iteration.cjs`. La primera prueba cubre persistencia, favoritos, filtros de historial, PDF, reintento de ubicación y teclado/tamaños de pantalla. La segunda usa conexiones simuladas; la tercera ejecuta el repostaje DEMO con el surtidor local y su factura real de prueba.
+
+## Buscar lugares y comparar estaciones (FULL)
+
+La lupa busca estaciones del mapa y permite consultar direcciones o poblaciones de España. La consulta de lugares usa Nominatim/OpenStreetMap únicamente al enviar el formulario: no hay peticiones mientras se escribe. Se muestran hasta cinco coincidencias, se cachean temporalmente durante la sesión y las peticiones tienen un límite de espera de diez segundos. No requiere claves. Si el servicio falla, el formulario permite volver a buscar.
+
+Al elegir un lugar se centra el mapa y se consultan estaciones en esa zona, manteniendo la posición GPS del usuario. Las distancias corresponden al centro de la zona explorada, en línea recta. La ficha «Explorando» permite regresar a la zona anterior y reintentar una carga fallida. Las estaciones ficticias de otra ciudad no se presentan como resultados de la búsqueda; los cargadores del censo integrado pueden seguir disponibles si falla la API de carburantes.
+
+«Comparar», disponible tanto en el mapa como en la lista, muestra precio y distancia de los servicios compatibles con el vehículo y los filtros actuales. Permite ordenar por menor precio o cercanía y consultar más resultados. Para híbridos en «Ver ambas», cada servicio tiene su propia tabla: nunca se ordenan conjuntamente €/L y €/kWh. Pulsar una estación abre su ficha sin iniciar el suministro. DEMO conserva su búsqueda y controles anteriores.
+
+Validación: `node tests/explore-compare.cjs`. Usa respuestas HTTP controladas para geocodificación y estaciones, el cargador real de datos y Leaflet. Cubre elección de zona, ubicación GPS tardía, caché, errores, cancelación, tiempos de espera, los cuatro tipos de vehículo, filtros, unidades, orden, paginación y presentación móvil. La disponibilidad real y CORS del servicio público de geocodificación deben verificarse desde el sitio publicado; la política de red del entorno de desarrollo bloquea Nominatim.

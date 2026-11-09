@@ -1,0 +1,14 @@
+.gg-full-icons .gg-place-result{display:block;width:100%;padding:12px;margin:8px 0;border:1px solid #c4d9ce;border-radius:12px;background:#f6faf7;color:#123e31;text-align:left;overflow-wrap:anywhere}
+.gg-place-result strong,.gg-place-result small{display:block}.gg-place-result small{margin-top:5px;color:#4b655a;line-height:1.5}
+#ggPlaceForm .btn{margin-top:12px}#ggLocalResults h3{font-size:15px;margin:20px 0 8px}#ggPlaceStatus{color:#124f3e;font-size:14px;line-height:1.5;margin:12px 0}
+.gg-geocoder-credit a{color:#145b47}.gg-full-icons .gg-compare-open{font:inherit;font-weight:700;border:0;border-radius:12px;background:#fff;color:#124f3e;padding:10px 12px;box-shadow:0 3px 10px #0002}
+.gg-search-area{flex-shrink:0;display:flex;align-items:center;gap:8px;margin:5px 12px;padding:8px 10px;border:1px solid #c9dfd2;border-radius:12px;background:#f5faf7;color:#123e31;font-size:13px}
+.gg-search-area>div{flex:1;min-width:0}.gg-search-area strong,.gg-search-area small{display:block;overflow-wrap:anywhere}.gg-search-area small{font-size:12px;margin-top:4px;line-height:1.4;color:#4b655a}
+.gg-full-icons .gg-leave-area{flex-shrink:0;width:44px;padding:8px;border:0;border-radius:10px;background:transparent;color:#123e31;font-size:24px}
+.gg-compare-services{border:0;margin:12px 0;padding:0;display:flex;gap:8px}.gg-compare-services legend{font-size:14px;margin-bottom:8px}.gg-compare-services .btn[aria-pressed=true]{background:#07513f;color:white}
+.gg-compare-table{table-layout:fixed;width:100%;border-collapse:collapse;color:#123e31;font-size:13px;margin:14px 0}.gg-compare-table caption{text-align:left;font-weight:700;margin:0 0 10px;font-size:14px}
+.gg-compare-table th,.gg-compare-table td{padding:10px 5px;text-align:left;vertical-align:top;border-bottom:1px solid #d5e5db;overflow-wrap:anywhere}.gg-compare-table thead{background:#edf6f0}.gg-compare-table th:first-child{width:47%}.gg-compare-table th:nth-child(2){width:28%}.gg-compare-table th:nth-child(3){width:25%}
+.gg-compare-table tbody th button{display:block;width:100%;text-align:left;border:0;padding:0 2px;background:transparent;color:#07513f;font:inherit;font-weight:750;text-decoration:underline;text-underline-offset:3px}
+.gg-compare-table small{display:block;color:#4b655a;font-size:11px;font-weight:400;margin:4px 0}.gg-compare-badge{display:inline-block;padding:3px 5px;border-radius:5px;margin:3px 3px 0 0;background:#fff1a8;color:#514000;font-size:11px;font-weight:650}
+@media(max-width:360px){.gg-search-area{margin-inline:0}.gg-compare-table th,.gg-compare-table td{padding:8px 3px}.gg-compare-table{font-size:12px}.gg-compare-table th:first-child{width:44%}}
+.gg-full-icons #ggPlaceQuery{display:block;width:100%;padding:12px;border:1px solid #b7cfc1;border-radius:12px;background:#fff;color:#123e31;font:inherit;font-size:16px}

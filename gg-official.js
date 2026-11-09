@@ -208,7 +208,7 @@ window.home=function(){if(stationView==='list')return stationList();return `<div
 // Recargar resultados al desplazar significativamente el mapa. Esperar para evitar consultas continuas.
 const OLD_UPDATE=window.updateRealMap;
 let panTimer=null;
-window.updateRealMap=function(){OLD_UPDATE();if(!geoMap)return;
+window.updateRealMap=function(){clearTimeout(panTimer);OLD_UPDATE();if(!geoMap)return;
  geoMap.on('moveend',()=>{if(page!=='Home'||stationView!=='map')return;const c=geoMap.getCenter();if(!c||!Number.isFinite(c.lat)||!Number.isFinite(c.lng))return;
  if(haversine(mapCenter.lat,mapCenter.lng,c.lat,c.lng)<4)return;
  clearTimeout(panTimer);panTimer=setTimeout(()=>{mapCenter={lat:c.lat,lng:c.lng};officialLoad(mapCenter)},1200);

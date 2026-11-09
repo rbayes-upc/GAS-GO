@@ -113,6 +113,12 @@ function compatibleCharge(s,vehicleOnly=false){
  if(chargeConnectorFilter&&!published.includes(chargeConnectorFilter))return false;
  return !minimumChargePower||chargePower(s)>=minimumChargePower;
 }
+function stationServices(s){
+ const mode=energyMode(),services=[];
+ if(mode!=='charge'&&compatibleFuel(s))services.push({type:'fuel',label:combustion(),price:Number(combustion()==='Diésel'?s.diesel:s.gas),unit:'€/L',source:s.officialSource?'Precio publicado':'Precio simulado',free:s.free});
+ if(mode!=='fuel'&&compatibleCharge(s))services.push({type:'charge',label:'Recarga eléctrica',price:Number(s.ev),unit:'€/kWh',source:'Tarifa simulada',free:s.evFree});
+ return services.filter(v=>(!onlyAvailable||v.free>0)&&(mode==='both'||!maxPrice||v.price<=maxPrice)&& (filterFuel==='Todos'||filterFuel===(v.type==='charge'?'Eléctrico':combustion())));
+}
 function chargePower(s){return Math.max(Number(s.evPowerPublished)||0,Number(s.kw)||0,...(s.evPowerLevels||[]).map(level=>Number(level[0])||0))}
 const compatibleFuel=s=>Number(combustion()==='Diésel'?s.diesel:s.gas)>0;
 function setEnergy(mode){
@@ -353,9 +359,11 @@ window.locateUser=function(){
  if(inPresentationDemo()){geoStatus='Ubicación simulada: estás en la estación de demostración.';render();toast(geoStatus);return}
  if(locationPending)return;
  if(!navigator.geolocation){locationError=true;geoStatus='Tu navegador no permite obtener la ubicación. Puedes seguir explorando el mapa.';render();return}
+ const centerRevision=window.ggExplore?.locationRevision?.();
  locationError=false;locationPending=true;geoStatus='Buscando tu ubicación…';if(page==='Home')render();
  navigator.geolocation.getCurrentPosition(position=>{
-  locationPending=false;userPosition={lat:position.coords.latitude,lng:position.coords.longitude};mapCenter={...userPosition};geoStatus='Tu ubicación está marcada en azul.';
+  locationPending=false;if(inPresentationDemo())return;
+  userPosition={lat:position.coords.latitude,lng:position.coords.longitude};if(centerRevision===window.ggExplore?.locationRevision?.())mapCenter={...userPosition};geoStatus='Tu ubicación está marcada en azul.';
   if(page==='Home')render();loadRealStations(mapCenter);
  },error=>{
   locationPending=false;locationError=true;userPosition=null;
@@ -406,7 +414,7 @@ window.completeRegistration=function(){
  if(regDraft.fuel===HYBRID&&!connectors.includes(regDraft.connector)){toast('Selecciona el conector de tu híbrido enchufable');regStep=2;render();return}
  originalRegistration();syncEnergy();
 };
-window.ggUX={openFavorite,chooseVehicle,pickVehicle,back,energyFields,toggleEnergyFields,setEnergy,energyMode,selectStation,openStation,drawStations};
+window.ggUX={stationServices,openFavorite,chooseVehicle,pickVehicle,back,energyFields,toggleEnergyFields,setEnergy,energyMode,selectStation,openStation,drawStations};
 document.addEventListener('click',event=>{
  if(page!=='Home'||!menu||!event.target.closest?.('.mapframe'))return;
  // Capturar el toque antes de Leaflet: cerrar el menú sin seleccionar una estación.
