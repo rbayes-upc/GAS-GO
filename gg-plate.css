@@ -37,3 +37,11 @@
 .gg-ocr-trace{border:1px solid #dce7df;border-radius:10px;padding:9px;margin:12px 0;overflow-wrap:anywhere}
 .gg-ocr-trace summary{font-size:12px;color:#235543;font-weight:700;cursor:pointer}
 .gg-ocr-trace p{margin:9px 0 0;white-space:pre-wrap}
+
+/* Una ficha uniforme por vehículo, con el activo integrado en la misma lista. */
+.gg-garage-vehicle .gg-garage-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.gg-garage-vehicle h2{font-size:16px;line-height:1.4;margin:0 0 5px;overflow-wrap:anywhere}
+.gg-garage-vehicle p{line-height:1.5;margin:3px 0}.gg-garage-vehicle .gg-plate-item-info{min-width:0;flex:1}
+.gg-garage-vehicle .gg-garage-heading>.btn,.gg-garage-active{flex-shrink:0}.gg-garage-active{margin-top:2px}
+.gg-garage-actions{display:flex;gap:8px;margin-top:12px}.gg-garage-actions>.btn{flex:1;margin:0;font-size:13px;padding:10px 12px}
+.gg-garage-vehicle .gg-plate-remove{margin-top:6px}.gg-garage-vehicle.gg-vehicle-current{background:#f4fbf6;border-color:#93bfa8}
