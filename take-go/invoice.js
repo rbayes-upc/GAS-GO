@@ -4,12 +4,12 @@ const G='#523729',G2='#6b4935',Y='#ffda2f',INK='#3c281e',MUTED='#8b7768',BORDER=
 const euro=n=>TakeGoUI.money(Math.round(Number(n||0)*100)),esc=s=>TakeGoUI.esc(s);
 function fields(r){return {number:r.id,date:TakeGoUI.date(r.paidAt),station:r.store,quantity:r.rows.reduce((n,p)=>n+p.quantity,0),issuer:'TAKE&GO TIENDAS DEMO',issuerNif:'No registrado · demo',issuerAddress:'Estación Diagonal · Barcelona',customer:r.customer,customerNif:'No registrado',customerAddress:'No registrada',payment:r.payment,paymentStatus:'Pago ficticio aprobado (automático)'}}
 function preview(r){const d=fields(r);return `<div class="tg-invoice-preview" aria-label="Vista previa de la factura TAKE&GO">
-<div class="tg-inv-top"><div class="tg-inv-logo">TAKE<span>&amp;</span>GO</div><div class="tg-inv-top-right"><span class="tg-inv-tag">FACTURA</span><div class="tg-inv-ref">${esc(d.number)}</div><div class="tg-inv-date">${esc(d.date)}</div></div></div>
+<div class="tg-inv-top">${TakeGoUI.logo('full','tg-inv-logo')}<div class="tg-inv-top-right"><span class="tg-inv-tag">FACTURA</span><div class="tg-inv-ref">${esc(d.number)}</div><div class="tg-inv-date">${esc(d.date)}</div></div></div>
 <div class="tg-inv-content"><div class="tg-inv-section">RESUMEN DE LA COMPRA</div><div class="tg-inv-grid3">${[['ESTACIÓN',d.station],['PRODUCTOS',d.quantity+(d.quantity===1?' unidad':' unidades')],['ACREDITACIÓN','Método '+r.method]].map(([k,v])=>`<div class="tg-inv-box"><span class="tg-inv-caption">${k}</span><span class="tg-inv-value">${esc(v)}</span></div>`).join('')}</div>
 <div class="tg-inv-section">DATOS DE FACTURACIÓN</div><div class="tg-inv-grid2">${[['EMISOR',d.issuer,'CIF: '+d.issuerNif,d.issuerAddress],['CLIENTE',d.customer,'DNI/NIF: '+d.customerNif,d.customerAddress]].map(([k,n,id,a])=>`<div class="tg-inv-billing"><span class="tg-inv-dash"></span><div class="tg-inv-caption">${k}</div><strong>${esc(n)}</strong><p>${esc(id)}<br>${esc(a)}</p></div>`).join('')}</div>
 <div class="tg-inv-section">DETALLE</div><div class="tg-inv-detail"><div class="tg-inv-detail-head"><span>CONCEPTO</span><span>IMPORTE</span></div>${r.rows.map(p=>`<div class="tg-inv-detail-row"><div><strong>${esc(p.name)}</strong><small>${p.quantity} ud. × ${TakeGoUI.money(p.cents)}</small></div><strong>${TakeGoUI.money(p.cents*p.quantity)}</strong></div>`).join('')}</div>
 <div class="tg-inv-grid2"><div class="tg-inv-paycard"><div class="tg-inv-caption">PAGO</div><strong>${esc(d.payment)}</strong><p>${esc(d.paymentStatus)}</p><span class="tg-inv-paid">OPERACIÓN SIMULADA</span></div><div class="tg-inv-totalcard"><div class="tg-inv-caption" style="color:#eedfcb">RESUMEN</div><div><span>Importe productos</span><strong>${TakeGoUI.money(r.totalCents)}</strong></div><div><span>Impuestos</span><strong>Incluidos</strong></div><div class="tg-inv-final"><span>TOTAL</span><strong>${TakeGoUI.money(r.totalCents)}</strong></div></div></div></div>
-<div class="tg-inv-bottom"><div><strong>DOCUMENTO FICTICIO · SIN VALIDEZ FISCAL</strong><p>Datos del emisor y operaciones exclusivamente de demostración.<br>Importes con impuestos incluidos. No acredita compra ni pago real.</p></div><span class="tg-inv-footer-logo">T&amp;G</span></div></div>`}
+<div class="tg-inv-bottom"><div><strong>DOCUMENTO FICTICIO · SIN VALIDEZ FISCAL</strong><p>Datos del emisor y operaciones exclusivamente de demostración.<br>Importes con impuestos incluidos. No acredita compra ni pago real.</p></div>${TakeGoUI.logo('compact','tg-inv-footer-logo')}</div></div>`}
 function roundRect(ctx,x,y,w,h,r,fill,stroke){
  ctx.beginPath();ctx.roundRect(x,y,w,h,Math.max(0,Math.min(r,w/2,h/2)));
  if(fill){ctx.fillStyle=fill;ctx.fill()} if(stroke){ctx.lineWidth=.85;ctx.strokeStyle=stroke;ctx.stroke()}
@@ -30,13 +30,14 @@ function multiline(ctx,s,x,y,width,size=9,color=MUTED,weight=false,lineH=13,maxL
  return result.length;
 }
 function drawCard(ctx,x,y,w,h){roundRect(ctx,x,y,w,h,11,SOFT,BORDER)}
-function drawInvoice(ctx,r){
+function drawInvoice(ctx,r,logos){
  const W=595,d=fields(r),q={total:r.totalCents/100};
  ctx.fillStyle='#fff';ctx.fillRect(0,0,595,842);
  // Brown header, adapted corporate colors with top yellow line.
  const bg=ctx.createLinearGradient(0,0,595,145);bg.addColorStop(0,G);bg.addColorStop(1,G2);
  ctx.fillStyle=bg;ctx.fillRect(0,0,W,147);ctx.fillStyle=Y;ctx.fillRect(0,0,W,6);
- text(ctx,'TAKE&GO',39,86,34,Y,true);
+ if(!logos?.full||!logos?.compact)throw new Error('Los logotipos de la factura no se han cargado. Reintenta la descarga.');
+ ctx.drawImage(logos.full,90,240,1500,420,35,43,235,65.8);
  roundRect(ctx,426,30,139,34,19,Y);text(ctx,'FACTURA',495.5,53,15,G,true,'center');
  fitted(ctx,d.number,557,88,185,7,'#fffaf4',true,'right');
  fitted(ctx,d.date,557,108,180,9,'#eedfcb',false,'right');
@@ -78,7 +79,7 @@ function drawInvoice(ctx,r){
  text(ctx,'DOCUMENTO FICTICIO · SIN VALIDEZ FISCAL',38,774,9,G,true);
  text(ctx,'Datos del emisor y operaciones exclusivamente de demostración.',38,791,8,MUTED);
  text(ctx,'Importes con impuestos incluidos. No acredita compra ni pago real.',38,806,8,MUTED);
- text(ctx,'T&G',516,794,23,G,true,'center');
+ ctx.drawImage(logos.compact,105,345,1040,550,477,768,73,38.6);
 }
 function binaryPdfFromJpeg(imageUrl,width,height){
  const raw=atob(imageUrl.split(',')[1]);const jpg=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)jpg[i]=raw.charCodeAt(i);
@@ -96,6 +97,8 @@ function binaryPdfFromJpeg(imageUrl,width,height){
  push('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
  const bytes=new Uint8Array(pos);let at=0;for(const c of chunks){bytes.set(c,at);at+=c.length}return new Blob([bytes],{type:'application/pdf'});
 }
-async function download(r){const scale=2.5,canvas=document.createElement('canvas');canvas.width=Math.round(595*scale);canvas.height=Math.round(842*scale);const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)throw new Error('Este navegador no permite generar la factura PDF');ctx.scale(scale,scale);drawInvoice(ctx,r);const blob=binaryPdfFromJpeg(canvas.toDataURL('image/jpeg',.94),canvas.width,canvas.height),uri=URL.createObjectURL(blob),a=document.createElement('a');a.href=uri;a.download='TAKEGO_Factura_'+r.id.replace(/[^\w.-]/g,'_')+'.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(uri),15000);return blob}
-window.TakeGoInvoice={preview,download,draw:drawInvoice};
+let logosPromise;
+function loadLogos(){if(!logosPromise)logosPromise=Promise.all(Object.entries(TakeGoUI.brandSources).map(([key,src])=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve([key,image]);image.onerror=()=>reject(new Error('No se puede cargar el logotipo de TAKE&GO. Reintenta la descarga.'));image.src=src}))).then(Object.fromEntries).catch(error=>{logosPromise=null;throw error});return logosPromise}
+async function download(r){const logos=await loadLogos();const scale=2.5,canvas=document.createElement('canvas');canvas.width=Math.round(595*scale);canvas.height=Math.round(842*scale);const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)throw new Error('Este navegador no permite generar la factura PDF');ctx.scale(scale,scale);drawInvoice(ctx,r,logos);const blob=binaryPdfFromJpeg(canvas.toDataURL('image/jpeg',.94),canvas.width,canvas.height),uri=URL.createObjectURL(blob),a=document.createElement('a');a.href=uri;a.download='TAKEGO_Factura_'+r.id.replace(/[^\w.-]/g,'_')+'.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(uri),15000);return blob}
+window.TakeGoInvoice={preview,download,draw:drawInvoice,loadLogos};
 })();
