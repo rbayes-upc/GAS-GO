@@ -1,48 +1,48 @@
 /* Plantilla V2 GAS&GO, adaptada exclusivamente a TAKE&GO. */
 .tg-invoice-modal{max-height:min(87dvh,760px);overflow-y:auto;overflow-x:hidden;padding:16px!important;max-width:440px!important}
-.tg-invoice-heading{margin:0 0 11px;font-size:19px;color:#3c281e}
+.tg-invoice-heading{margin:0 0 11px;font-size:19px;color:#361912}
 .tg-invoice-desc{color:#8b7768;font-size:11px;margin:4px 0 12px;line-height:1.45}
-.tg-invoice-preview{background:#fff;color:#3c281e;border:1px solid #e7ddd1;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px #52372910;font-size:10px;text-align:left}
-.tg-inv-top{background:linear-gradient(120deg,#523729,#6b4935);color:#fff;border-top:4px solid #ffcf30;min-height:104px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tg-invoice-preview{background:#fff;color:#361912;border:1px solid #e7ddd1;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px #36191210;font-size:10px;text-align:left}
+.tg-inv-top{background:linear-gradient(120deg,#361912,#361912);color:#fff;border-top:4px solid #fed612;min-height:104px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .tg-inv-top img{width:52%;max-width:180px;object-fit:contain;display:block}
 .tg-inv-top-right{text-align:right;min-width:105px;flex:none}
-.tg-inv-tag{display:block;background:#ffda2f;border-radius:999px;color:#523729;padding:8px 11px;font-size:12px;font-weight:900;text-align:center;letter-spacing:.3px}
+.tg-inv-tag{display:block;background:#fed612;border-radius:999px;color:#361912;padding:8px 11px;font-size:12px;font-weight:900;text-align:center;letter-spacing:.3px}
 .tg-inv-ref{font-weight:800;font-size:10px;margin-top:12px;overflow-wrap:anywhere}
 .tg-inv-date{margin-top:4px;color:#eedfcb;font-size:9px}
 .tg-inv-content{padding:16px 16px 12px}
 .tg-inv-section{font-size:9px;font-weight:800;letter-spacing:.65px;color:#8b7768;margin:6px 0 10px}
 .tg-inv-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:20px}
-.tg-inv-box{background:#f7f3ec;border:1px solid #e7ddd1;border-radius:10px;padding:12px 9px;min-width:0;overflow-wrap:anywhere}
+.tg-inv-box{background:#fdf8ea;border:1px solid #e7ddd1;border-radius:10px;padding:12px 9px;min-width:0;overflow-wrap:anywhere}
 .tg-inv-caption{display:block;color:#8b7768;font-weight:800;font-size:8px;margin-bottom:7px;letter-spacing:.2px}
-.tg-inv-value{font-size:10px;font-weight:800;color:#3c281e;overflow-wrap:anywhere}
+.tg-inv-value{font-size:10px;font-weight:800;color:#361912;overflow-wrap:anywhere}
 .tg-inv-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:20px}
 .tg-inv-billing{border:1px solid #e7ddd1;border-radius:12px;padding:12px 10px;min-width:0;min-height:106px;overflow-wrap:anywhere}
-.tg-inv-dash{display:block;background:#ffd32a;width:25px;height:5px;border-radius:3px;margin:0 0 12px}
-.tg-inv-billing strong{display:block;font-size:10px;line-height:1.25;margin:6px 0;color:#3c281e}
+.tg-inv-dash{display:block;background:#fed612;width:25px;height:5px;border-radius:3px;margin:0 0 12px}
+.tg-inv-billing strong{display:block;font-size:10px;line-height:1.25;margin:6px 0;color:#361912}
 .tg-inv-billing p{margin:0;color:#8b7768;font-size:8px;line-height:1.48;overflow-wrap:anywhere}
 .tg-inv-detail{border:1px solid #e7ddd1;border-radius:12px;overflow:hidden;margin:0 0 20px}
 .tg-inv-detail-head{display:flex;justify-content:space-between;background:#f1e6d8;padding:12px 10px;font-weight:800;font-size:9px;color:#694a35}
 .tg-inv-detail-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 10px 17px}
 .tg-inv-detail-row strong{font-size:10px}
 .tg-inv-detail-row small{display:block;font-size:9px;color:#8b7768;margin-top:6px}
-.tg-inv-paycard{background:#f7f3ec;border:1px solid #e7ddd1;border-radius:12px;padding:15px 12px;min-width:0}
-.tg-inv-paycard strong{display:block;font-size:12px;margin:14px 0 9px;color:#3c281e;overflow-wrap:anywhere}
+.tg-inv-paycard{background:#fdf8ea;border:1px solid #e7ddd1;border-radius:12px;padding:15px 12px;min-width:0}
+.tg-inv-paycard strong{display:block;font-size:12px;margin:14px 0 9px;color:#361912;overflow-wrap:anywhere}
 .tg-inv-paycard p{font-size:9px;color:#8b7768;margin:0 0 10px}
-.tg-inv-paid{display:inline-block;background:#efe1ce;color:#79563e;border-radius:99px;padding:6px 10px;font-size:8px;font-weight:850}
-.tg-inv-totalcard{background:linear-gradient(145deg,#523729,#79563e);border-radius:12px;padding:15px 12px;color:white;min-width:0}
+.tg-inv-paid{display:inline-block;background:#efe1ce;color:#361912;border-radius:99px;padding:6px 10px;font-size:8px;font-weight:850}
+.tg-inv-totalcard{background:linear-gradient(145deg,#361912,#361912);border-radius:12px;padding:15px 12px;color:white;min-width:0}
 .tg-inv-totalcard>div:not(:first-child){display:flex;justify-content:space-between;gap:7px;font-size:9px;margin-top:14px}
 .tg-inv-totalcard strong{white-space:nowrap;font-size:10px}
-.tg-inv-final{border-top:1px solid #ffffff55;padding-top:10px;margin-top:12px!important;align-items:baseline;color:#ffdb2f;font-weight:900;font-size:11px!important}
+.tg-inv-final{border-top:1px solid #ffffff55;padding-top:10px;margin-top:12px!important;align-items:baseline;color:#fed612;font-weight:900;font-size:11px!important}
 .tg-inv-final strong{font-size:17px}
 .tg-inv-bottom{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;border-top:1px solid #e7ddd1;margin-top:60px;padding:12px 16px 16px}
-.tg-inv-bottom strong{color:#523729;font-size:9px}
+.tg-inv-bottom strong{color:#361912;font-size:9px}
 .tg-inv-bottom p{font-size:8px;color:#8b7768;margin:6px 0 0;line-height:1.4}
 .tg-inv-bottom img{width:57px;height:auto;object-fit:contain}
 .tg-invoice-modal .tg-inv-actions{position:sticky;bottom:0;background:#fff;padding:12px 0 0;z-index:1;box-shadow:0 -8px 10px #fff}
 .tg-invoice-modal .tg-inv-actions .btn{margin-top:7px}
 @media(max-width:380px){.tg-inv-top{padding:12px 10px}.tg-inv-content{padding:12px 8px}.tg-inv-grid3{gap:4px}.tg-inv-box{padding:10px 5px}.tg-inv-value{font-size:9px}.tg-inv-billing{padding:10px 7px}.tg-inv-top-right{min-width:92px}.tg-inv-top img{width:46%}.tg-inv-totalcard,.tg-inv-paycard{padding:12px 9px}.tg-inv-final strong{font-size:14px}}
 
-.tg-inv-logo{font-family:Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-1.4px;color:white;white-space:nowrap}.tg-inv-logo span{color:#ffda2f}.tg-inv-footer-logo{font-size:22px;font-weight:800;color:#523729;white-space:nowrap}.tg-inv-detail-row+.tg-inv-detail-row{border-top:1px solid #e7ddd1}.tg-inv-detail-row>strong{white-space:nowrap}.tg-invoice-preview p{margin-top:0}.tg-invoice-preview .tg-inv-ref{max-width:155px;font-size:8px}.receipt-dialog{padding:16px;max-height:87dvh}.receipt-dialog .dialog-actions{position:sticky;bottom:-16px;margin-top:0;padding:12px 0;background:#fffdfa;box-shadow:0 -8px 10px #fffdfa}.receipt-dialog .dialog-actions .primary{flex:1}
+.tg-inv-logo{font-family:Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-1.4px;color:white;white-space:nowrap}.tg-inv-logo span{color:#fed612}.tg-inv-footer-logo{font-size:22px;font-weight:800;color:#361912;white-space:nowrap}.tg-inv-detail-row+.tg-inv-detail-row{border-top:1px solid #e7ddd1}.tg-inv-detail-row>strong{white-space:nowrap}.tg-invoice-preview p{margin-top:0}.tg-invoice-preview .tg-inv-ref{max-width:155px;font-size:8px}.receipt-dialog{padding:16px;max-height:87dvh}.receipt-dialog .dialog-actions{position:sticky;bottom:-16px;margin-top:0;padding:12px 0;background:#fdf8ec;box-shadow:0 -8px 10px #fdf8ec}.receipt-dialog .dialog-actions .primary{flex:1}
 
 .tg-inv-top-right{min-width:0;width:46%;flex:0 1 155px}.tg-inv-logo{font-size:clamp(16px,4.8vw,22px)}
 .tg-inv-top .tg-inv-logo{display:block;width:52%;max-width:180px;aspect-ratio:1500/420;border-radius:5px}.tg-inv-top .tg-inv-logo img{width:111.4667%;max-width:none;height:auto;object-fit:initial;left:-6%;top:-57.1429%}.tg-inv-bottom .tg-inv-footer-logo{width:57px;aspect-ratio:1040/550;border-radius:4px}.tg-inv-bottom .tg-inv-footer-logo img{width:120.5769%;height:auto;max-width:none;left:-10.0962%;top:-62.7273%}

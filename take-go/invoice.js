@@ -1,6 +1,6 @@
 /* TAKE&GO · misma plantilla V2 de gg-invoice.js, paleta marrón y detalle de compra. */
 (function(){'use strict';
-const G='#523729',G2='#6b4935',Y='#ffda2f',INK='#3c281e',MUTED='#8b7768',BORDER='#e7ddd1',SOFT='#f7f3ec';
+const G='#361912',G2='#361912',Y='#fed612',INK='#361912',MUTED='#8b7768',BORDER='#e7ddd1',SOFT='#fdf8ea';
 const euro=n=>TakeGoUI.money(Math.round(Number(n||0)*100)),esc=s=>TakeGoUI.esc(s);
 function fields(r){return {number:r.id,date:TakeGoUI.date(r.paidAt),station:r.store,quantity:r.rows.reduce((n,p)=>n+p.quantity,0),issuer:'TAKE&GO TIENDAS DEMO',issuerNif:'No registrado · demo',issuerAddress:'Estación Diagonal · Barcelona',customer:r.customer,customerNif:'No registrado',customerAddress:'No registrada',payment:r.payment,paymentStatus:'Pago ficticio aprobado (automático)'}}
 function preview(r){const d=fields(r);return `<div class="tg-invoice-preview" aria-label="Vista previa de la factura TAKE&GO">
@@ -37,7 +37,7 @@ function drawInvoice(ctx,r,logos){
  const bg=ctx.createLinearGradient(0,0,595,145);bg.addColorStop(0,G);bg.addColorStop(1,G2);
  ctx.fillStyle=bg;ctx.fillRect(0,0,W,147);ctx.fillStyle=Y;ctx.fillRect(0,0,W,6);
  if(!logos?.full||!logos?.compact)throw new Error('Los logotipos de la factura no se han cargado. Reintenta la descarga.');
- ctx.drawImage(logos.full,90,240,1500,420,35,43,235,65.8);
+ ctx.save();ctx.globalCompositeOperation='lighten';ctx.drawImage(logos.full,90,240,1500,420,35,43,235,65.8);ctx.restore();
  roundRect(ctx,426,30,139,34,19,Y);text(ctx,'FACTURA',495.5,53,15,G,true,'center');
  fitted(ctx,d.number,557,88,185,7,'#fffaf4',true,'right');
  fitted(ctx,d.date,557,108,180,9,'#eedfcb',false,'right');
@@ -66,7 +66,7 @@ function drawInvoice(ctx,r,logos){
  multiline(ctx,d.payment,52,609,224,12,INK,true,15,2);
  fitted(ctx,d.paymentStatus,52,640,224,9,MUTED);
  roundRect(ctx,52,651,119,21,11,'#efe1ce');text(ctx,'OPERACIÓN SIMULADA',111.5,665,7.7,G,true,'center');
- const tot=ctx.createLinearGradient(305,561,555,685);tot.addColorStop(0,G);tot.addColorStop(1,'#79563e');
+ const tot=ctx.createLinearGradient(305,561,555,685);tot.addColorStop(0,G);tot.addColorStop(1,'#361912');
  roundRect(ctx,305,561,252,124,12,tot);
  text(ctx,'RESUMEN',319,584,9,'#f1e5d7',true);
  text(ctx,'Importe productos',319,605,9,'#eddfcf');text(ctx,euro(q.total),541,605,9,'#fff',true,'right');
@@ -79,7 +79,7 @@ function drawInvoice(ctx,r,logos){
  text(ctx,'DOCUMENTO FICTICIO · SIN VALIDEZ FISCAL',38,774,9,G,true);
  text(ctx,'Datos del emisor y operaciones exclusivamente de demostración.',38,791,8,MUTED);
  text(ctx,'Importes con impuestos incluidos. No acredita compra ni pago real.',38,806,8,MUTED);
- ctx.drawImage(logos.compact,105,345,1040,550,477,768,73,38.6);
+ ctx.fillStyle=G;ctx.fillRect(477,768,73,38.6);ctx.save();ctx.globalCompositeOperation='lighten';ctx.drawImage(logos.compact,105,345,1040,550,477,768,73,38.6);ctx.restore();
 }
 function binaryPdfFromJpeg(imageUrl,width,height){
  const raw=atob(imageUrl.split(',')[1]);const jpg=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)jpg[i]=raw.charCodeAt(i);
