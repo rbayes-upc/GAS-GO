@@ -139,7 +139,8 @@ function simplify(content){
   foldDetails(card,'.gg-station-source,.gg245-metrics,.ggdc-times','Más detalles de la estación');
   const secondary=card.querySelector('.gg-secondary-details');if(!secondary)continue;
   const favorite=card.querySelector('button[onclick^="fav("]'),incident=card.querySelector('.gg-report-station,button[onclick^="ggIncidents.openWithStation("]');
-  if(favorite)secondary.append(favorite);if(incident)secondary.append(incident);
+  if(favorite)secondary.append(favorite);
+  if(incident&&!card.matches('.gg-station-popup'))secondary.append(incident);
   const actions=card.querySelector('.ggdc-secondary');if(actions&&actions.children.length===1)actions.classList.add('gg-single-secondary');
  }
 }
