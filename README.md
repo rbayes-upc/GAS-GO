@@ -79,7 +79,7 @@ Validación: `node tests/explore-compare.cjs`. Usa respuestas HTTP controladas p
 
 ## Preferencias por vehículo y uso sin conexión (FULL)
 
-En **Mi garaje → Preferencias**, cada matrícula guarda un método de pago ficticio y un límite opcional por operación de 1 a 300 €. El combustible de un vehículo de combustión o eléctrico depende de su motor; en los híbridos se puede elegir Repostar o Recargar como servicio habitual al seleccionar el vehículo. Es posible cambiar de servicio después en el mapa. Editar una matrícula conserva estas preferencias; eliminar el vehículo las elimina.
+El botón **Preferencias** de la tarjeta del vehículo activo (mapa y lista) abre su configuración directamente. También está en **Mi garaje → Preferencias**. Cada matrícula guarda un método de pago ficticio y un límite opcional por operación de 1 a 300 €. El combustible de un vehículo de combustión o eléctrico depende de su motor; en los híbridos se puede elegir Repostar o Recargar como servicio habitual al seleccionar el vehículo. Es posible cambiar de servicio después en el mapa. Editar una matrícula conserva estas preferencias; eliminar el vehículo las elimina.
 
 La llegada al surtidor transmite el límite y el pago junto con el vehículo. La operación conserva esa configuración aunque la selección de la app cambie después. El surtidor limita la cantidad suministrada sin superar el máximo **antes de descuentos**, tanto en litros como en kWh, y detiene el flujo al alcanzarlo. Se mantiene el botón de finalización existente para guardar la factura, y se puede finalizar antes del límite. DEMO no hereda los límites de FULL. No se realizan cobros reales.
 

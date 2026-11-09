@@ -223,7 +223,7 @@ function vehicleCard(content){
  const vehicle=activeVehicle();
  const description=hybrid()?`${HYBRID} · ${energyMode()==='both'?'Ambos servicios':energyMode()==='charge'?'Recargar':'Repostar'}`:data.fuel;
  const card=document.createElement('section');card.className='gg-active-vehicle';card.setAttribute('aria-label','Vehículo activo');
- card.innerHTML=`<div><span class="gg-active-vehicle-label">Vehículo activo</span><strong>${esc(data.vehicle||'Selecciona un vehículo')}</strong><small>${esc(description||'')}${vehicle?.plate?' · '+esc(vehicle.plate):''}</small></div><button type="button" class="btn ghost" onclick="ggUX.chooseVehicle()" aria-label="Cambiar vehículo">Cambiar</button>`;
+ card.innerHTML=`<div><span class="gg-active-vehicle-label">Vehículo activo</span><strong>${esc(data.vehicle||'Selecciona un vehículo')}</strong><small>${esc(description||'')}${vehicle?.plate?' · '+esc(vehicle.plate):''}</small></div><div class="gg-vehicle-actions"><button type="button" class="btn ghost" onclick="ggUX.chooseVehicle()" aria-label="Cambiar vehículo">Cambiar</button><button type="button" class="btn ghost" onclick="${vehicle?"GGPreferences.open('current')":"go('Mi vehículo')"}" aria-label="Preferencias del vehículo">Preferencias</button></div>`;
  content.prepend(card);
 }
 function chooseVehicle(){
@@ -292,6 +292,12 @@ function foldDetails(container,selector,label){
  nodes[0].before(details);for(const node of nodes)details.append(node);
 }
 function simplify(content){
+ const stationList=content.querySelector('.station-list-screen');
+ if(stationList&&!inPresentationDemo()){
+  const sources=stationList.querySelector('.gg-list-source');if(sources){fullDataInformation=sources.innerHTML;sources.remove()}
+  stationList.querySelectorAll('.list-summary>b,.list-summary>span').forEach(node=>node.remove());
+ }
+
  const mapHome=content.querySelector('.map-home');
  if(mapHome){
   if(!inPresentationDemo()){

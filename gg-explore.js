@@ -101,7 +101,7 @@ window.render=function(){
  const search=document.querySelector('.top-actions button[onclick="openSearch()"]');if(search)search.setAttribute('aria-label',inPresentationDemo()?'Buscar gasolinera':'Buscar dirección, población o estación');
  if(page!=='Home'||inPresentationDemo())return;
  renderComparison();
- const container=document.querySelector('.mapcontrols,.station-list-screen .list-toolbar');
+ const container=document.querySelector('.mapcontrols,.station-list-screen .list-summary');
  if(container){const button=document.createElement('button');button.type='button';button.className='map-filter-btn gg-compare-open';button.textContent='Comparar';button.addEventListener('click',()=>openComparison());container.append(button)}
  if(area){
   const status=document.createElement('section');status.className='gg-search-area';status.setAttribute('aria-label','Zona explorada');
