@@ -8,6 +8,7 @@ const esc=escapeHtml;
 let history=[],goingBack=false,locationChecked=false,lastVehicleIdentity=null;
 let locationPending=false,lastCompletedReceipt=null,completionTimer=null,completionExpiresAt=0;
 let chargeConnectorFilter='',minimumChargePower=0;
+let fullDataInformation='';
 const hybrid=()=>data.customVehicle?.fuel===HYBRID&&data.vehicle===data.customVehicle.name;
 const preferenceKey=()=>data.customVehicle?.plate||data.vehicle;
 function energyMode(){return hybrid()?(data.energyPreferences?.[preferenceKey()]||'fuel'):data.fuel==='Eléctrico'?'charge':'fuel'}
@@ -200,13 +201,18 @@ function foldDetails(container,selector,label){
 function simplify(content){
  const mapHome=content.querySelector('.map-home');
  if(mapHome){
-  foldDetails(mapHome,'.gg-source','Información de los datos');
-  // El censo tiene una sola etiqueta; conservar sus avisos de error visibles.
-  for(const strip of mapHome.querySelectorAll('.gg-ev-strip')){
-   if(strip.textContent.includes('⚠'))continue;
-   const details=mapHome.querySelector('.gg-secondary-details');if(details&&!strip.closest('details'))details.append(strip);
+  if(!inPresentationDemo()){
+   mapHome.querySelector('.map-home-title')?.remove();
+   const sources=Array.from(mapHome.querySelectorAll('.gg-source,.gg-ev-strip')).filter(node=>!node.textContent.includes('⚠'));
+   fullDataInformation=sources.map(node=>node.outerHTML).join('');for(const node of sources)node.remove();
+  }else{
+   foldDetails(mapHome,'.gg-source','Información de los datos');
+   for(const strip of mapHome.querySelectorAll('.gg-ev-strip')){
+    if(strip.textContent.includes('⚠'))continue;
+    const details=mapHome.querySelector('.gg-secondary-details');if(details&&!strip.closest('details'))details.append(strip);
+   }
+   const title=mapHome.querySelector('.map-home-title span');if(title)title.textContent='Prototipo · operaciones simuladas';
   }
-  const title=mapHome.querySelector('.map-home-title span');if(title)title.textContent='Prototipo · operaciones simuladas';
  }
  for(const card of content.querySelectorAll('.gg-station-popup,.list-station-card,.gg-demo-compact-popup,.gg258-list-card')){
   summarizeStation(card);
@@ -262,6 +268,7 @@ window.render=function(){
  syncEnergy();originalRender();
  const content=$('content');
  if(!['Home','Bienvenida'].includes(page))content.insertAdjacentHTML('afterbegin','<button class="gg-back" type="button" onclick="ggUX.back()" aria-label="Volver a la pantalla anterior">← Volver</button>');
+ if(page==='Ayuda'&&!inPresentationDemo())content.insertAdjacentHTML('beforeend',`<section class="card" id="ggHelpData"><h2>Información de los datos</h2><p class="small muted">Las operaciones, la disponibilidad y los tiempos de espera son simulados. Las fuentes y el estado de los datos del mapa se muestran aquí.</p>${fullDataInformation||'<p class="small muted">Abre el mapa para consultar sus fuentes de datos.</p>'}</section>`);
  if(page==='Home'){
   const controls=hybrid()?`<fieldset class="gg-energy-switch"><legend>¿Qué necesitas para tu híbrido?</legend>${[['fuel','Repostar'],['charge','Recargar'],['both','Ver ambas']].map(([mode,text])=>`<button type="button" aria-pressed="${energyMode()===mode}" onclick="ggUX.setEnergy('${mode}')">${text}</button>`).join('')}</fieldset>`:'';
   content.insertAdjacentHTML('afterbegin',controls);
