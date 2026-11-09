@@ -6,6 +6,14 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  console.log('PASS DEMO does not populate the FULL garage');
  const c=await context(),p=await c.newPage();await p.goto('https://gasgo.test/GAS-GO/');await p.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
  assert.deepEqual(await p.evaluate(()=>data.plateVehicles.map(v=>v.fuel)),['Gasolina 95','Diésel','Eléctrico','Híbrido enchufable']);assert.equal(await p.evaluate(()=>data.vehicle),'Moto principal');assert.equal(await p.evaluate(()=>data.plateVehicles.every(v=>GGPlate.validPlate(v.plate))),true);
+ // Sesión FULL ya abierta antes de actualizar: sin pasar por login ni por el garaje.
+ await p.evaluate(()=>{data.plateVehicles=[];delete data.garageExamplesVersion;save();});
+ await p.getByRole('button',{name:'Cambiar vehículo',exact:true}).click();
+ assert.equal(await p.locator('.gg-vehicle-pick').count(),4);assert.equal(await p.evaluate(()=>data.vehicle),'Moto principal');
+ await p.evaluate(()=>closeModal());
+ await p.evaluate(()=>{data.plateVehicles=[];delete data.garageExamplesVersion;save();render();});
+ assert.equal(await p.evaluate(()=>data.plateVehicles.length),4);
+ console.log('PASS an existing FULL session initializes examples on quick selection and Home without visiting the garage');
  const history=await p.evaluate(()=>JSON.stringify(data.history));
  await p.locator('.footnav .home').click();await p.locator('#menugrid').getByRole('button',{name:/Mi garaje/}).click();assert.equal(await p.locator('.gg-plate-saved').count(),4);
  await p.evaluate(()=>{window.loadRealStations=async()=>{};const base={lat:41.39,lng:2.16,free:1,total:2,evFree:1,evTotal:2,dist:1,area:'Prueba',kw:50};STATIONS.splice(0,STATIONS.length,...[

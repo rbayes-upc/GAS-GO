@@ -298,5 +298,5 @@ function editVehicle(v){
 function edit(i){editVehicle(stored()[i])}
 function editCurrent(){const current=data.customVehicle;if(!current)return;const saved=stored().find(v=>norm(v.plate)===norm(current.plate));if(saved){editVehicle(saved);return}const v={...current};if(v.brand&&v.model?.toLowerCase().startsWith(v.brand.toLowerCase()+' '))v.model=v.model.slice(v.brand.length+1);editVehicle(v)}
 function cancel(){activeAnalysis++;editingPlate=null;editingActive=false;draft=null;cleanPhoto();closeModal()}
-window.GGPlate={screen,edit,editCurrent,openManual,openPhoto,fileChange,cropMode,nextCrop,cropReset,cropStart,cropMove,cropEnd,analyze,review,showForm,plateHint,store,select,remove,cancel,validPlate,norm,approximateRegistration,persistRegistrationVehicle,interpretOCR,getPlateFromOCR};
+window.GGPlate={ensureExamples:ensureExampleVehicles,screen,edit,editCurrent,openManual,openPhoto,fileChange,cropMode,nextCrop,cropReset,cropStart,cropMove,cropEnd,analyze,review,showForm,plateHint,store,select,remove,cancel,validPlate,norm,approximateRegistration,persistRegistrationVehicle,interpretOCR,getPlateFromOCR};
 })();

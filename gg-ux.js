@@ -128,6 +128,7 @@ function drawStations(map,layer){
 function activeVehicle(){return data.customVehicle?.name===data.vehicle?data.customVehicle:null}
 function vehicleCard(content){
  if(inPresentationDemo())return;
+ window.GGPlate?.ensureExamples?.();
  const vehicle=activeVehicle();
  const description=hybrid()?`${HYBRID} · ${energyMode()==='both'?'Ambos servicios':energyMode()==='charge'?'Recargar':'Repostar'}`:data.fuel;
  const card=document.createElement('section');card.className='gg-active-vehicle';card.setAttribute('aria-label','Vehículo activo');
@@ -136,6 +137,7 @@ function vehicleCard(content){
 }
 function chooseVehicle(){
  if(inPresentationDemo())return;
+ window.GGPlate?.ensureExamples?.();
  const rows=Array.isArray(data.plateVehicles)?data.plateVehicles:[];
  modal(`<h2>Cambiar vehículo</h2><p class="small muted">Las estaciones y los filtros se actualizarán con tu elección.</p>${rows.map((v,i)=>`<button type="button" class="gg-vehicle-pick" onclick="ggUX.pickVehicle(${i})"><strong>${esc(v.name)}</strong><span>${esc(v.plate)} · ${esc(v.fuel)}</span>${v.plate===activeVehicle()?.plate?'<small>Seleccionado</small>':''}</button>`).join('')||'<p>Tienes disponible el vehículo actual. Puedes añadir otro desde Mi garaje.</p>'}<button type="button" class="btn ghost block" onclick="closeModal();go('Mi vehículo')">Gestionar mi garaje</button>`);
 }
