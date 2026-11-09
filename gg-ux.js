@@ -203,6 +203,7 @@ function simplify(content){
  if(mapHome){
   if(!inPresentationDemo()){
    mapHome.querySelector('.map-home-title')?.remove();
+   mapHome.querySelector('.map-status')?.remove();
    const sources=Array.from(mapHome.querySelectorAll('.gg-source,.gg-ev-strip')).filter(node=>!node.textContent.includes('⚠'));
    fullDataInformation=sources.map(node=>node.outerHTML).join('');for(const node of sources)node.remove();
   }else{
@@ -268,7 +269,7 @@ window.render=function(){
  syncEnergy();originalRender();
  const content=$('content');
  if(!['Home','Bienvenida'].includes(page))content.insertAdjacentHTML('afterbegin','<button class="gg-back" type="button" onclick="ggUX.back()" aria-label="Volver a la pantalla anterior">← Volver</button>');
- if(page==='Ayuda'&&!inPresentationDemo())content.insertAdjacentHTML('beforeend',`<section class="card" id="ggHelpData"><h2>Información de los datos</h2><p class="small muted">Las operaciones, la disponibilidad y los tiempos de espera son simulados. Las fuentes y el estado de los datos del mapa se muestran aquí.</p>${fullDataInformation||'<p class="small muted">Abre el mapa para consultar sus fuentes de datos.</p>'}</section>`);
+ if(page==='Ayuda'&&!inPresentationDemo())content.insertAdjacentHTML('beforeend',`<section class="card" id="ggHelpData"><h2>Información de los datos</h2><p class="small muted">Las operaciones, la disponibilidad y los tiempos de espera son simulados. Las fuentes y el estado de los datos del mapa se muestran aquí.</p><p class="small muted">${esc(geoStatus)}</p>${fullDataInformation||'<p class="small muted">Abre el mapa para consultar sus fuentes de datos.</p>'}</section>`);
  if(page==='Home'){
   const controls=hybrid()?`<fieldset class="gg-energy-switch"><legend>¿Qué necesitas para tu híbrido?</legend>${[['fuel','Repostar'],['charge','Recargar'],['both','Ver ambas']].map(([mode,text])=>`<button type="button" aria-pressed="${energyMode()===mode}" onclick="ggUX.setEnergy('${mode}')">${text}</button>`).join('')}</fieldset>`:'';
   content.insertAdjacentHTML('afterbegin',controls);
