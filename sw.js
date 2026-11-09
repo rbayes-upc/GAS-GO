@@ -1,6 +1,6 @@
 /* Caché del shell de GAS&GO: actualizar VERSION al cambiar los archivos precargados. */
 'use strict';
-const VERSION='299';
+const VERSION='300';
 const BASE=new URL('./',self.location.href);
 const PREFIX='gasgo-shell-'+encodeURIComponent(BASE.pathname)+'-';
 const CACHE=PREFIX+VERSION;
@@ -28,7 +28,7 @@ self.addEventListener('fetch',event=>{
  event.respondWith((async()=>{
   const cache=await caches.open(CACHE);
   try{
-   const response=await fetch(request);
+   const response=await fetch(request,{cache:'no-cache'});
    if(!response.ok)throw Error('HTTP '+response.status);
    try{await cache.put(cacheKey,response.clone())}catch(error){}return response;
   }catch(error){

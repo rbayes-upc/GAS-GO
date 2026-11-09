@@ -41,3 +41,6 @@
 
 .gg-vehicle-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 .gg-full-icons .station-list-screen .list-summary{justify-content:space-between;margin:4px 0 8px}
+
+/* Compatibilidad con una plantilla anterior mientras se actualizan los archivos. */
+.gg-full-icons .station-list-screen .gg-list-source,.gg-full-icons .station-list-screen .list-summary>b,.gg-full-icons .station-list-screen .list-summary>span{display:none!important}
