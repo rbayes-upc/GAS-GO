@@ -33,3 +33,5 @@ La cesta completada queda marcada como pagada. La navegación usa el historial d
 Desde una factura o una compra completada se puede registrar una incidencia ficticia asociada a su referencia. Se guarda únicamente bajo `takego_issues_v1`, con una copia de texto descargable y acceso desde Perfil → Mis incidencias. No hay envío a una estación, seguimiento remoto, devoluciones de dinero ni afirmación de resolución. Los detalles se escapan al mostrarse.
 
 Pruebas adicionales: `node tests/take-go-ux.cjs` cubre Atrás/Adelante, guía persistente, navegación móvil, borradores, verificación pendiente, tarjetas alternativas, límite y devolución directa, incidencias locales, recarga/reconexión y pago con la app cerrada.
+
+Las variantes claras de `assets/*-claro.png` proceden del segundo ZIP del usuario y se muestran en las cabeceras claras de la app y tienda, bienvenida y pie de factura. Los originales oscuros se conservan para la cabecera marrón de factura, la tarjeta de pago y la bolsa ilustrada. Cada versión mantiene sus proporciones y encuadre propios; el PDF utiliza el mismo criterio de contraste.
