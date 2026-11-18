@@ -1,0 +1,125 @@
+export const vehicles = {
+  city: { label: 'Urbano', front: 2.3, rear: 2.1 },
+  suv: { label: 'SUV', front: 2.5, rear: 2.5 },
+  van: { label: 'Furgoneta', front: 3.2, rear: 3.5 },
+};
+export const services = {
+  air: { label: 'Inflador de neumáticos', rate: 2 },
+  wash: { label: 'Autolavado con pistola', rate: 5 },
+};
+export const methods = {
+  auto: 'Automático',
+  confirm: 'Confirmación en app',
+  code: 'Código temporal',
+};
+export const tires = ['Delantero izquierdo', 'Delantero derecho', 'Trasero izquierdo', 'Trasero derecho'];
+export const programs = { water: 'Agua', foam: 'Espuma', rinse: 'Aclarado' };
+export const equipment = { air: 'A-01', wash: 'L-01' };
+
+export function createSession({ service, vehicle, method, limit, id, code }, now) {
+  if (!Object.hasOwn(services, service) || !Object.hasOwn(vehicles, vehicle) ||
+      !Object.hasOwn(methods, method) || !Number.isInteger(limit) || limit < 50 || limit > 5000) {
+    throw new Error('Elige un servicio y fija un límite entre 0,50 € y 50,00 €.');
+  }
+  return {
+    service, vehicle, method, limit, id, code, created: now, expires: now + 90000,
+    phase: 'requested', elapsed: 0, total: 0, pressures: [1.8, 2.0, 1.9, 2.2],
+    completed: [], tire: null, program: 'water', runningSince: null,
+  };
+}
+
+export function target(session, tire) {
+  return vehicles[session.vehicle][tire < 2 ? 'front' : 'rear'];
+}
+
+function finish(session, now, reason) {
+  return { ...session, phase: 'finished', finished: now, runningSince: null, reason };
+}
+
+function authorize(session) {
+  return { ...session, phase: 'ready', code: null };
+}
+
+export function advance(session, now) {
+  if (session.phase === 'identifying' && session.method === 'auto' &&
+      now >= session.identifyingSince + 900 && session.identifyingSince + 900 < session.expires) {
+    return authorize(session);
+  }
+  if (['requested', 'identifying'].includes(session.phase) && now >= session.expires) {
+    return { ...session, phase: 'expired', code: null };
+  }
+  if (session.phase !== 'running') return session;
+
+  const rate = services[session.service].rate;
+  const untilLimit = Math.ceil(session.limit * 1000 / rate) - session.elapsed;
+  const untilTarget = session.service === 'air'
+    ? Math.ceil(Math.abs(target(session, session.tire) - session.pressures[session.tire]) * 5000 - 1e-8)
+    : Infinity;
+  const duration = Math.max(0, Math.min(now - session.runningSince, untilLimit, untilTarget));
+  if (!duration && untilTarget > 0) return session;
+
+  const eventTime = session.runningSince + duration;
+  const elapsed = session.elapsed + duration;
+  let updated = {
+    ...session, elapsed, runningSince: eventTime,
+    total: Math.min(session.limit, Math.floor(elapsed * rate / 1000)),
+  };
+  if (session.service === 'air') {
+    updated.pressures = [...session.pressures];
+    const desired = target(session, session.tire);
+    const current = session.pressures[session.tire];
+    updated.pressures[session.tire] = duration === untilTarget
+      ? desired : current + Math.sign(desired - current) * duration / 5000;
+    if (duration === untilTarget) {
+      updated.completed = [...new Set([...session.completed, session.tire])];
+      updated = { ...updated, phase: 'ready', runningSince: null, tire: null };
+    }
+  }
+  if (duration === untilLimit) return finish(updated, eventTime, 'Importe máximo alcanzado');
+  if (updated.completed.length === tires.length) return finish(updated, eventTime, 'Cuatro neumáticos ajustados');
+  return updated;
+}
+
+export function act(session, action, value, now) {
+  const current = advance(session, now);
+  switch (action) {
+    case 'identify':
+      if (current.phase === 'requested') return { ...current, phase: 'identifying', identifyingSince: now };
+      break;
+    case 'confirm':
+      if (current.phase === 'identifying' && current.method === 'confirm') return authorize(current);
+      break;
+    case 'code':
+      if (current.phase === 'identifying' && current.method === 'code') {
+        if (value !== current.code) throw new Error('El código es incorrecto. Revisa la app del cliente.');
+        return authorize(current);
+      }
+      break;
+    case 'connect':
+      if (current.service === 'air' && current.phase === 'ready' &&
+          Number.isInteger(value) && value >= 0 && value < tires.length && !current.completed.includes(value)) {
+        return advance({ ...current, tire: value, phase: 'running', runningSince: now }, now);
+      }
+      break;
+    case 'program':
+      if (current.service === 'wash' && ['ready', 'running'].includes(current.phase) && Object.hasOwn(programs, value)) {
+        return { ...current, program: value };
+      }
+      break;
+    case 'spray':
+      if (current.service === 'wash' && current.phase === 'ready') {
+        return { ...current, phase: 'running', runningSince: now };
+      }
+      break;
+    case 'pause':
+      if (current.phase === 'running') return { ...current, phase: 'ready', runningSince: null, tire: null };
+      break;
+    case 'finish':
+      if (['ready', 'running'].includes(current.phase)) return finish(current, now, 'Finalización manual');
+      break;
+    case 'cancel':
+      if (['requested', 'identifying'].includes(current.phase)) return { ...current, phase: 'cancelled', code: null };
+      break;
+  }
+  return current;
+}

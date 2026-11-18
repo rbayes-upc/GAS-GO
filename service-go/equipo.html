@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123a85">
+  <title>Service&Go · Simulador de equipos</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body data-view="equipment">
+  <header class="topbar">
+    <a class="brand" href="./">Service<span>&amp;Go</span></a>
+    <a class="header-link" href="./" target="_blank" rel="noopener">Abrir app del cliente ↗</a>
+  </header>
+  <main>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">ÁREA DE SERVICIO</p>
+        <h1>Simulador de equipos</h1>
+        <p>Usa esta pantalla junto a la app del cliente, en el mismo navegador.</p>
+      </div>
+      <span class="demo">Modo simulación</span>
+    </div>
+    <p class="error" id="error" role="alert" hidden></p>
+    <section class="panel" id="standby">
+      <h2>Esperando una solicitud</h2>
+      <p>Prepara un servicio en la app del cliente para activar el inflador o el box de lavado.</p>
+    </section>
+    <section class="panel session" id="session" aria-labelledby="service-title" hidden>
+      <p class="eyebrow" id="equipment-name"></p>
+      <h2 id="service-title"></h2>
+      <p class="status" id="status" role="status"></p>
+      <dl class="metrics">
+        <div><dt>Tiempo activo</dt><dd id="time"></dd></div>
+        <div><dt>Importe</dt><dd id="total"></dd></div>
+        <div><dt>Máximo</dt><dd id="limit"></dd></div>
+      </dl>
+      <p id="activity" class="hint"></p>
+      <form id="code-form" hidden>
+        <label>Código de la app <input id="code" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]{6}" maxlength="6" required></label>
+        <button class="primary" type="submit">Validar código</button>
+      </form>
+      <div id="air-controls" hidden>
+        <h3>Presión por neumático</h3>
+        <div class="tires" id="tires"></div>
+        <p class="hint">Presiones de ejemplo para esta simulación.</p>
+      </div>
+      <div id="wash-controls" hidden>
+        <h3>Programa de la pistola</h3>
+        <div class="actions" id="programs" aria-label="Programas de lavado"></div>
+      </div>
+      <div class="actions">
+        <button class="primary" type="button" data-action="identify" hidden>Identificar cliente</button>
+        <button class="primary" type="button" data-action="spray" hidden>Activar pistola</button>
+        <button type="button" data-action="pause" hidden></button>
+        <button type="button" data-action="finish" hidden>Finalizar servicio</button>
+      </div>
+    </section>
+  </main>
+  <footer>Service&Go · Equipos simulados</footer>
+</body>
+</html>
