@@ -3,73 +3,77 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#123a85">
+  <meta name="theme-color" content="#101f3c">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./app.mjs"></script>
+  <link rel="stylesheet" href="./styles.css?v=2">
+  <script type="module" src="./app.mjs?v=2"></script>
 </head>
 <body data-view="client">
-  <header class="topbar">
-    <a class="brand" href="./">Service<span>&amp;Go</span></a>
-    <a class="header-link" id="equipment-link" href="./equipo.html" target="_blank" rel="noopener">Abrir simulador ↗</a>
-  </header>
-  <main>
-    <div class="hero">
-      <div>
-        <p class="eyebrow">ÁREA DE SERVICIO</p>
-        <h1>Cuida tu vehículo</h1>
-        <p>Elige un servicio y controla el tiempo y el importe desde tu móvil.</p>
-      </div>
-      <span class="demo">Modo simulación</span>
-    </div>
-    <p class="error" id="error" role="alert" hidden></p>
-    <form id="reservation">
-      <fieldset class="chooser">
-        <legend>¿Qué quieres hacer?</legend>
-        <div class="choices">
-          <label class="choice">
-            <input type="radio" name="service" value="air" checked>
-            <span class="equipment-icon wheel" aria-hidden="true"></span>
-            <span><strong>Inflar neumáticos</strong><small>Ajuste por rueda · 0,02 €/s</small></span>
-          </label>
-          <label class="choice">
-            <input type="radio" name="service" value="wash">
-            <span class="equipment-icon wash" aria-hidden="true"></span>
-            <span><strong>Lavar el vehículo</strong><small>Box con pistola · 0,05 €/s</small></span>
-          </label>
+  <aside class="desktop-story" aria-labelledby="story-title">
+    <span class="brand story-brand">SERVICE<span>&amp;GO</span></span>
+    <h1 id="story-title">Tu vehículo,<br>a punto.</h1>
+    <p>Ajusta la presión de los neumáticos o lava tu vehículo en el box.</p>
+    <div class="story-rule"></div>
+  </aside>
+  <div class="device">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Service&Go · Inicio">SERVICE<span>&amp;GO</span></a>
+      <span class="demo">DEMO</span>
+    </header>
+    <main>
+      <p class="error" id="error" role="alert" hidden></p>
+      <form id="reservation">
+        <fieldset class="chooser">
+          <legend>Elige un servicio</legend>
+          <div class="choices">
+            <label class="choice">
+              <input type="radio" name="service" value="air" checked>
+              <span class="equipment-icon wheel" aria-hidden="true"></span>
+              <span><strong>Inflar neumáticos</strong><small>Ajuste por rueda · 0,02 €/s</small></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="service" value="wash">
+              <span class="equipment-icon wash" aria-hidden="true"></span>
+              <span><strong>Lavar el vehículo</strong><small>Box con pistola · 0,05 €/s</small></span>
+            </label>
+          </div>
+        </fieldset>
+        <section class="panel setup" aria-labelledby="setup-title">
+          <h2 id="setup-title">Tu sesión</h2>
+          <div class="fields">
+            <label>Vehículo <select name="vehicle" id="vehicle"></select></label>
+            <label>Importe máximo (€) <input name="limit" type="number" inputmode="decimal" min="0.50" max="50" step="0.01" value="3.00" required></label>
+            <label>Identificación <select name="method" id="method"></select></label>
+          </div>
+          <p class="hint" id="vehicle-hint"></p>
+          <button class="primary" type="submit">Preparar servicio</button>
+        </section>
+      </form>
+      <section class="panel session" id="session" aria-labelledby="service-title" hidden>
+        <p class="eyebrow" id="equipment-name"></p>
+        <h2 id="service-title"></h2>
+        <p class="status" id="status" role="status"></p>
+        <p class="code" id="client-code" hidden></p>
+        <dl class="metrics">
+          <div><dt>Tiempo activo</dt><dd id="time"></dd></div>
+          <div><dt>Importe</dt><dd id="total"></dd></div>
+          <div><dt>Máximo</dt><dd id="limit"></dd></div>
+        </dl>
+        <progress class="budget" id="budget" aria-label="Importe consumido del máximo"></progress>
+        <p id="activity" class="hint"></p>
+        <div class="actions">
+          <button class="primary" type="button" data-action="confirm" hidden>Confirmar identificación</button>
+          <button type="button" data-action="cancel" hidden>Cancelar solicitud</button>
+          <button type="button" data-action="finish" hidden>Finalizar servicio</button>
+          <button class="primary" type="button" data-action="receipt" hidden>Descargar factura PDF</button>
+          <button type="button" data-action="reset" hidden>Nueva sesión</button>
         </div>
-      </fieldset>
-      <section class="panel setup" aria-labelledby="setup-title">
-        <h2 id="setup-title">Configura tu sesión</h2>
-        <div class="fields">
-          <label>Vehículo <select name="vehicle" id="vehicle"></select></label>
-          <label>Identificación <select name="method" id="method"></select></label>
-          <label>Importe máximo (€) <input name="limit" type="number" inputmode="decimal" min="0.50" max="50" step="0.01" value="3.00" required></label>
-        </div>
-        <p class="hint" id="vehicle-hint"></p>
-        <button class="primary" type="submit">Preparar servicio</button>
       </section>
-    </form>
-    <section class="panel session" id="session" aria-labelledby="service-title" hidden>
-      <p class="eyebrow" id="equipment-name"></p>
-      <h2 id="service-title"></h2>
-      <p class="status" id="status" role="status"></p>
-      <p class="code" id="client-code" hidden></p>
-      <dl class="metrics">
-        <div><dt>Tiempo activo</dt><dd id="time"></dd></div>
-        <div><dt>Importe</dt><dd id="total"></dd></div>
-        <div><dt>Máximo</dt><dd id="limit"></dd></div>
-      </dl>
-      <p id="activity" class="hint"></p>
-      <div class="actions">
-        <button class="primary" type="button" data-action="confirm" hidden>Confirmar identificación</button>
-        <button type="button" data-action="cancel" hidden>Cancelar solicitud</button>
-        <button type="button" data-action="finish" hidden>Finalizar servicio</button>
-        <button class="primary" type="button" data-action="receipt" hidden>Descargar factura PDF</button>
-        <button type="button" data-action="reset" hidden>Nueva sesión</button>
-      </div>
-    </section>
-  </main>
-  <footer>Service&Go · Servicios e importes simulados</footer>
+    </main>
+    <footer class="app-footer">
+      <span>Servicios simulados</span>
+      <a class="header-link" href="./equipo.html" target="_blank" rel="noopener">Abrir simulador</a>
+    </footer>
+  </div>
 </body>
 </html>

@@ -71,6 +71,8 @@ function render(session) {
   setText($('time'), timer(session.elapsed));
   setText($('total'), money(session.total));
   setText($('limit'), money(session.limit));
+  $('budget').max = session.limit;
+  $('budget').value = session.total;
 
   const identifying = session.phase === 'identifying';
   const ready = session.phase === 'ready';

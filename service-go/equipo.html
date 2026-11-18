@@ -3,24 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#123a85">
+  <meta name="theme-color" content="#101f3c">
   <title>Service&Go · Simulador de equipos</title>
-  <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./app.mjs"></script>
+  <link rel="stylesheet" href="./styles.css?v=2">
+  <script type="module" src="./app.mjs?v=2"></script>
 </head>
 <body data-view="equipment">
   <header class="topbar">
-    <a class="brand" href="./">Service<span>&amp;Go</span></a>
-    <a class="header-link" href="./" target="_blank" rel="noopener">Abrir app del cliente ↗</a>
+    <a class="brand" href="./" aria-label="Service&Go · Inicio">SERVICE<span>&amp;GO</span></a>
+    <a class="header-link" href="./" target="_blank" rel="noopener">Abrir app del cliente</a>
   </header>
   <main>
     <div class="hero">
       <div>
-        <p class="eyebrow">ÁREA DE SERVICIO</p>
+        <p class="eyebrow">EQUIPOS · DEMO LOCAL</p>
         <h1>Simulador de equipos</h1>
         <p>Usa esta pantalla junto a la app del cliente, en el mismo navegador.</p>
       </div>
-      <span class="demo">Modo simulación</span>
     </div>
     <p class="error" id="error" role="alert" hidden></p>
     <section class="panel" id="standby">
@@ -36,6 +35,7 @@
         <div><dt>Importe</dt><dd id="total"></dd></div>
         <div><dt>Máximo</dt><dd id="limit"></dd></div>
       </dl>
+      <progress class="budget" id="budget" aria-label="Importe consumido del máximo"></progress>
       <p id="activity" class="hint"></p>
       <form id="code-form" hidden>
         <label>Código de la app <input id="code" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]{6}" maxlength="6" required></label>
