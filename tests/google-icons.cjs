@@ -5,7 +5,7 @@ const leaflet=path.dirname(require.resolve('leaflet/dist/leaflet.js',{paths:[pro
 (async()=>{const b=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});try{
 const c=await b.newContext({viewport:{width:430,height:932},geolocation:{latitude:41.39,longitude:2.16}});const errors=[];
 c.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
-await c.route('**/*',r=>{const u=new URL(r.request().url());if(u.hostname==='unpkg.com'&&u.pathname.endsWith('leaflet.js'))return r.fulfill({path:path.join(leaflet,'leaflet.js'),contentType:'text/javascript'});if(u.hostname==='unpkg.com'&&u.pathname.endsWith('leaflet.css'))return r.fulfill({path:path.join(leaflet,'leaflet.css'),contentType:'text/css'});if(u.hostname!=='gasgo.test')return r.abort();const f=u.pathname.replace(/^\/GAS-GO\//,'')||'index.html';return r.fulfill({path:path.join(root,f),contentType:f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.html')?'text/html':undefined});});
+await c.route('**/*',r=>{const u=new URL(r.request().url());if(u.hostname==='unpkg.com'&&u.pathname.endsWith('leaflet.js'))return r.fulfill({path:path.join(leaflet,'leaflet.js'),contentType:'text/javascript'});if(u.hostname==='unpkg.com'&&u.pathname.endsWith('leaflet.css'))return r.fulfill({path:path.join(leaflet,'leaflet.css'),contentType:'text/css'});if(u.hostname!=='gasgo.test')return r.abort();const f=u.pathname.replace(/^\/GAS-GO\//,'')||'index.html';return r.fulfill({path:path.join(root,f),contentType:/\.m?js$/.test(f)?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.html')?'text/html':undefined});});
 const p=await c.newPage();await p.goto('https://gasgo.test/GAS-GO/');
 await p.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
 await p.evaluate(()=>{
@@ -23,7 +23,13 @@ await p.waitForFunction(()=>document.body.classList.contains('gg-full-icons'));
 assert.equal(await p.locator('.footnav .house [data-gg-icon="home"]').count(),1);
 assert.equal(await p.locator('#ggv2ConnectBtn [data-gg-icon="link"]').count(),1);
 await p.locator('.footnav .home').click();
-assert.equal(await p.locator('#menugrid .circle .gg-google-icon').count(),6);
+assert.equal(await p.locator('#menugrid .circle .gg-google-icon').count(),8);
+for(const [label,entry] of [['TAKE&GO','take-go'],['Service&Go','service-go']]){
+ const [app]=await Promise.all([c.waitForEvent('page'),p.locator('#menugrid').getByRole('link',{name:label,exact:true}).click()]);
+ await app.waitForURL(url=>url.origin==='https://gasgo.test'&&url.pathname==='/GAS-GO/'+entry+'/index.html');
+ assert.match(await app.title(),new RegExp(label,'i'));
+ await app.close();
+}
 await p.screenshot({path:'/workspace/gasgo-dev/full-google-menu.png'});
 await p.locator('#menugrid').getByRole('button',{name:/Mi garaje/}).click();
 await p.locator('.gg-vehicle-current [data-gg-icon="two_wheeler"]').waitFor();
