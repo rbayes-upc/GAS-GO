@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=10">
+  <link rel="stylesheet" href="./styles.css?v=11">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=6"></script>
+  <script type="module" src="./app.mjs?v=7"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -92,6 +92,46 @@
         </dl>
         <progress class="budget" id="budget" aria-label="Importe consumido del máximo"></progress>
         <p id="activity" class="hint"></p>
+        <article class="service-invoice" id="serviceInvoice" aria-label="Factura de Service&Go" hidden>
+          <header class="invoice-top">
+            <img src="./assets/logotipo-service-go-oscuro.png" alt="Service&amp;Go" width="1672" height="941">
+            <div><strong>Factura simulada</strong><time data-invoice="date"></time></div>
+            <small data-invoice="id"></small>
+          </header>
+          <div class="invoice-body">
+            <section>
+              <h3>Resumen del servicio</h3>
+              <dl class="invoice-grid invoice-summary">
+                <div><dt>Servicio</dt><dd data-invoice="service"></dd></div>
+                <div><dt>Equipo</dt><dd data-invoice="equipment"></dd></div>
+                <div><dt>Identificación</dt><dd data-invoice="identification"></dd></div>
+              </dl>
+            </section>
+            <section>
+              <h3>Datos de facturación</h3>
+              <dl class="invoice-grid">
+                <div><dt>Emisor</dt><dd>Service&amp;Go · Demostración</dd></div>
+                <div><dt>Cliente</dt><dd data-invoice="customer"></dd></div>
+                <div><dt>Vehículo</dt><dd data-invoice="vehicle"></dd></div>
+                <div><dt>Pago simulado</dt><dd data-invoice="payment"></dd></div>
+              </dl>
+            </section>
+            <section>
+              <h3>Detalle del servicio</h3>
+              <div class="invoice-detail">
+                <strong data-invoice="service"></strong>
+                <strong data-invoice="total"></strong>
+                <small>Tiempo activo <span data-invoice="duration"></span> · <span data-invoice="rate"></span></small>
+                <small data-invoice="reason"></small>
+              </div>
+            </section>
+            <dl class="invoice-total">
+              <div><dt>Importe máximo</dt><dd data-invoice="limit"></dd></div>
+              <div><dt>Total simulado</dt><dd data-invoice="total"></dd></div>
+            </dl>
+            <p class="invoice-notice">Documento ficticio · Sin validez fiscal</p>
+          </div>
+        </article>
         <div class="actions">
           <button class="primary" type="button" data-action="confirm" hidden>Confirmar identificación</button>
           <button type="button" data-action="cancel" hidden>Cancelar solicitud</button>

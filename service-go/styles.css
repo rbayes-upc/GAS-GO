@@ -264,3 +264,30 @@ body[data-view="equipment"] {
 #air-controls h3:not(:first-child) { margin-top: 12px; }
 #programs { display: grid; gap: 7px; }
 #programs button { width: 100%; text-align: left; }
+
+.service-invoice { margin-top: 14px; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; }
+.invoice-top {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 8px;
+  padding: 10px 12px; color: white; background: var(--deep); border-top: 4px solid var(--yellow);
+}
+.invoice-top img { display: block; width: 100%; max-width: 165px; height: 44px; object-fit: cover; }
+.invoice-top strong { display: block; padding: 4px 7px; border-radius: 8px; background: var(--yellow); color: var(--deep); font-size: .75rem; }
+.invoice-top time { display: block; margin-top: 3px; text-align: right; font-size: .72rem; }
+.invoice-top small { grid-column: 1 / -1; color: #dbe6f4; overflow-wrap: anywhere; }
+.invoice-body { padding: 12px; background: white; }
+.invoice-body h3 { margin: 0 0 6px; font-size: .82rem; text-transform: uppercase; letter-spacing: .035em; }
+.invoice-body section { margin-bottom: 14px; }
+.invoice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.invoice-grid div { min-width: 0; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); }
+.invoice-summary div { background: var(--tint); border-color: transparent; }
+.invoice-summary div:first-child { grid-column: 1 / -1; }
+.invoice-grid dt, .invoice-total dt { color: var(--muted); font-size: .72rem; }
+.invoice-grid dd, .invoice-total dd { margin: 2px 0 0; font-weight: 750; overflow-wrap: anywhere; }
+.invoice-detail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 6px; padding: 8px; border-block: 1px solid var(--line); }
+.invoice-detail small { grid-column: 1 / -1; }
+.invoice-total { display: flex; justify-content: space-between; gap: 8px; margin: 0; padding: 10px; background: var(--deep); color: white; border-radius: 10px; }
+.invoice-total dt { color: #dbe6f4; }
+.invoice-total dd { font-size: 1.15rem; }
+.invoice-total div:last-child { text-align: right; }
+.invoice-total div:last-child dd { color: var(--yellow); }
+.invoice-notice { margin-top: 10px; color: var(--muted); font-size: .72rem; }

@@ -1,5 +1,5 @@
 import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=3';
-import { money, receipt, timer } from './pdf.mjs?v=2';
+import { invoiceDetails, money, receipt, timer } from './pdf.mjs?v=3';
 import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 
 const key = 'service-go.session.v1';
@@ -115,6 +115,12 @@ function render(session) {
   for (const button of buttons) button.hidden = !visible[button.dataset.action];
 
   if (client) {
+    const invoice = $('serviceInvoice');
+    invoice.hidden = session.phase !== 'finished';
+    if (!invoice.hidden && (previous?.phase !== 'finished' || previous.id !== session.id)) {
+      const details = invoiceDetails(session);
+      for (const field of invoice.querySelectorAll('[data-invoice]')) setText(field, details[field.dataset.invoice]);
+    }
     $('client-code').hidden = !codeEntry;
     setText($('client-code'), codeEntry ? 'Código temporal · ' + session.code : '');
   } else {
@@ -158,14 +164,23 @@ function dispatch(action, value) {
   });
 }
 
-function download() {
+async function download(event) {
   if (shown?.phase !== 'finished') return;
-  const url = URL.createObjectURL(receipt(shown));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'service-go-' + shown.id + '.pdf';
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const session = shown;
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    const url = URL.createObjectURL(await receipt(session));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'service-go-' + session.id + '.pdf';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch {
+    showError(new Error('No se pudo generar la factura. Vuelve a intentarlo.'));
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function makeButton(text, action) {
