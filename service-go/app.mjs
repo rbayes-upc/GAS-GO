@@ -1,5 +1,6 @@
-import { act, advance, createSession, equipment, methods, programs, services, target, tires, vehicles } from './engine.mjs';
-import { money, receipt, timer } from './pdf.mjs';
+import { act, advance, createSession, equipment, methods, programs, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=2';
+import { money, receipt, timer } from './pdf.mjs?v=2';
+import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 
 const key = 'service-go.session.v1';
 const client = document.body.dataset.view === 'client';
@@ -85,9 +86,10 @@ function render(session) {
   const running = session.phase === 'running';
   const air = session.service === 'air';
   const codeEntry = identifying && session.method === 'code';
+  const labels = tireLabels(session);
   const activity = air
-    ? (running ? tires[session.tire] + ' · ' + bar(session.pressures[session.tire]) + ' → ' + bar(target(session, session.tire)) + ' · ' : '') +
-      session.completed.length + ' de 4 neumáticos ajustados'
+    ? (running ? labels[session.tire] + ' · ' + bar(session.pressures[session.tire]) + ' → ' + bar(target(session, session.tire)) + ' · ' : '') +
+      session.completed.length + ' de ' + labels.length + ' neumáticos ajustados'
     : (running ? programs[session.program] + ' · ' : '') + 'Tarifa de ' + money(services.wash.rate) + ' por segundo activo';
   setText($('activity'), activity);
 
@@ -115,7 +117,10 @@ function render(session) {
     $('wash-controls').hidden = air || !(ready || running);
     setText(document.querySelector('[data-action="pause"]'), air ? 'Desconectar boquilla' : 'Pausar pistola');
 
-    tireControls.forEach(({ pressure, button }, i) => {
+    tireControls.forEach(({ card, title, pressure, button }, i) => {
+      card.hidden = i >= labels.length;
+      if (card.hidden) return;
+      setText(title, labels[i]);
       setText(pressure, bar(session.pressures[i]) + ' / objetivo ' + bar(target(session, i)));
       setText(button, session.completed.includes(i) ? 'Ajustado' : session.tire === i ? 'Boquilla conectada' : 'Conectar boquilla');
       button.disabled = !ready || session.completed.includes(i);
@@ -156,6 +161,14 @@ function makeButton(text, action) {
   return button;
 }
 
+function readProfile() {
+  try {
+    return serviceProfile(JSON.parse(localStorage.getItem(gasgoStorageKey)));
+  } catch {
+    return serviceProfile(null);
+  }
+}
+
 const tireControls = [];
 const programControls = new Map();
 if (client) {
@@ -164,24 +177,33 @@ if (client) {
     render(shown);
     $('service-choice').focus();
   });
-  for (const [id, item] of Object.entries(vehicles)) $('vehicle').add(new Option(item.label, id));
   for (const [id, label] of Object.entries(methods)) $('method').add(new Option(label, id));
   function updateHint() {
-    const selected = vehicles[$('vehicle').value];
-    const form = $('reservation');
-    setText($('vehicle-hint'), new FormData(form).get('service') === 'air'
+    const profile = readProfile();
+    const selected = vehicles[profile.vehicle];
+    const form = new FormData($('reservation'));
+    setText($('profile-origin'), profile.linked ? 'Perfil de GAS&GO' : 'Perfil de demostración');
+    setText($('profile-name'), profile.name);
+    setText($('profile-vehicle'), profile.vehicleLabel);
+    setText($('profile-payment'), profile.payment);
+    setText($('limit-preview'), money(Math.round(Number(form.get('limit')) * 100)));
+    setText($('vehicle-hint'), form.get('service') === 'air'
       ? 'Objetivos simulados · delante ' + bar(selected.front) + ' · detrás ' + bar(selected.rear)
       : 'El agua, la espuma y el aclarado tienen la misma tarifa. Las pausas no se cobran.');
   }
-  $('reservation').addEventListener('change', updateHint);
+  $('reservation').addEventListener('input', updateHint);
+  addEventListener('storage', event => {
+    if (event.key === gasgoStorageKey || event.key === null) updateHint();
+  });
   updateHint();
   $('reservation').addEventListener('submit', event => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const profile = readProfile();
     update((current, now) => {
       if (current) return current;
       return createSession({
-        service: form.get('service'), vehicle: form.get('vehicle'), method: form.get('method'),
+        service: form.get('service'), vehicle: profile.vehicle, customer: profile, method: form.get('method'),
         limit: Math.round(Number(form.get('limit')) * 100), id: crypto.randomUUID(),
         code: String(100000 + crypto.getRandomValues(new Uint32Array(1))[0] % 900000),
       }, now);
@@ -197,7 +219,7 @@ if (client) {
     const button = makeButton('Conectar boquilla', () => dispatch('connect', i));
     card.append(title, pressure, button);
     $('tires').append(card);
-    tireControls.push({ pressure, button });
+    tireControls.push({ card, title, pressure, button });
   }
   for (const [program, name] of Object.entries(programs)) {
     const button = makeButton(name, () => dispatch('program', program));

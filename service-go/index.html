@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=7">
+  <link rel="stylesheet" href="./styles.css?v=8">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=3"></script>
+  <script type="module" src="./app.mjs?v=4"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -59,11 +59,19 @@
         </fieldset>
         <section class="panel setup" aria-labelledby="setup-title">
           <h2 id="setup-title">Tu sesión</h2>
-          <div class="fields">
-            <label>Vehículo <select name="vehicle" id="vehicle"></select></label>
-            <label>Importe máximo (€) <input name="limit" type="number" inputmode="decimal" min="0.50" max="50" step="0.01" value="3.00" required></label>
-            <label>Identificación <select name="method" id="method"></select></label>
-          </div>
+          <p class="hint" id="profile-origin"></p>
+          <dl class="session-profile">
+            <div><dt>Identidad</dt><dd id="profile-name"></dd></div>
+            <div><dt>Vehículo activo</dt><dd id="profile-vehicle"></dd></div>
+            <div><dt>Pago simulado</dt><dd id="profile-payment"></dd></div>
+          </dl>
+          <details class="session-options">
+            <summary>Opciones de sesión · máximo <span id="limit-preview">3,00 €</span></summary>
+            <div class="fields">
+              <label>Identificación <select name="method" id="method"></select></label>
+              <label>Importe máximo (€) <input name="limit" type="number" inputmode="decimal" min="0.50" max="50" step="0.01" value="3.00" required></label>
+            </div>
+          </details>
           <p class="hint" id="vehicle-hint"></p>
           <button class="primary" type="submit">Preparar servicio</button>
         </section>

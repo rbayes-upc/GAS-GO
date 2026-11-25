@@ -1,4 +1,5 @@
 export const vehicles = {
+  motorcycle: { label: 'Moto', front: 2.2, rear: 2.5 },
   city: { label: 'Urbano', front: 2.3, rear: 2.1 },
   suv: { label: 'SUV', front: 2.5, rear: 2.5 },
   van: { label: 'Furgoneta', front: 3.2, rear: 3.5 },
@@ -13,23 +14,27 @@ export const methods = {
   code: 'Código temporal',
 };
 export const tires = ['Delantero izquierdo', 'Delantero derecho', 'Trasero izquierdo', 'Trasero derecho'];
+const motorcycleTires = ['Delantero', 'Trasero'];
+export function tireLabels(session) {
+  return session.vehicle === 'motorcycle' ? motorcycleTires : tires;
+}
 export const programs = { water: 'Agua', foam: 'Espuma', rinse: 'Aclarado' };
 export const equipment = { air: 'A-01', wash: 'L-01' };
 
-export function createSession({ service, vehicle, method, limit, id, code }, now) {
+export function createSession({ service, vehicle, method, limit, id, code, customer }, now) {
   if (!Object.hasOwn(services, service) || !Object.hasOwn(vehicles, vehicle) ||
       !Object.hasOwn(methods, method) || !Number.isInteger(limit) || limit < 50 || limit > 5000) {
     throw new Error('Elige un servicio y fija un límite entre 0,50 € y 50,00 €.');
   }
   return {
-    service, vehicle, method, limit, id, code, created: now, expires: now + 90000,
-    phase: 'requested', elapsed: 0, total: 0, pressures: [1.8, 2.0, 1.9, 2.2],
+    service, vehicle, method, limit, id, code, customer, created: now, expires: now + 90000,
+    phase: 'requested', elapsed: 0, total: 0, pressures: vehicle === 'motorcycle' ? [1.8, 2.0] : [1.8, 2.0, 1.9, 2.2],
     completed: [], tire: null, program: 'water', runningSince: null,
   };
 }
 
 export function target(session, tire) {
-  return vehicles[session.vehicle][tire < 2 ? 'front' : 'rear'];
+  return vehicles[session.vehicle][tire < tireLabels(session).length / 2 ? 'front' : 'rear'];
 }
 
 function finish(session, now, reason) {
@@ -76,7 +81,9 @@ export function advance(session, now) {
     }
   }
   if (duration === untilLimit) return finish(updated, eventTime, 'Importe máximo alcanzado');
-  if (updated.completed.length === tires.length) return finish(updated, eventTime, 'Cuatro neumáticos ajustados');
+  if (updated.completed.length === tireLabels(updated).length) {
+    return finish(updated, eventTime, updated.vehicle === 'motorcycle' ? 'Dos neumáticos ajustados' : 'Cuatro neumáticos ajustados');
+  }
   return updated;
 }
 
@@ -97,7 +104,7 @@ export function act(session, action, value, now) {
       break;
     case 'connect':
       if (current.service === 'air' && current.phase === 'ready' &&
-          Number.isInteger(value) && value >= 0 && value < tires.length && !current.completed.includes(value)) {
+          Number.isInteger(value) && value >= 0 && value < tireLabels(current).length && !current.completed.includes(value)) {
         return advance({ ...current, tire: value, phase: 'running', runningSince: now }, now);
       }
       break;

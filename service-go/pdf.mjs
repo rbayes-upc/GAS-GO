@@ -1,4 +1,4 @@
-import { equipment, methods, services, vehicles } from './engine.mjs';
+import { equipment, methods, services, vehicles } from './engine.mjs?v=2';
 
 export const money = cents => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 export const timer = milliseconds => {
@@ -22,7 +22,8 @@ export function receipt(session) {
     ['Servicio: ' + services[session.service].label, 12],
     ['Equipo: ' + equipment[session.service], 12],
     ['Identificación: ' + methods[session.method], 12],
-    ['Vehículo: ' + vehicles[session.vehicle].label, 12],
+    ['Vehículo: ' + (session.customer?.vehicleLabel || vehicles[session.vehicle].label), 12],
+    ...(session.customer ? [['Cliente: ' + session.customer.name, 12], ['Pago simulado: ' + session.customer.payment, 12]] : []),
     ['Tiempo activo: ' + timer(session.elapsed), 12],
     ['Importe máximo: ' + money(session.limit), 12],
     ['Finalización: ' + session.reason, 12],

@@ -209,3 +209,13 @@ body[data-view="equipment"] {
   color: white;
   background: var(--blue);
 }
+
+.session-profile { margin: 0 0 13px; }
+.session-profile div { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.session-profile dt { color: var(--muted); flex-shrink: 0; }
+.session-profile dd { margin: 0; text-align: right; font-weight: 750; overflow-wrap: anywhere; }
+.session-options summary { padding: 10px 0; color: var(--blue); font-weight: 750; cursor: pointer; }
+.session-options .fields label:last-child { grid-column: auto; }
+@media (max-width: 375px) {
+  .session-options .fields { grid-template-columns: 1fr; }
+}
