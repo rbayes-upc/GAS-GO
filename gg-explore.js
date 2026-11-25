@@ -30,6 +30,19 @@ function displayPlaces(rows){
  $('ggPlaceStatus').textContent=rows.length?'Elige la zona que quieres explorar.':'No se han encontrado direcciones. Añade el municipio o prueba otra dirección.';
  $('ggPlaceResults').innerHTML=rows.map((p,i)=>`<button type="button" class="gg-place-result" onclick="ggExplore.place(${i})"><strong>${esc(p.label)}</strong><small>${esc(p.description)}</small></button>`).join('');
 }
+async function geocode(query,signal){
+ const key=text(query),cached=cache.get(key);
+ if(cached&&Date.now()-cached.time<3600000)return cached.rows;
+ if(Date.now()-lastRequest<1100)throw Error('rate');
+ lastRequest=Date.now();
+  const params=new URLSearchParams({format:'jsonv2',q:query,countrycodes:'es',limit:'5',addressdetails:'1','accept-language':'es'});
+  const response=await fetch(GEOCODER+'?'+params,{headers:{Accept:'application/json'},signal,credentials:'omit',referrerPolicy:'strict-origin-when-cross-origin'});
+  if(!response.ok)throw Error(response.status===429?'rate':'network');
+  const result=await response.json();if(!Array.isArray(result))throw Error('invalid');
+  const rows=result.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lon))&&Math.abs(Number(p.lat))<=90&&Math.abs(Number(p.lon))<=180).slice(0,5).map(p=>({lat:Number(p.lat),lng:Number(p.lon),label:String(p.display_name||p.name||query).split(',').slice(0,3).join(',').slice(0,150),description:String(p.display_name||p.name||query).slice(0,300)}));
+  cache.set(key,{time:Date.now(),rows});
+  return rows;
+}
 async function searchPlaces(){
  const input=$('ggPlaceQuery');if(!input||inPresentationDemo())return;
  const query=input.value.trim(),key=text(query);
@@ -38,16 +51,11 @@ async function searchPlaces(){
  $('ggPlaceResults').replaceChildren();const cached=cache.get(key);
  if(cached&&Date.now()-cached.time<3600000){displayPlaces(cached.rows);return}
  if(Date.now()-lastRequest<1100){$('ggPlaceStatus').textContent='Espera un momento antes de volver a buscar.';return}
- lastRequest=Date.now();const ctrl=new AbortController();searchRequest=ctrl;
+ const ctrl=new AbortController();searchRequest=ctrl;
  $('ggPlaceStatus').textContent='Buscando direcciones…';document.querySelector('#ggPlaceForm button').disabled=true;
  const timer=setTimeout(()=>ctrl.abort(),10000);
  try{
-  const params=new URLSearchParams({format:'jsonv2',q:query,countrycodes:'es',limit:'5',addressdetails:'1','accept-language':'es'});
-  const response=await fetch(GEOCODER+'?'+params,{headers:{Accept:'application/json'},signal:ctrl.signal,credentials:'omit',referrerPolicy:'strict-origin-when-cross-origin'});
-  if(!response.ok)throw Error(response.status===429?'rate':'network');
-  const result=await response.json();if(!Array.isArray(result))throw Error('invalid');
-  const rows=result.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lon))&&Math.abs(Number(p.lat))<=90&&Math.abs(Number(p.lon))<=180).slice(0,5).map(p=>({lat:Number(p.lat),lng:Number(p.lon),label:String(p.display_name||p.name||query).split(',').slice(0,3).join(',').slice(0,150),description:String(p.display_name||p.name||query).slice(0,300)}));
-  cache.set(key,{time:Date.now(),rows});if(valid())displayPlaces(rows);
+  const rows=await geocode(query,ctrl.signal);if(valid())displayPlaces(rows);
  }catch(error){if(valid())$('ggPlaceStatus').textContent=error.message==='rate'?'El servicio está ocupado. Espera unos segundos y vuelve a buscar.':error.name==='AbortError'?'La búsqueda tarda demasiado. Vuelve a intentarlo.':'No se ha podido buscar la dirección. Comprueba Internet y vuelve a intentarlo.'}
  finally{clearTimeout(timer);if(valid()){document.querySelector('#ggPlaceForm button').disabled=false;searchRequest=null}}
 }
@@ -102,13 +110,13 @@ window.render=function(){
  if(page!=='Home'||inPresentationDemo())return;
  renderComparison();
  const container=document.querySelector('.mapcontrols,.station-list-screen .list-summary');
- if(container){const button=document.createElement('button');button.type='button';button.className='map-filter-btn gg-compare-open';button.textContent='Comparar';button.addEventListener('click',()=>openComparison());container.append(button)}
+ if(container){const button=document.createElement('button');button.type='button';button.className='map-filter-btn gg-plan-open';button.textContent='Planificar';button.addEventListener('click',()=>window.ggRoute?.open());container.append(button)}
  if(area){
   const status=document.createElement('section');status.className='gg-search-area';status.setAttribute('aria-label','Zona explorada');
   status.innerHTML=`<div><strong>Explorando: ${esc(area.label)}</strong>${area.loading?'<small role="status">Buscando estaciones en esta zona…</small>':area.error?'<small role="alert">No se han podido actualizar todos los datos de esta zona.</small>':'<small>Distancias desde esta zona · tu ubicación no cambia.</small>'}</div>${area.error?'<button type="button" class="btn ghost" onclick="ggExplore.retryArea()">Reintentar</button>':''}<button type="button" class="gg-leave-area" onclick="ggExplore.leaveArea()" aria-label="Volver a la zona anterior">×</button>`;
   const card=document.querySelector('.gg-active-vehicle');if(card)card.after(status);
  }
 };
-window.ggExplore={locationRevision:()=>areaEpoch,place,station,compare:openComparison,comparedStation,more(){comparisonLimit+=10;renderComparison()},leaveArea,retryArea(){if(area)area.error=false;loadArea()}};
+window.ggExplore={geocode,locationRevision:()=>areaEpoch,place,station,compare:openComparison,comparedStation,more(){comparisonLimit+=10;renderComparison()},leaveArea,retryArea(){if(area)area.error=false;loadArea()}};
 render();
 })();

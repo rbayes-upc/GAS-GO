@@ -1,10 +1,10 @@
 /* Caché del shell de GAS&GO: actualizar VERSION al cambiar los archivos precargados. */
 'use strict';
-const VERSION='310';
+const VERSION='311';
 const BASE=new URL('./',self.location.href);
 const PREFIX='gasgo-shell-'+encodeURIComponent(BASE.pathname)+'-';
 const CACHE=PREFIX+VERSION;
-const ASSETS=["gg-demo-compact.css", "gg-driver.css", "gg-driver.js", "gg-ev.css", "gg-ev.js", "gg-explore.css", "gg-explore.js", "gg-google-icons-data.js", "gg-google-icons.css", "gg-google-icons.js", "gg-incidents.css", "gg-incidents.js", "gg-invoice.css", "gg-invoice.js", "gg-official.css", "gg-official.js", "gg-offline.js", "gg-plate.css", "gg-plate.js", "gg-preferences.css", "gg-preferences.js", "gg-theme-driver.css", "gg-timing.css", "gg-timing.js", "gg-ux.css", "gg-ux.js", "gg-wallet.css", "gg-wallet.js", "logo-cabecera-gg.png", "logo-gasgo-wordmark.png", "logo-gasgo.jpeg", "index.html", "logo-factura-cabecera.png", "logo-factura-pie.png"];
+const ASSETS=["gg-demo-compact.css", "gg-driver.css", "gg-driver.js", "gg-ev.css", "gg-ev.js", "gg-explore.css", "gg-explore.js", "gg-route.js", "gg-google-icons-data.js", "gg-google-icons.css", "gg-google-icons.js", "gg-incidents.css", "gg-incidents.js", "gg-invoice.css", "gg-invoice.js", "gg-official.css", "gg-official.js", "gg-offline.js", "gg-plate.css", "gg-plate.js", "gg-preferences.css", "gg-preferences.js", "gg-theme-driver.css", "gg-timing.css", "gg-timing.js", "gg-ux.css", "gg-ux.js", "gg-wallet.css", "gg-wallet.js", "logo-cabecera-gg.png", "logo-gasgo-wordmark.png", "logo-gasgo.jpeg", "index.html", "logo-factura-cabecera.png", "logo-factura-pie.png"];
 const paths=new Set(ASSETS.map(p=>new URL(p,BASE).pathname));
 const indexURL=new URL('index.html',BASE).href;
 const metaURL=new URL('__gasgo_offline_metadata__',BASE).href;
