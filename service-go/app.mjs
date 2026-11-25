@@ -172,6 +172,32 @@ function readProfile() {
 const tireControls = [];
 const programControls = new Map();
 if (client) {
+  const issueForm = $('issueForm');
+  $('openIssue').addEventListener('click', () => $('issueDialog').showModal());
+  issueForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const fields = new FormData(issueForm);
+    const button = event.submitter;
+    button.disabled = true;
+    const issue = {
+      reason: fields.get('reason'), details: String(fields.get('details')).trim(),
+      sessionId: shown?.id ?? null, createdAt: Date.now(),
+    };
+    const issueKey = 'service-go.issues.v1';
+    try {
+      await navigator.locks.request(issueKey, () => {
+        const issues = JSON.parse(localStorage.getItem(issueKey) || '[]');
+        localStorage.setItem(issueKey, JSON.stringify([...issues, issue]));
+      });
+      issueForm.reset();
+      setText($('issueStatus'), 'Incidencia guardada en este navegador.');
+    } catch {
+      setText($('issueStatus'), 'No se pudo guardar la incidencia. Vuelve a intentarlo.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+  $('issueDialog').addEventListener('close', () => setText($('issueStatus'), ''));
   $('startService').addEventListener('click', () => {
     configuring = true;
     render(shown);

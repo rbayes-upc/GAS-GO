@@ -5,16 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=8">
+  <link rel="stylesheet" href="./styles.css?v=9">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=4"></script>
+  <script type="module" src="./app.mjs?v=5"></script>
 </head>
 <body data-view="client">
   <div class="device">
     <div class="phone-status" aria-hidden="true"><span>9:41</span><span>●●● ▰ Wi-Fi ▣</span></div>
     <header class="topbar">
       <a class="brand" href="./" aria-label="Service&Go · Inicio"><img src="./assets/monograma-service-go-oscuro.png" alt="" width="1672" height="941"></a>
-      <span class="demo">DEMO</span>
+      <button type="button" class="issue-icon" id="openIssue" aria-label="Incidencias" title="Incidencias">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5m0 3h.01"/>
+        </svg>
+      </button>
     </header>
     <main>
       <p class="error" id="error" role="alert" hidden></p>
@@ -102,5 +106,24 @@
       <a class="header-link" href="./equipo.html" target="_blank" rel="noopener">Abrir simulador</a>
     </nav>
   </div>
+  <dialog class="issue-dialog" id="issueDialog" aria-labelledby="issue-title">
+    <h2 id="issue-title">Comunicar una incidencia</h2>
+    <p class="hint">El aviso se guarda en este navegador como parte de la demostración.</p>
+    <form id="issueForm">
+      <label>Motivo
+        <select name="reason" required>
+          <option value="">Selecciona un motivo</option>
+          <option>Problema con el inflador</option>
+          <option>Problema con el box de lavado</option>
+          <option>Problema con el importe o la factura</option>
+          <option>Otro motivo</option>
+        </select>
+      </label>
+      <label>Detalles (opcional)<textarea name="details" rows="3" maxlength="500"></textarea></label>
+      <button class="primary" type="submit">Guardar incidencia</button>
+    </form>
+    <p id="issueStatus" class="hint" role="status"></p>
+    <form method="dialog"><button type="submit">Cerrar</button></form>
+  </dialog>
 </body>
 </html>

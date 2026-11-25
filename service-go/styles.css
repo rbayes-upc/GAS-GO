@@ -25,10 +25,17 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .topbar :focus-visible { outline-color: var(--yellow); }
 .brand { display: inline-flex; align-items: center; flex-shrink: 0; height: 62px; overflow: hidden; }
 .brand img { display: block; width: 124px; height: auto; }
-.demo {
-  color: var(--yellow); background: #ffdf2e14; border: 1px solid #ffdf2e80;
-  border-radius: 99px; padding: 5px 11px; font-size: .72rem; font-weight: 850; letter-spacing: .09em;
+.issue-icon {
+  display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  color: var(--yellow); background: transparent; border: 1px solid currentColor; border-radius: 12px;
 }
+.issue-dialog {
+  width: min(400px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 20px;
+  border: 1px solid var(--line); border-radius: 17px; background: var(--paper); color: var(--ink);
+}
+.issue-dialog::backdrop { background: #101f3c80; }
+.issue-dialog label { display: grid; gap: 5px; margin-bottom: 12px; font-weight: 750; }
+.issue-dialog textarea { width: 100%; border: 1px solid #a7b9cf; border-radius: 9px; padding: 8px; font: inherit; }
 body[data-view="client"] { min-height: 100dvh; background: var(--paper); }
 .device {
   width: 100%; max-width: 440px; height: 100dvh; margin: auto;
