@@ -90,3 +90,12 @@
 .issue-new { margin-bottom: 16px; }
 .issue-stage { margin-top: 8px; }
 .store-header-right:has(.issue-icon) { flex-wrap: wrap; }
+
+.gasgo-return {
+  flex-shrink: 0; display: flex; justify-content: flex-end;
+  padding: 0 20px; border-bottom: 1px solid var(--line);
+}
+.gasgo-return a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  font-size: 12px; font-weight: 750; text-underline-offset: 3px;
+}

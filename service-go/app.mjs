@@ -15,6 +15,7 @@ function formatPressure(value, unit = 'BAR') {
 const buttons = [...document.querySelectorAll('button[data-action]')];
 let shown;
 let configuring = false;
+let viewingWelcome = false;
 
 function read() {
   return JSON.parse(localStorage.getItem(key));
@@ -72,10 +73,12 @@ function status(session) {
 function render(session) {
   const previous = shown;
   shown = session;
-  $('session').hidden = !session;
+  $('session').hidden = !session || viewingWelcome;
   if (client) {
-    $('welcome').hidden = Boolean(session) || configuring;
-    $('reservation').hidden = Boolean(session) || !configuring;
+    $('welcome').hidden = !viewingWelcome && (Boolean(session) || configuring);
+    $('reservation').hidden = viewingWelcome || Boolean(session) || !configuring;
+    $('backService').hidden = !$('welcome').hidden;
+    setText($('startService'), session ? 'Continuar sesión' : 'Probar Service&Go');
   } else {
     $('standby').hidden = Boolean(session);
   }
@@ -227,13 +230,33 @@ if (client) {
     event.preventDefault();
     showEquipment(true);
   });
-  $('closeEquipment').addEventListener('click', async () => {
-    await update((current, now) => current?.phase === 'running' ? act(current, 'pause', null, now) : current);
+  function pauseSession() {
+    return update((current, now) => current?.phase === 'running' ? act(current, 'pause', null, now) : current);
+  }
+  function hideEquipment() {
     pane.querySelector('iframe')?.remove();
     pane.hidden = true;
     document.body.classList.remove('equipment-open');
     sessionStorage.removeItem('service-go.equipment-open');
+  }
+  $('closeEquipment').addEventListener('click', async () => {
+    await pauseSession();
+    hideEquipment();
     opener.focus();
+  });
+  $('backService').addEventListener('click', async () => {
+    await pauseSession();
+    hideEquipment();
+    configuring = false;
+    viewingWelcome = true;
+    render(shown);
+    $('welcome-title').focus();
+  });
+  $('returnGasgo').addEventListener('click', async event => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || shown?.phase !== 'running') return;
+    event.preventDefault();
+    await pauseSession();
+    location.assign($('returnGasgo').href);
   });
   if (sessionStorage.getItem('service-go.equipment-open') === '1') showEquipment();
   const issueForm = $('issueForm');
@@ -264,8 +287,10 @@ if (client) {
   $('issueDialog').addEventListener('close', () => setText($('issueStatus'), ''));
   $('startService').addEventListener('click', () => {
     configuring = true;
+    viewingWelcome = false;
     render(shown);
-    $('service-choice').focus();
+    if (shown && !terminal.includes(shown.phase)) showEquipment();
+    $(shown ? 'service-title' : 'service-choice').focus();
   });
   for (const [id, label] of Object.entries(methods)) $('method').add(new Option(label, id));
   function updateHint() {

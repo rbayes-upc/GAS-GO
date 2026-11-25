@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=11">
+  <link rel="stylesheet" href="./styles.css?v=12">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=10"></script>
+  <script type="module" src="./app.mjs?v=11"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -20,11 +20,15 @@
         </svg>
       </button>
     </header>
+    <nav class="return-links" aria-label="Navegación de Service&Go">
+      <button type="button" id="backService" hidden><span aria-hidden="true">← </span>Volver</button>
+      <a id="returnGasgo" href="../index.html">Volver a Gas&amp;Go</a>
+    </nav>
     <main>
       <p class="error" id="error" role="alert" hidden></p>
       <section id="welcome" class="welcome" aria-labelledby="welcome-title">
         <img src="./assets/logotipo-service-go.png" alt="Service&amp;Go" width="2169" height="725">
-        <h1 id="welcome-title">Cuida tu coche y sigue tu viaje</h1>
+        <h1 id="welcome-title" tabindex="-1">Cuida tu coche y sigue tu viaje</h1>
         <p>Lava el coche o infla las ruedas sin complicaciones.</p>
         <ul class="welcome-services">
           <li>
@@ -82,7 +86,7 @@
       </form>
       <section class="panel session" id="session" aria-labelledby="service-title" hidden>
         <p class="eyebrow" id="equipment-name"></p>
-        <h2 id="service-title"></h2>
+        <h2 id="service-title" tabindex="-1"></h2>
         <p class="status" id="status" role="status"></p>
         <p class="code" id="client-code" hidden></p>
         <dl class="metrics">

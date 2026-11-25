@@ -291,3 +291,15 @@ body[data-view="equipment"] {
 .invoice-total div:last-child { text-align: right; }
 .invoice-total div:last-child dd { color: var(--yellow); }
 .invoice-notice { margin-top: 10px; color: var(--muted); font-size: .72rem; }
+
+.return-links {
+  flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; padding-inline: 16px; border-bottom: 1px solid var(--line);
+}
+.return-links button {
+  border: 0; background: transparent; padding-inline: 0; font-size: .83rem;
+}
+.return-links a {
+  display: inline-flex; align-items: center; min-height: 44px; margin-left: auto;
+  color: var(--blue); font-size: .83rem; font-weight: 800; text-underline-offset: 3px;
+}
