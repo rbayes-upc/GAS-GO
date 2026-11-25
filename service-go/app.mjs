@@ -1,4 +1,4 @@
-import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=5';
+import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=6';
 import { invoiceDetails, money, receipt, tariffLabel, timer } from './pdf.mjs?v=5';
 import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 

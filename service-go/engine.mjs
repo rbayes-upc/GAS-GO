@@ -101,7 +101,7 @@ export function advance(session, now) {
       ? desired : current + Math.sign(desired - current) * duration / 5000;
     if (duration === untilTarget) {
       updated.completed = [...new Set([...session.completed, session.tire])];
-      updated = { ...updated, phase: 'ready', runningSince: null, tire: null, selectedTire: null, pressureDraft: null, pressureGoal: null };
+      updated = { ...updated, phase: 'ready', runningSince: null, tire: null, selectedTire: null };
     }
   }
   if (duration === untilLimit) return finish(updated, eventTime, 'Importe máximo alcanzado');
@@ -133,7 +133,7 @@ export function act(session, action, value, now) {
       if (current.service === 'air' && current.phase === 'ready' &&
           Number.isInteger(value) && value >= 0 && value < tireLabels(current).length) {
         if (value === selectedWheel(current)) return current;
-        return { ...current, selectedTire: value, pressureDraft: null, pressureGoal: null };
+        return { ...current, selectedTire: value };
       }
       break;
     case 'adjust-pressure':

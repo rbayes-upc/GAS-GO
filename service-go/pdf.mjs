@@ -1,4 +1,4 @@
-import { equipment, methods, services, sessionTariff, vehicles } from './engine.mjs?v=5';
+import { equipment, methods, services, sessionTariff, vehicles } from './engine.mjs?v=6';
 
 export const money = cents => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 export function tariffLabel(session) {
