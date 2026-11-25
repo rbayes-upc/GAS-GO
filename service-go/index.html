@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=12">
+  <link rel="stylesheet" href="./styles.css?v=13">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=11"></script>
+  <script type="module" src="./app.mjs?v=12"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -148,6 +148,11 @@
     <nav class="app-footer" aria-label="Accesos de Service&Go">
       <span>Servicios simulados</span>
       <a class="header-link" id="openEquipment" href="./equipo.html">Abrir simulador</a>
+    </nav>
+    <nav class="operations-nav" aria-label="Operaciones de Service&Go">
+      <button type="button" data-operation="home" aria-current="page"><span class="operation-icon operation-home" aria-hidden="true"></span>Inicio</button>
+      <button type="button" data-operation="air"><span class="operation-icon equipment-icon wheel" aria-hidden="true"></span>Inflar</button>
+      <button type="button" data-operation="wash"><span class="operation-icon equipment-icon wash" aria-hidden="true"></span>Lavar</button>
     </nav>
   </div>
   <section class="equipment-pane" id="equipmentPane" aria-labelledby="equipmentPaneTitle" hidden>

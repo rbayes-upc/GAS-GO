@@ -303,3 +303,24 @@ body[data-view="equipment"] {
   display: inline-flex; align-items: center; min-height: 44px; margin-left: auto;
   color: var(--blue); font-size: .83rem; font-weight: 800; text-underline-offset: 3px;
 }
+
+.operations-nav {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); flex-shrink: 0;
+  padding: 5px 8px max(5px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line);
+}
+.operations-nav button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border: 0; background: transparent; color: var(--muted); font-size: .75rem; padding: 4px;
+}
+.operations-nav button[aria-current="page"] { color: var(--deep); }
+.operation-icon {
+  position: relative; display: block; width: 26px; height: 24px; flex: 0 0 24px;
+  border-radius: 6px; background: transparent;
+}
+.operations-nav button[aria-current="page"] .operation-icon { background: var(--yellow); }
+.operation-home::after {
+  content: ''; position: absolute; inset: 4px 6px; background: var(--deep);
+  clip-path: polygon(50% 0, 100% 40%, 91% 51%, 86% 47%, 86% 100%, 60% 100%, 60% 68%, 40% 68%, 40% 100%, 14% 100%, 14% 47%, 9% 51%, 0 40%);
+}
+.operation-icon.wheel::after { inset: 4px 5px; border-width: 4px; }
+.operation-icon.wash::after { width: 9px; height: 13px; top: 5px; left: 9px; }

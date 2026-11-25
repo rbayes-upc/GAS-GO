@@ -79,6 +79,11 @@ function render(session) {
     $('reservation').hidden = viewingWelcome || Boolean(session) || !configuring;
     $('backService').hidden = !$('welcome').hidden;
     setText($('startService'), session ? 'Continuar sesión' : 'Probar Service&Go');
+    const operation = !$('welcome').hidden ? 'home' : session?.service ?? $('reservation').elements.service.value;
+    for (const button of document.querySelectorAll('[data-operation]')) {
+      if (button.dataset.operation === operation) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    }
   } else {
     $('standby').hidden = Boolean(session);
   }
@@ -244,14 +249,17 @@ if (client) {
     hideEquipment();
     opener.focus();
   });
-  $('backService').addEventListener('click', async () => {
+  async function showWelcome() {
+    if (!$('welcome').hidden) return;
     await pauseSession();
     hideEquipment();
     configuring = false;
     viewingWelcome = true;
     render(shown);
     $('welcome-title').focus();
-  });
+  }
+  $('backService').addEventListener('click', showWelcome);
+  document.querySelector('[data-operation="home"]').addEventListener('click', showWelcome);
   $('returnGasgo').addEventListener('click', async event => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || shown?.phase !== 'running') return;
     event.preventDefault();
@@ -285,13 +293,28 @@ if (client) {
     }
   });
   $('issueDialog').addEventListener('close', () => setText($('issueStatus'), ''));
-  $('startService').addEventListener('click', () => {
+  function openOperation(service) {
+    if (service && !shown) {
+      $('reservation').elements.service.value = service;
+      updateHint();
+    }
     configuring = true;
     viewingWelcome = false;
     render(shown);
     if (shown && !terminal.includes(shown.phase)) showEquipment();
     $(shown ? 'service-title' : 'service-choice').focus();
-  });
+    if (service && shown && shown.service !== service) {
+      showError(new Error(terminal.includes(shown.phase)
+        ? 'Pulsa «Nueva sesión» para elegir otro servicio.'
+        : 'Finaliza la sesión actual antes de cambiar de servicio.'));
+    } else {
+      showError(null);
+    }
+  }
+  $('startService').addEventListener('click', () => openOperation());
+  for (const button of document.querySelectorAll('[data-operation]:not([data-operation="home"])')) {
+    button.addEventListener('click', () => openOperation(button.dataset.operation));
+  }
   for (const [id, label] of Object.entries(methods)) $('method').add(new Option(label, id));
   function updateHint() {
     const profile = readProfile();
@@ -306,7 +329,10 @@ if (client) {
       ? 'Objetivos simulados · delante ' + formatPressure(selected.front) + ' · detrás ' + formatPressure(selected.rear)
       : 'Todos los programas tienen la misma tarifa. Las pausas no se cobran.');
   }
-  $('reservation').addEventListener('input', updateHint);
+  $('reservation').addEventListener('input', event => {
+    updateHint();
+    if (event.target.name === 'service') render(shown);
+  });
   addEventListener('storage', event => {
     if (event.key === gasgoStorageKey || event.key === null) updateHint();
   });
