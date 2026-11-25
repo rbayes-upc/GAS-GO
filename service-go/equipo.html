@@ -3,14 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101f3c">
+  <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · Simulador de equipos</title>
-  <link rel="stylesheet" href="./styles.css?v=2">
+  <link rel="stylesheet" href="./styles.css?v=3">
+  <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
   <script type="module" src="./app.mjs?v=2"></script>
 </head>
 <body data-view="equipment">
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Service&Go · Inicio">SERVICE<span>&amp;GO</span></a>
+    <a class="brand" href="./" aria-label="Service&Go · Inicio"><img src="./assets/monograma-service-go.png" alt="" width="144" height="72"></a>
+    <span class="terminal-brand">Service&amp;Go</span>
     <a class="header-link" href="./" target="_blank" rel="noopener">Abrir app del cliente</a>
   </header>
   <main>
@@ -24,7 +26,11 @@
     <p class="error" id="error" role="alert" hidden></p>
     <section class="panel" id="standby">
       <h2>Esperando una solicitud</h2>
-      <p>Prepara un servicio en la app del cliente para activar el inflador o el box de lavado.</p>
+      <p>Prepara un servicio en la app del cliente.</p>
+      <div class="equipment-list">
+        <div><span class="equipment-icon wheel" aria-hidden="true"></span><span><strong>Inflador de neumáticos</strong><small>Equipo A-01 · Presión por rueda</small></span></div>
+        <div><span class="equipment-icon wash" aria-hidden="true"></span><span><strong>Box de lavado</strong><small>Equipo L-01 · Agua, espuma y aclarado</small></span></div>
+      </div>
     </section>
     <section class="panel session" id="session" aria-labelledby="service-title" hidden>
       <p class="eyebrow" id="equipment-name"></p>
