@@ -36,3 +36,6 @@
 .gg-route-picked:empty { display:none }
 .gg-route-picked li { padding:4px 0 }
 .gg-route-picked button { margin-left:6px }
+.gg-route-export [hidden] { display:none }
+.gg-route-waze-legs { margin:10px 0 }
+.gg-route-waze-legs summary { cursor:pointer;font-weight:750 }

@@ -7,7 +7,12 @@ const maxStops = 3;
 const pageSize = 5;
 const formatPrice = value => value.toLocaleString('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' €/L';
 const number = value => value == null || String(value).trim() === '' ? NaN : Number(String(value).replace(',', '.'));
-const defaultFuel = () => (data.customVehicle?.combustionFuel || data.fuel) === 'Diésel' ? 'diesel' : 'gas';
+function vehicleFuel() {
+  const vehicle = data.customVehicle?.name === data.vehicle ? data.customVehicle : null;
+  const fuel = vehicle?.fuel === 'Híbrido enchufable' ? vehicle.combustionFuel : vehicle?.fuel ?? data.fuel;
+  if (fuel === 'Eléctrico') return null;
+  return fuel === 'Diésel' ? 'diesel' : 'gas';
+}
 const filters = fuel => ({ fuel, priceFrom: null, priceTo: null, kmFrom: null, kmTo: null });
 const esc = escapeHtml;
 const point = p => p.lat + ',' + p.lng;
@@ -107,7 +112,7 @@ async function pricedStations(points, signal) {
   return { elements, source: 'Punto Muerto', partial: partial || signal.aborted };
 }
 
-async function fuelStations(points, signal) {
+async function fuelStations({ points, distance: tripDistance }, signal) {
   const coordinates = points.map(p => L.point(p.lng * 111320, p.lat * 111320));
   let tolerance = 100;
   let simplified = L.LineUtil.simplify(coordinates, tolerance);
@@ -131,6 +136,9 @@ async function fuelStations(points, signal) {
     if (!Array.isArray(body.elements) || body.remark) throw Error('Consulta incompleta');
   }
   const segments = routeSegments(points);
+  const last = segments.at(-1);
+  const length = last.length + last.meters;
+  const scale = length > 0 ? tripDistance / length : 1;
   const stations = [];
   const seen = new Set();
   for (const item of body.elements) {
@@ -141,7 +149,7 @@ async function fuelStations(points, signal) {
     seen.add(key);
     const station = { lat, lng, prices: item.prices ?? {}, label: String(item.tags?.name || item.tags?.brand || 'Gasolinera').slice(0, 100) };
     const nearest = locate(station, segments);
-    if (nearest.offset <= corridor) stations.push({ ...station, ...nearest });
+    if (nearest.offset <= corridor) stations.push({ ...station, ...nearest, along: nearest.along * scale });
   }
   return { stations: stations.sort((a, b) => a.along - b.along), source, partial };
 }
@@ -214,7 +222,24 @@ function googleUrl(current) {
 
 function updateExport(current) {
   current.root.querySelector('.gg-route-count').textContent = current.stops.length + ' de ' + maxStops + ' paradas seleccionadas';
-  current.root.querySelector('.gg-route-google').href = googleUrl(current);
+  const root = current.root;
+  const stops = orderedStops(current);
+  root.querySelector('.gg-route-google').href = googleUrl(current);
+  const apple = new URL('https://maps.apple.com/directions');
+  apple.search = new URLSearchParams({
+    source: point(current.origin), destination: point(current.destination), mode: 'driving',
+  });
+  for (const stop of stops) apple.searchParams.append('waypoint', point(stop));
+  root.querySelector('.gg-route-apple').href = apple.href;
+
+  const waze = target => 'https://waze.com/ul?' + new URLSearchParams({ ll: point(target), navigate: 'yes' });
+  const direct = root.querySelector('.gg-route-waze');
+  direct.hidden = stops.length > 0;
+  direct.href = waze(current.destination);
+  const legs = root.querySelector('.gg-route-waze-legs');
+  legs.hidden = !stops.length;
+  legs.querySelector('ol').innerHTML = [...stops, current.destination].map((target, i) =>
+    `<li><a href="${esc(waze(target))}" target="_blank" rel="noopener">${i < stops.length ? 'Parada ' + (i + 1) + ' · ' : 'Destino · '}${esc(target.label)}</a></li>`).join('');
 }
 
 function downloadGpx(current) {
@@ -250,9 +275,17 @@ function refreshStops(current) {
 
 function renderResults(current, failed) {
   const node = current.root.querySelector('.gg-route-results');
+  const { fuel } = current.filters;
+  const fuelLabel = fuel === 'diesel' ? 'Diésel A' : fuel === 'gas' ? 'Gasolina 95' : 'Vehículo eléctrico';
+  const prices = current.stations.map(station => station.prices[fuel]).filter(price => price > 0);
+  const low = prices.length ? Math.min(...prices) : null;
+  const high = prices.length ? Math.max(...prices) : null;
+  const lastKm = Math.ceil(current.route.distance / 100) / 10;
   const fields = [
-    ['priceFrom', 'Precio desde (€/L)', '0.001'], ['priceTo', 'Precio hasta (€/L)', '0.001'],
-    ['kmFrom', 'Km del viaje desde', '0.1'], ['kmTo', 'Km del viaje hasta', '0.1'],
+    ['priceFrom', 'Precio desde (€/L)', low, high, '0.001', low],
+    ['priceTo', 'Precio hasta (€/L)', low, high, '0.001', high],
+    ['kmFrom', 'Km del viaje desde', 0, lastKm, '0.1', 0],
+    ['kmTo', 'Km del viaje hasta', 0, lastKm, '0.1', lastKm],
   ];
   node.innerHTML = `<h3>Gasolineras en el trayecto</h3><p class="small muted">${formatDistance(current.route.distance)} de ruta. Distancias a la ruta en línea recta.</p>
     ${failed ? '<p role="status">No se han podido cargar las gasolineras. Puedes abrir la ruta o reintentar.</p><button class="btn ghost" type="button" data-route-retry>Reintentar gasolineras</button>' : ''}
@@ -260,20 +293,20 @@ function renderResults(current, failed) {
       <p class="small muted">${current.stations.length} gasolineras a hasta 10 km de la ruta · ${esc(current.source ?? '')}.</p>
       <button class="btn ghost" type="button" data-route-filter aria-expanded="false" aria-controls="ggRouteFilters">Filtros</button>
       <form id="ggRouteFilters" hidden>
-        <label>Combustible<select name="fuel"><option value="gas">Gasolina 95</option><option value="diesel">Diésel A</option></select></label>
-        <div class="gg-route-filter-fields">${fields.map(([id, label, step]) => `<label>${label}<input name="${id}" type="number" min="0" step="${step}" inputmode="decimal"></label>`).join('')}</div>
+        <p><strong>${fuelLabel}</strong> · vehículo activo</p>
+        ${low === null ? '<p class="small muted">No hay precios disponibles para este vehículo en la ruta.</p>' : ''}
+        <div class="gg-route-filter-fields">${fields.filter(([, , min]) => min !== null).map(([id, label, min, max, step, value]) => `<label>${label}<input name="${id}" type="number" min="${min}" max="${max}" step="${step}" value="${value}" inputmode="decimal"></label>`).join('')}</div>
         <p class="small muted" role="alert"></p>
         <button class="btn primary" type="submit">Aplicar filtros</button>
-        <button class="btn ghost" type="reset">Limpiar</button>
+        <button class="btn ghost" type="reset">Restablecer</button>
       </form>
       <fieldset class="gg-route-stops" aria-label="Elige hasta tres paradas"></fieldset>
       <div class="gg-route-paging"><button type="button" class="btn ghost" data-route-prev>Anteriores</button><span></span><button type="button" class="btn ghost" data-route-next>Siguientes</button></div>
     </div>${!failed && !current.stations.length ? '<p>No se encontraron gasolineras cerca de este trayecto.</p>' : ''}
     ${current.partial ? '<p class="small muted">Hay tramos sin datos. Puedes seleccionar las gasolineras disponibles.</p>' : ''}
     <p class="gg-route-count small muted" role="status"></p><ol class="gg-route-picked"></ol>
-    <div class="gg-route-export"><a class="btn primary gg-route-google" target="_blank" rel="noopener">Abrir en Google Maps</a><button class="btn ghost" type="button" data-route-gpx>Descargar GPX</button></div><p class="small muted">El navegador recalculará el trayecto con las paradas elegidas. El GPX incluye el origen, las paradas y el destino en orden.</p>`;
+    <div class="gg-route-export"><a class="btn primary gg-route-google" target="_blank" rel="noopener">Abrir en Google Maps</a><a class="btn ghost gg-route-apple" target="_blank" rel="noopener">Apple Maps</a><a class="btn ghost gg-route-waze" target="_blank" rel="noopener">Waze</a><button class="btn ghost" type="button" data-route-gpx>Descargar GPX</button></div><details class="gg-route-waze-legs" hidden><summary>Waze · abrir por etapas</summary><p class="small muted">Abre cada parada en orden. Waze navega a un destino por enlace.</p><ol></ol></details><p class="small muted">El navegador recalculará el trayecto con las paradas elegidas. El GPX incluye el origen, las paradas y el destino en orden.</p>`;
   const form = node.querySelector('#ggRouteFilters'), filterButton = node.querySelector('[data-route-filter]');
-  form.elements.fuel.value = current.filters.fuel;
   filterButton.onclick = () => {
     form.hidden = !form.hidden;
     filterButton.setAttribute('aria-expanded', String(!form.hidden));
@@ -286,8 +319,11 @@ function renderResults(current, failed) {
   };
   form.onsubmit = event => {
     event.preventDefault();
-    const next = filters(form.elements.fuel.value);
-    for (const [name] of fields) next[name] = form.elements[name].value === '' ? null : form.elements[name].valueAsNumber;
+    const next = filters(fuel);
+    for (const [name, , , , , initial] of fields) {
+      const value = form.elements[name]?.valueAsNumber;
+      if (Number.isFinite(value) && value !== initial) next[name] = value;
+    }
     const error = form.querySelector('[role=alert]');
     if (['price', 'km'].some(key => next[key + 'From'] !== null && next[key + 'To'] !== null && next[key + 'From'] > next[key + 'To'])) {
       error.textContent = 'El mínimo debe ser menor o igual que el máximo.';
@@ -297,12 +333,9 @@ function renderResults(current, failed) {
     apply(next);
     filterButton.click();
   };
-  form.onreset = event => {
-    event.preventDefault();
-    for (const [name] of fields) form.elements[name].value = '';
-    form.elements.fuel.value = defaultFuel();
+  form.onreset = () => {
     form.querySelector('[role=alert]').textContent = '';
-    apply(filters(defaultFuel()));
+    apply(filters(fuel));
   };
   node.querySelector('.gg-route-stops').onchange = event => {
     if (event.target.matches('input[type=checkbox]')) {
@@ -334,7 +367,7 @@ async function plan(current, destination) {
   current.stops = [];
   current.stations = [];
   current.partial = false;
-  current.filters = filters(defaultFuel());
+  current.filters = filters(vehicleFuel());
   current.page = 0;
   current.status.textContent = 'Calculando la ruta…';
   current.root.querySelector('.gg-route-results').replaceChildren();
@@ -350,7 +383,7 @@ async function plan(current, destination) {
     current.status.textContent = 'Buscando gasolineras cerca de la ruta…';
     let failed = false;
     try {
-      const found = await fuelStations(current.route.points, signal);
+      const found = await fuelStations(current.route, signal);
       if (selected()) Object.assign(current, found);
     }
     catch { failed = true; }

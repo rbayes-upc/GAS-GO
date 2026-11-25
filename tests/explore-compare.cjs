@@ -30,8 +30,8 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
    if(plannerQuery&&u.searchParams.get('limit')==='800'){
     if(!plannerFallback)return r.fulfill({status:503,body:'unavailable'});
     return r.fulfill({json:{estaciones:[
-     {lat:'41,6',lng:'2,4',rotulo:'Parada alternativa',precios:{g95e5:'1,45'}},
-     ...Array.from({length:5},(_,i)=>({lat:41.65+i*.05,lng:2.45+i*.05,rotulo:'Estación '+(i+2),precios:{g95e5:1.5+i*.05}})),
+     {lat:'41,6',lng:'2,4',rotulo:'Parada alternativa',precios:{g95e5:1.85,'gasoleo-a':'1,45'}},
+     ...Array.from({length:5},(_,i)=>({lat:41.65+i*.05,lng:2.45+i*.05,rotulo:'Estación '+(i+2),precios:{g95e5:1.85,'gasoleo-a':1.5+i*.05}})),
     ]}});
    }
    const lat=(Number(u.searchParams.get('minLat'))+Number(u.searchParams.get('maxLat')))/2,lng=(Number(u.searchParams.get('minLng'))+Number(u.searchParams.get('maxLng')))/2;bounds.push({lat,lng});
@@ -103,17 +103,30 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
  }
  await p.evaluate(()=>closeModal());
  plannerFallback=true;
+ await p.evaluate(()=>{data.customVehicle=null;data.fuel='Diésel'});
  await p.locator('.gg-plan-open').click();
  await p.getByRole('searchbox',{name:'Dirección de destino'}).fill('Girona');
  await p.getByRole('button',{name:'Buscar destino',exact:true}).click();
  await p.getByRole('button',{name:'Girona, Gironès, Catalunya, España',exact:true}).click();
  await p.getByRole('checkbox',{name:/Parada alternativa/}).check();
+ const apple=new URL(await p.getByRole('link',{name:'Apple Maps',exact:true}).getAttribute('href'));
+ assert.equal(apple.searchParams.get('destination'),'41.9794,2.8214');
+ assert.deepEqual(apple.searchParams.getAll('waypoint'),['41.6,2.4']);
+ await p.getByText('Waze · abrir por etapas',{exact:true}).click();
+ const waze=new URL(await p.getByRole('link',{name:/Parada 1 · Parada alternativa/}).getAttribute('href'));
+ assert.equal(waze.searchParams.get('ll'),'41.6,2.4');
  assert.equal(await p.locator('.gg-route-stops input').count(),5);
  await p.getByRole('button',{name:'Siguientes',exact:true}).click();
  assert.equal(await p.locator('.gg-route-stops input').count(),1);
  await p.getByRole('button',{name:'Filtros',exact:true}).last().click();
+ assert.equal(await p.locator('#ggRouteFilters select').count(),0);
+ assert.match(await p.locator('#ggRouteFilters').innerText(),/Diésel A/);
+ assert.equal(await p.getByLabel('Precio desde (€/L)').inputValue(),'1.45');
+ assert.equal(await p.getByLabel('Precio hasta (€/L)').inputValue(),'1.7');
+ assert.equal(await p.getByLabel('Km del viaje desde').inputValue(),'0');
+ assert.equal(await p.getByLabel('Km del viaje hasta').inputValue(),'94');
  await p.getByLabel('Precio desde (€/L)').fill('1.60');
- await p.getByLabel('Precio hasta (€/L)').fill('1.75');
+ await p.getByLabel('Precio hasta (€/L)').fill('1.70');
  await p.getByLabel('Km del viaje desde').fill('50');
  await p.getByLabel('Km del viaje hasta').fill('90');
  await p.getByRole('button',{name:'Aplicar filtros'}).click();
