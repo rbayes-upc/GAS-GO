@@ -24,7 +24,7 @@ assert.equal(await p.locator('.footnav .house [data-gg-icon="home"]').count(),1)
 assert.equal(await p.locator('#ggv2ConnectBtn [data-gg-icon="link"]').count(),1);
 await p.locator('.footnav .home').click();
 assert.equal(await p.locator('#menugrid .circle .gg-google-icon').count(),6);
-for(const [label,entry] of [['TAKE&GO','take-go'],['Service&Go','service-go']]){
+for(const [label,entry] of [['Take&Go','take-go'],['Service&Go','service-go']]){
  const link=p.locator('#menugrid').getByRole('link',{name:label,exact:true});
  const logo=link.locator('img');
  await logo.evaluate(img=>img.decode());

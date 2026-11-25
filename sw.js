@@ -1,6 +1,6 @@
 /* Caché del shell de GAS&GO: actualizar VERSION al cambiar los archivos precargados. */
 'use strict';
-const VERSION='307';
+const VERSION='308';
 const BASE=new URL('./',self.location.href);
 const PREFIX='gasgo-shell-'+encodeURIComponent(BASE.pathname)+'-';
 const CACHE=PREFIX+VERSION;
