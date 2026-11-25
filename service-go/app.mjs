@@ -8,6 +8,7 @@ const terminal = ['finished', 'expired', 'cancelled'];
 const bar = value => value.toFixed(2).replace('.', ',') + ' bar';
 const buttons = [...document.querySelectorAll('button[data-action]')];
 let shown;
+let configuring = false;
 
 function read() {
   return JSON.parse(localStorage.getItem(key));
@@ -62,7 +63,12 @@ function render(session) {
   const previous = shown;
   shown = session;
   $('session').hidden = !session;
-  $(client ? 'reservation' : 'standby').hidden = Boolean(session);
+  if (client) {
+    $('welcome').hidden = Boolean(session) || configuring;
+    $('reservation').hidden = Boolean(session) || !configuring;
+  } else {
+    $('standby').hidden = Boolean(session);
+  }
   if (!session) return;
 
   setText($('equipment-name'), 'EQUIPO ' + equipment[session.service]);
@@ -124,7 +130,10 @@ function dispatch(action, value) {
   const id = shown?.id;
   return update((current, now) => {
     if (!current || current.id !== id) return current;
-    if (action === 'reset') return terminal.includes(current.phase) ? null : current;
+    if (action === 'reset' && terminal.includes(current.phase)) {
+      configuring = true;
+      return null;
+    }
     return act(current, action, value, now);
   });
 }
@@ -150,6 +159,11 @@ function makeButton(text, action) {
 const tireControls = [];
 const programControls = new Map();
 if (client) {
+  $('startService').addEventListener('click', () => {
+    configuring = true;
+    render(shown);
+    $('service-choice').focus();
+  });
   for (const [id, item] of Object.entries(vehicles)) $('vehicle').add(new Option(item.label, id));
   for (const [id, label] of Object.entries(methods)) $('method').add(new Option(label, id));
   function updateHint() {

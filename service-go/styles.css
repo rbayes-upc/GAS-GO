@@ -44,9 +44,9 @@ body[data-view="client"] { min-height: 100dvh; background: var(--paper); }
   border-top: 4px solid var(--yellow); background: var(--deep);
 }
 .device .topbar .brand { margin-left: -12px; }
-.welcome { text-align: center; margin-bottom: 18px; }
+.welcome { max-width: 380px; margin: 0 auto 18px; text-align: center; }
 .welcome img { display: block; margin: -8px auto -7px; width: min(300px, 100%); height: auto; }
-.welcome h1 { font-size: clamp(1.55rem, 6vw, 1.9rem); letter-spacing: -.045em; line-height: 1.12; }
+.welcome h1 { font-size: clamp(1.75rem, 7vw, 2.1rem); letter-spacing: -.045em; line-height: 1.12; }
 .welcome p { margin: 7px auto 0; max-width: 32ch; color: var(--muted); }
 @media (min-width: 560px) {
   body[data-view="client"] { padding: 20px 0; background: #e4ecf6; }
@@ -158,4 +158,54 @@ body[data-view="equipment"] {
 @media (max-width: 370px) {
   .device > main { padding: 14px; }
   .tires { grid-template-columns: 1fr; }
+}
+
+.welcome > button { width: 100%; }
+.welcome-services, .welcome-steps {
+  list-style: none;
+  padding: 0;
+  display: grid;
+}
+.welcome-services { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0 14px; }
+.welcome-services li {
+  padding: 9px 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: white;
+}
+.welcome-services small { line-height: 1.35; }
+.service-illustration {
+  display: grid;
+  place-items: center;
+  min-height: 77px;
+  margin-bottom: 7px;
+  border-radius: 10px;
+  background: var(--tint);
+}
+.service-illustration .equipment-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+}
+.service-illustration .wheel::after { inset: 9px; border-width: 7px; }
+.service-illustration .wash::after { width: 20px; height: 25px; top: 11px; left: 15px; }
+.illustration-wash { background: #e5f0fa; }
+.illustration-air { background: #fff5cb; }
+.welcome-steps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 16px;
+  counter-reset: service-step;
+}
+.welcome-steps li { display: grid; justify-items: center; gap: 4px; font-size: .79rem; font-weight: 700; }
+.welcome-steps li::before {
+  counter-increment: service-step;
+  content: counter(service-step);
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  color: white;
+  background: var(--blue);
 }

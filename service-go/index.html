@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=5">
+  <link rel="stylesheet" href="./styles.css?v=6">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=2"></script>
+  <script type="module" src="./app.mjs?v=3"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -18,14 +18,32 @@
     </header>
     <main>
       <p class="error" id="error" role="alert" hidden></p>
-      <form id="reservation">
-        <section class="welcome" aria-labelledby="welcome-title">
-          <img src="./assets/logotipo-service-go.png" alt="Service&amp;Go" width="2169" height="725">
-          <h1 id="welcome-title">Tu vehículo, a punto</h1>
-          <p>Infla los neumáticos o lava tu vehículo en el box.</p>
-        </section>
+      <section id="welcome" class="welcome" aria-labelledby="welcome-title">
+        <img src="./assets/logotipo-service-go.png" alt="Service&amp;Go" width="2169" height="725">
+        <h1 id="welcome-title">Tu coche a punto.<br>La cartera, guardada.</h1>
+        <p>Lava el coche o infla las ruedas. Identifícate y controla el importe desde el móvil.</p>
+        <ul class="welcome-services">
+          <li>
+            <div class="service-illustration illustration-wash" aria-hidden="true"><span class="equipment-icon wash"></span></div>
+            <strong>Lavado en box</strong>
+            <small>Agua, espuma y aclarado con pistola a presión.</small>
+          </li>
+          <li>
+            <div class="service-illustration illustration-air" aria-hidden="true"><span class="equipment-icon wheel"></span></div>
+            <strong>Inflado de ruedas</strong>
+            <small>Ajusta la presión de cada neumático.</small>
+          </li>
+        </ul>
+        <ol class="welcome-steps" aria-label="Cómo funciona">
+          <li>Elige el servicio</li>
+          <li>Identifícate</li>
+          <li>Consulta el importe</li>
+        </ol>
+        <button class="primary" id="startService" type="button">Probar Service&amp;Go</button>
+      </section>
+      <form id="reservation" hidden>
         <fieldset class="chooser">
-          <legend>Elige un servicio</legend>
+          <legend id="service-choice" tabindex="-1">Elige un servicio</legend>
           <div class="choices">
             <label class="choice">
               <input type="radio" name="service" value="air" checked>
