@@ -73,3 +73,20 @@
 .embedded-store .checkout-sidebar { order: 0; }
 
 .current-invoice-action { margin-top: 12px; }
+
+.issue-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 12px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+}
+.app-header .issue-icon { color: var(--yellow); }
+.issue-icon:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.issue-new { margin-bottom: 16px; }
+.issue-stage { margin-top: 8px; }
+.store-header-right:has(.issue-icon) { flex-wrap: wrap; }

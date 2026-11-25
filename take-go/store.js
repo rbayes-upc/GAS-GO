@@ -60,11 +60,39 @@ channel.onmessage=({data:m})=>{
  if(m.type==='retry_payment'&&m.visitId===engine.state.visitId)retry(m.payment);
 };
 function showReceipt(){receipt=engine.state.receipt;if(!receipt)return;$('#receiptContent').innerHTML=U.receiptHTML(receipt);$('#receiptDialog').showModal()}
-function report(){receipt=engine.state.receipt;if(!receipt)return;$('#receiptDialog').close();$('#storeIssueContent').innerHTML=E.issueForm(receipt);$('#storeIssueDialog').showModal()}
-document.addEventListener('click',e=>{
- if(!active)return;const el=e.target.closest('button');if(!el)return;
- if(el.dataset.category){category=el.dataset.category;render();return}
+let issueReceipt=null,issueView='';
+function showIssuePanel(view,purchase=null){
+ issueReceipt=purchase;
+ issueView=view;
+ const dialog=$('#storeIssueDialog');
+ $('#storeIssueContent').innerHTML=view==='list'?E.issuesHTML({manage:true})+'<p id="storeIssueError" role="alert"></p>':E.issueForm(purchase);
+ if(!dialog.open)dialog.showModal();
+}
+function report(){
+ const purchase=engine?.state.receipt;
+ if(!purchase)return;
+ $('#receiptDialog').close();
+ showIssuePanel('form',purchase);
+}
+$('#storeIssues').innerHTML=U.icon('warning');
+$('#storeIssues').onclick=()=>showIssuePanel('list');
+addEventListener('storage',e=>{
+ if(e.key===E.issueKey&&issueView==='list'&&$('#storeIssueDialog').open)showIssuePanel('list');
+});
+document.addEventListener('click',async e=>{
+ const el=e.target.closest('button');if(!el)return;
  const a=el.dataset.action;
+ if(a==='new-issue'){showIssuePanel('form');return}
+ if(a==='download-issue'){E.downloadIssue(el.dataset.id);return}
+ if(a==='issue-stage'){
+  el.disabled=true;
+  try{await E.updateIssue(el.dataset.id,el.dataset.stage);if(issueView==='list'&&$('#storeIssueDialog').open)showIssuePanel('list')}
+  catch(error){const msg=$('#storeIssueError');if(msg)msg.textContent=error.message}
+  finally{el.disabled=false}
+  return;
+ }
+ if(!active)return;
+ if(el.dataset.category){category=el.dataset.category;render();return}
  if(a==='enter'&&connected()&&engine.start($('#authMethod').value)){publish();const visit=engine.state.visitId;if(engine.state.phase==='identifying')setTimeout(()=>{if(engine.automatic(visit))publish()},1600)}
  if(a==='pick'){if(engine.pick(el.dataset.sku,{missingRfid:$('#missingRfid').checked})){$('#missingRfid').checked=false;publish()}}
  if(a==='return'&&engine.returnOne(el.dataset.sku))publish();
@@ -75,9 +103,21 @@ document.addEventListener('click',e=>{
  if(a==='new'&&engine.newVisit())publish();
  if(a==='receipt')showReceipt();
  if(a==='report')report();
- if(a==='download-issue')E.downloadIssue(el.dataset.id);
 });
-document.addEventListener('submit',e=>{if(e.target.id!=='issueForm')return;e.preventDefault();try{const x=E.recordIssue(receipt,e.target);$('#storeIssueContent').innerHTML='<h2>Incidencia guardada localmente</h2><p>No se ha enviado a la estación ni se ha iniciado un reembolso.</p><small class="reference">'+U.esc(x.id)+'</small><button class="button primary wide" data-action="download-issue" data-id="'+U.esc(x.id)+'">Descargar copia</button>'}catch(error){$('#issueError').textContent=error.message}});
+document.addEventListener('submit',async e=>{
+ const form=e.target;
+ if(form.id!=='issueForm')return;
+ e.preventDefault();
+ const button=e.submitter;
+ if(button)button.disabled=true;
+ try{
+  const issue=await E.recordIssue(issueReceipt,form);
+  if(!form.isConnected)return;
+  issueView='saved';
+  $('#storeIssueContent').innerHTML='<h2>Incidencia guardada localmente</h2><p>No se ha enviado a la estación ni se ha iniciado un reembolso.</p><small class="reference">'+U.esc(issue.id)+'</small><button class="button primary wide" data-action="download-issue" data-id="'+U.esc(issue.id)+'">Descargar copia</button>';
+ }catch(error){if(form.isConnected)$('#issueError').textContent=error.message}
+ finally{if(button)button.disabled=false}
+});
 $('#voiceAnnouncements').onchange=e=>{if(!e.target.checked){if('speechSynthesis' in window)speechSynthesis.cancel();return}lastAnnounced=null;access()};
 $('#downloadReceipt').onclick=async()=>{const button=$('#downloadReceipt');button.disabled=true;try{await U.downloadReceipt(receipt)}catch(error){$('#toast').textContent=error.message;$('#toast').style.display='block';setTimeout(()=>$('#toast').style.display='none',4500)}finally{button.disabled=false}};
 $('#closeReceipt').onclick=()=>$('#receiptDialog').close();$('#reportReceipt').onclick=report;

@@ -47,7 +47,7 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
   await app.getByRole('heading',{name:'Mis incidencias',exact:true}).waitFor();assert.equal(await app.locator('#appMain script').count(),0);assert.match(await app.locator('#appMain').innerText(),/No se han enviado/);
   const issues=await app.evaluate(()=>JSON.parse(localStorage.getItem('takego_issues_v1')));assert.equal(issues.length,1);assert.equal(issues[0].receiptId,s.receipt.id);
   const download=app.waitForEvent('download');await app.getByRole('button',{name:'Descargar copia',exact:true}).click();const copied=fs.readFileSync(await (await download).path(),'utf8');assert.ok(copied.includes(s.receipt.id));assert.match(copied,/No enviada/);
-  await app.goBack();await app.waitForFunction(()=>document.querySelector('#receiptDialog').open);assert.match(await app.locator('#receiptContent').innerText(),/FACTURA/);await app.locator('#closeReceipt').click();await app.getByRole('button',{name:'Perfil',exact:true}).click();await app.locator('[data-tab="issues"]').click();await app.reload();store=await frame();await store.locator('.product-card').first().waitFor();assert.equal(await app.locator('[data-action="download-issue"]').count(),1);
+  await app.goBack();await app.waitForFunction(()=>document.querySelector('#receiptDialog').open);assert.match(await app.locator('#receiptContent').innerText(),/FACTURA/);await app.locator('#closeReceipt').click();await app.getByRole('button',{name:'Perfil',exact:true}).click();await app.locator('#appMain [data-tab="issues"]').click();await app.reload();store=await frame();await store.locator('.product-card').first().waitFor();assert.equal(await app.locator('[data-action="download-issue"]').count(),1);
   console.log('PASS invoice back closes modal, receipt-linked local issue, escaped details, downloadable copy and reload persistence');
   await limits('3.05');await action('new');await action('enter');await phase('shopping');await pick('water');await action('exit');await phase('limit_exceeded');
   assert.equal(await store.getByRole('button',{name:'Devolver Agua mineral'}).isEnabled(),true);await store.getByRole('button',{name:'Devolver Agua mineral'}).click();await phase('shopping');await action('exit');await phase('left_empty');assert.equal((await saved()).receipts.length,1);
@@ -62,6 +62,20 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
   await pick('coffee');await app.getByRole('button',{name:'Cerrar tienda',exact:true}).click();store=await context.newPage();await store.goto(storeURL);await phase('shopping');await app.close();await store.getByText('App sin conexión · estado guardado',{exact:true}).waitFor();assert.match(await store.locator('#connectionState').innerText(),/sin conexión/);await action('exit');await phase('complete');assert.equal((await saved()).receipts.length,3);
   app=await context.newPage();await app.goto(appURL);await app.getByRole('heading',{name:'Compra pagada. Puedes salir.',exact:true}).waitFor();await app.getByRole('button',{name:'Facturas',exact:true}).click();assert.equal(await app.locator('[data-action="receipt"]').count(),3);assert.equal(await app.evaluate(()=>localStorage.getItem('gasgo_demo')),'unchanged');
   await action('report');await store.locator('#issueReason').selectOption('Problema con la factura');await store.getByRole('button',{name:'Guardar incidencia de demostración',exact:true}).click();await store.getByRole('heading',{name:'Incidencia guardada localmente',exact:true}).waitFor();assert.equal(await app.evaluate(()=>JSON.parse(localStorage.getItem('takego_issues_v1')).length),2);await store.locator('#closeStoreIssue').click();assert.equal((await saved()).receipts.length,3);await app.screenshot({path:'/tmp/takego-ux-facturas.png',fullPage:true});await store.screenshot({path:'/tmp/takego-ux-store.png',fullPage:true});assert.deepEqual(errors,[]);
+  await app.getByRole('button',{name:'Incidencias',exact:true}).click();
+  await app.getByRole('button',{name:'Comunicar incidencia',exact:true}).click();
+  await app.getByLabel('¿Qué ha ocurrido?').selectOption('Problema de acceso');
+  await app.getByRole('button',{name:'Guardar incidencia de demostración'}).click();
+  const accessIssue=app.locator('.card').filter({hasText:'Problema de acceso'});
+  await accessIssue.getByText(/Pendiente/).waitFor();
+  await store.getByRole('button',{name:'Incidencias de la tienda',exact:true}).click();
+  const storeIssue=store.locator('.card').filter({hasText:'Problema de acceso'});
+  await storeIssue.getByRole('button',{name:'Marcar en revisión'}).click();
+  await accessIssue.getByText(/En revisión/).waitFor();
+  await storeIssue.getByRole('button',{name:'Marcar como resuelta'}).click();
+  await accessIssue.getByText(/Resuelta/).waitFor();
+  await storeIssue.getByRole('button',{name:'Reabrir incidencia'}).click();
+  await accessIssue.getByText(/Pendiente/).waitFor();
   console.log('PASS connection loss disables stale actions, cached reload/reconnect, stable code input, single terminal lock, app closed during automatic payment and receipt resync; no browser errors');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(error=>{console.error(error);process.exitCode=1});

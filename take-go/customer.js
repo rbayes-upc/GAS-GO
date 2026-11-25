@@ -1,6 +1,7 @@
 (function(){'use strict';
 const U=TakeGoUI,E=TakeGoExperience,$=s=>document.querySelector(s),key='takego_customer_v1';
 const welcomeMarkup=$('#appMain').innerHTML;
+$('#customerIssues').innerHTML=U.icon('warning');
 let data;try{data=JSON.parse(localStorage.getItem(key))||{}}catch{data={}}
 if(data.profile)data.profile.limits=TakeGoSpending.normalize(data.profile.limits);
 data.receipts=Array.isArray(data.receipts)?data.receipts.filter(U.receiptValid):[];
@@ -16,7 +17,7 @@ const connected=()=>lastSeen>0&&Date.now()-lastSeen<6000;
 const hello=()=>channel.postMessage({type:'hello',role:'customer',profile:data.profile});
 const receiptById=id=>data.receipts.find(r=>r.id===id)||(state?.receipt?.id===id?state.receipt:null);
 function toast(message){$('#toast').textContent=message;$('#toast').style.display='block';setTimeout(()=>$('#toast').style.display='none',4000)}
-function route(){const [view,id]=location.hash.slice(1).split('/');return {view:['welcome','home','basket','receipts','profile','payments','limits','issues','issue','invoice'].includes(view)?view:linkedEntry?'home':'welcome',id:id?decodeURIComponent(id):null}}
+function route(){const [view,id]=location.hash.slice(1).split('/');return {view:['welcome','home','basket','receipts','profile','payments','limits','issues','new-issue','issue','invoice'].includes(view)?view:linkedEntry?'home':'welcome',id:id?decodeURIComponent(id):null}}
 function url(view,id){return '?session='+link+'#'+view+(id?'/'+encodeURIComponent(id):'')}
 function navigate(view,id,{replace=false}={}){
  if(view===tab&&!id)return;
@@ -87,7 +88,7 @@ function render(){
   $('#appNav').innerHTML='';
   return;
  }
- const profileTabs=['payments','limits','issues','issue'];
+ const profileTabs=['payments','limits','issues','new-issue','issue'];
  $('#appNav').innerHTML=[['home','home','Inicio'],['basket','bag','Cesta'],['receipts','receipt','Facturas'],['profile','person','Perfil']].map(([id,icon,label])=>`<button class="nav-button ${tab===id||(id==='profile'&&profileTabs.includes(tab))?'active':''}" data-tab="${id}" ${tab===id||(id==='profile'&&profileTabs.includes(tab))?'aria-current="page"':''}>${U.icon(icon)}${label}</button>`).join('');
  const backButton=tab!=='home'?'<button class="back" data-action="back">'+U.icon('back')+' Volver</button>':'';
  if(tab==='home')main.innerHTML=`<p class="eyebrow">HOLA, ALEX</p><h1 class="page-title">Tu pausa, a tu ritmo.</h1><p>TAKE&GO · Estación Diagonal</p>${phaseCard()}${connectionHTML()}${state?.phase==='ready'?E.budget(TakeGoSpending.report(data.receipts,data.profile.limits)):''}<div class="steps"><div class="step"><span class="step-number">01</span><div><strong>Entra y te reconocemos</strong><p>La tienda confirma tu acceso.</p></div></div><div class="step"><span class="step-number">02</span><div><strong>Coge. Devuelve. Elige.</strong><p>Los sensores simulados contrastan tu cesta.</p></div></div><div class="step"><span class="step-number">03</span><div><strong>Sal y sigue tu camino</strong><p>La tienda confirma el pago y guarda tu factura.</p></div></div></div>${state&&state.phase!=='ready'?'<button class="button quiet wide" data-action="store">Volver a la tienda virtual '+U.icon('arrow')+'</button>':''}`;
@@ -97,6 +98,7 @@ function render(){
  if(tab==='payments')main.innerHTML=backButton+connectionHTML()+paymentRecovery()+TakeGoPreferences.payments(data.profile);
  if(tab==='limits')main.innerHTML=backButton+TakeGoPreferences.limits(data.profile,data.receipts);
  if(tab==='issues')main.innerHTML=backButton+E.issuesHTML();
+ if(tab==='new-issue')main.innerHTML=backButton+E.issueForm();
  if(tab==='issue'){const r=receiptById(route().id);main.innerHTML=backButton+(r?E.issueForm(r):'<p>No se encuentra esta compra. Abre una factura para registrar una incidencia.</p>')}
  updateConnection();
 }
@@ -139,16 +141,31 @@ document.addEventListener('click',e=>{
  if(action==='receipt')navigate('invoice',b.dataset.id);
  if(action==='retry-current')liveSend({type:'retry_payment',visitId:state?.visitId,payment:data.profile.payment});
  if(action==='add-payment')toast('Disponible al integrar pagos reales. No introduzcas datos bancarios.');
+ if(action==='new-issue')navigate('new-issue');
  if(action==='download-issue')E.downloadIssue(b.dataset.id);
 });
 document.addEventListener('change',e=>{
  if(e.target.dataset.limitToggle){const key=e.target.dataset.limitToggle,input=$('#limit-'+key),enabled=e.target.checked;input.disabled=!enabled;input.required=enabled;$('[data-unlimited="'+key+'"]').hidden=enabled;$('#zero-'+key).hidden=!enabled||input.value===''||Number(input.value)!==0;limitsDirty=true}
 });
 document.addEventListener('input',e=>{if(e.target.closest('#limitsForm')){limitsDirty=true;const key=e.target.name;if(['daily','weekly','monthly'].includes(key))$('#zero-'+key).hidden=e.target.value===''||Number(e.target.value)!==0}});
-document.addEventListener('submit',e=>{
+addEventListener('storage',e=>{if(e.key===E.issueKey&&tab==='issues')render()});
+document.addEventListener('submit',async e=>{
  if(e.target.id==='limitsForm'){e.preventDefault();try{data.profile.limits=TakeGoPreferences.parse(e.target);limitsDirty=false;save();hello();render();$('#limitsSaved').textContent='Límites guardados'}catch(error){$('#limitsError').textContent=error.message}return}
  if(e.target.id==='codeForm'){e.preventDefault();liveSend({type:'verify',visitId:state?.visitId,code:new FormData(e.target).get('code')});return}
- if(e.target.id==='issueForm'){e.preventDefault();try{E.recordIssue(receiptById(route().id),e.target);navigate('issues',null,{replace:true});toast('Incidencia guardada solo en este navegador. No se ha enviado.')}catch(error){$('#issueError').textContent=error.message}}
+ if(e.target.id==='issueForm'){
+  e.preventDefault();
+  const form=e.target,button=e.submitter;
+  if(button)button.disabled=true;
+  try{
+   const purchase=tab==='issue'?receiptById(route().id):null;
+   if(tab==='issue'&&!purchase)throw Error('No se encuentra esta compra.');
+   await E.recordIssue(purchase,form);
+   if(!form.isConnected)return;
+   navigate('issues',null,{replace:true});
+   toast('Incidencia guardada solo en este navegador. No se ha enviado.');
+  }catch(error){if(form.isConnected)$('#issueError').textContent=error.message}
+  finally{if(button)button.disabled=false}
+ }
 });
 $('#downloadReceipt').onclick=async()=>{const button=$('#downloadReceipt');button.disabled=true;try{await U.downloadReceipt(receipt)}catch(error){toast(error.message)}finally{button.disabled=false}};
 $('#closeReceipt').onclick=back;
