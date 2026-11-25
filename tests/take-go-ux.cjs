@@ -17,8 +17,8 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
   await context.route('https://**',r=>r.abort());
   let app=await context.newPage();await app.goto(`http://127.0.0.1:${server.address().port}/GAS-GO/take-go/`);
   await app.evaluate(()=>localStorage.setItem('gasgo_demo','unchanged'));
-  await app.getByRole('button',{name:/Probar TAKE/}).click();await app.getByRole('heading',{name:'Dos pantallas, una demostración'}).waitFor();
-  await app.getByRole('button',{name:'Entendido',exact:true}).click();await app.reload();assert.equal(await app.locator('.demo-guide').count(),0);
+  await app.getByRole('button',{name:/Probar TAKE/}).click();await app.getByRole('heading',{name:'Tu pausa, a tu ritmo.'}).waitFor();assert.equal(await app.getByText('Dos pantallas, una demostración',{exact:true}).count(),0);
+  await app.reload();assert.equal(await app.getByText('Dos pantallas, una demostración',{exact:true}).count(),0);
   const opened=app.waitForEvent('popup');await app.getByRole('button',{name:/Abrir tienda virtual/}).click();let store=await opened;await store.waitForLoadState();
   const storeURL=store.url(),appURL=app.url(),saved=()=>store.evaluate(()=>JSON.parse(localStorage.getItem('takego_store_v1_'+new URLSearchParams(location.search).get('session'))));
   const phase=async expected=>{await store.waitForFunction(expected=>JSON.parse(localStorage.getItem('takego_store_v1_'+new URLSearchParams(location.search).get('session')))?.phase===expected,expected,{timeout:10000})};
@@ -30,7 +30,7 @@ const assert=require('node:assert/strict'),http=require('node:http'),fs=require(
   await limits('0');assert.equal(await app.locator('#zero-daily').isVisible(),true);await app.locator('#enable-daily').uncheck();assert.equal(await app.locator('#limit-daily').isDisabled(),true);await app.getByRole('button',{name:'Guardar límites',exact:true}).click();
   assert.equal(await app.evaluate(()=>JSON.parse(localStorage.getItem('takego_customer_v1')).profile.limits.daily),null);
   await app.locator('#enable-daily').check();await app.locator('#limit-daily').fill('20');await app.waitForTimeout(1800);assert.equal(await app.locator('#limit-daily').inputValue(),'20');await app.locator('#enable-daily').uncheck();await app.getByRole('button',{name:'Guardar límites',exact:true}).click();
-  console.log('PASS one-time guide, browser back/forward, pinned mobile navigation, explicit unlimited/zero cap and edits survive heartbeats');
+  console.log('PASS no demo guide, browser back/forward, pinned mobile navigation, explicit unlimited/zero cap and edits survive heartbeats');
   await action('enter');await phase('shopping');assert.match(await store.locator('#accessPanel').innerText(),/Identificado. Puedes entrar/);
   await store.locator('#demoOptions').evaluate(e=>e.open=true);await store.locator('#missingRfid').check();await pick('coffee');
   assert.equal(await store.locator('.count').innerText(),'1');assert.match(await store.locator('#checkoutPanel').innerText(),/Importe pendiente/);assert.doesNotMatch(await store.locator('#checkoutPanel').innerText(),/0,00 €/);
