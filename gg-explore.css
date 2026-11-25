@@ -23,3 +23,5 @@
 .gg-route-stops small { display:block;color:#526e60 }
 .gg-route-export { display:flex;gap:8px;flex-wrap:wrap }
 .gg-route-export .btn { display:inline-flex;align-items:center;justify-content:center;text-decoration:none;min-height:44px }
+
+#ggRouteDestination:focus-visible { outline:2px solid #075a46;outline-offset:2px }

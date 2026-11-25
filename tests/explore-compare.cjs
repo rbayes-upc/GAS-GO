@@ -1,7 +1,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),path=require('node:path');
 const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('leaflet/dist/leaflet.js',{paths:['/workspace/gasgo-dev/node_modules']}));
 (async()=>{const b=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});try{
- const c=await b.newContext({viewport:{width:430,height:932}}),errors=[],queries=[],bounds=[];let geocodeMode='ok',stationFailure=false,pendingGeocode;
+ const c=await b.newContext({viewport:{width:430,height:932}}),errors=[],queries=[],bounds=[];let geocodeMode='ok',stationFailure=false,plannerFallback=false,pendingGeocode;
  c.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
  await c.route('**/*',async r=>{
   const u=new URL(r.request().url());
@@ -16,14 +16,17 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
    return r.fulfill({json:{routes:[{distance:94000,geometry:{coordinates:[[2.17,41.38],[2.4,41.6],[2.8214,41.9794]]}}]}});
   }
   if(u.hostname==='overpass.kumi.systems'&&r.request().postData()?.includes('around')){
+   if(plannerFallback)return r.fulfill({status:503,body:'unavailable'});
    return r.fulfill({json:{elements:[
     {lat:41.6,lon:2.4,tags:{name:'Parada central'}},
     {center:{lat:41.96,lon:2.8},tags:{brand:'Parada final'}},
-    {lat:40,lon:-3,tags:{name:'Fuera de ruta'}},
+    {lat:41.49,lon:2.4,tags:{name:'Parada dentro de 10 km'}},
+    {lat:41.1,lon:2.4,tags:{name:'Fuera de ruta'}},
    ]}});
   }
   if(u.hostname==='energia.serviciosmin.gob.es')return r.fulfill({json:{ListaEESSPrecio:[]}});
   if(u.hostname==='puntomuerto.es'){
+   if(plannerFallback&&u.searchParams.get('limit')==='800')return r.fulfill({json:{estaciones:[{lat:'41,6',lng:'2,4',rotulo:'Parada alternativa'}]}});
    const lat=(Number(u.searchParams.get('minLat'))+Number(u.searchParams.get('maxLat')))/2,lng=(Number(u.searchParams.get('minLng'))+Number(u.searchParams.get('maxLng')))/2;bounds.push({lat,lng});
    if(stationFailure)return r.fulfill({status:503,body:'unavailable'});
    return r.fulfill({json:{estaciones:[{id:551,rotulo:'Estación zona buscada',direccion:'Carrer de prova',localidad:'Girona',lat:lat+.001,lng:lng+.001,precios:{g95e5:1.65,'gasoleo-a':1.55}},{id:552,rotulo:'Estación otra ciudad',lat:40.4,lng:-3.7,precios:{g95e5:1.5,'gasoleo-a':1.4}}]}});
@@ -57,13 +60,13 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
  {...base,id:74,name:'Carga CCS2 barata',lat:41.41,gas:null,diesel:null,ev:.25,type:'electric'},
  {...base,id:75,name:'Carga Tipo 2',lat:41.43,gas:null,diesel:null,ev:.2,type:'electric',evConnector:'Tipo 2'},
  {...base,id:76,name:'Gasolina ocupada',lat:41.44,gas:1.4,diesel:null,ev:0,free:0}]);geoStationMode='official';GGPlate.select(0);go('Home');clearMapFilters()});
- await p.locator('.gg-plan-open').click();await p.getByRole('button',{name:'Comparar estaciones del mapa'}).click();assert.equal(await p.locator('.gg-compare-table tbody tr').count(),3);assert.equal(await p.locator('.gg-compare-table tbody tr').first().getAttribute('data-station-id'),'76');await p.locator('#ggCompareSort').selectOption('distance');assert.equal(await p.locator('.gg-compare-table tbody tr').first().getAttribute('data-station-id'),'71');assert.match(await p.locator('.gg-compare-table').innerText(),/Gasolina 95|Precio/);await p.screenshot({path:'/tmp/gasgo-compare.png'});assert.doesNotMatch(await p.locator('.gg-compare-table').innerText(),/Solo diésel|Carga CCS2/);
+ await p.evaluate(()=>ggExplore.compare());assert.equal(await p.locator('.gg-compare-table tbody tr').count(),3);assert.equal(await p.locator('.gg-compare-table tbody tr').first().getAttribute('data-station-id'),'76');await p.locator('#ggCompareSort').selectOption('distance');assert.equal(await p.locator('.gg-compare-table tbody tr').first().getAttribute('data-station-id'),'71');assert.match(await p.locator('.gg-compare-table').innerText(),/Gasolina 95|Precio/);await p.screenshot({path:'/tmp/gasgo-compare.png'});assert.doesNotMatch(await p.locator('.gg-compare-table').innerText(),/Solo diésel|Carga CCS2/);
  await p.locator('#overlay').getByRole('button',{name:'Barata mixta',exact:true}).click();assert.equal(await p.evaluate(()=>selectedStation),72);assert.equal(await p.evaluate(()=>simulation),null);
- await p.evaluate(()=>{onlyAvailable=true;maxPrice=1.6;render()});await p.locator('.gg-plan-open').click();await p.getByRole('button',{name:'Comparar estaciones del mapa'}).click();assert.equal(await p.locator('.gg-compare-table tbody tr').count(),1);assert.equal(await p.locator('.gg-compare-table tbody tr').first().getAttribute('data-station-id'),'72');await p.evaluate(()=>closeModal());
- await p.evaluate(()=>{GGPlate.select(1);clearMapFilters();setStationView('list')});assert.equal(await p.locator('.gg-list-source,.list-summary>b,.list-summary>span').count(),0);assert.doesNotMatch(await p.evaluate(()=>stationList()),/Estaciones y áreas de servicio|gg-list-source|resultados ·/);for(const width of [320,375,430]){await p.setViewportSize({width,height:932});for(const selector of ['.list-summary button[onclick="openMapFilters()"]','.list-summary .gg-plan-open']){const rect=await p.locator(selector).boundingBox();assert.ok(rect&&rect.x>=0&&rect.x+rect.width<=width)}}await p.screenshot({path:'/tmp/gasgo-list-clean.png'});await p.locator('.list-summary').getByRole('button',{name:/Filtros/}).click();assert.equal(await p.locator('#modalMapQuery').isVisible(),true);await p.evaluate(()=>closeModal());await p.locator('.gg-plan-open').click();await p.getByRole('button',{name:'Comparar estaciones del mapa'}).click();assert.equal(await p.locator('.gg-compare-table tbody tr').count(),2);assert.equal(await p.locator('.gg-compare-table tbody tr').first().getAttribute('data-station-id'),'73');await p.evaluate(()=>closeModal());
- await p.evaluate(()=>{GGPlate.select(2);clearMapFilters();go('Home')});await p.locator('.gg-plan-open').click();await p.getByRole('button',{name:'Comparar estaciones del mapa'}).click();assert.equal(await p.locator('.gg-compare-table tbody tr').count(),2);assert.match(await p.locator('.gg-compare-table').innerText(),/kWh/);assert.doesNotMatch(await p.locator('.gg-compare-table').innerText(),/Carga Tipo 2/);await p.evaluate(()=>closeModal());
+ await p.evaluate(()=>{onlyAvailable=true;maxPrice=1.6;render()});await p.evaluate(()=>ggExplore.compare());assert.equal(await p.locator('.gg-compare-table tbody tr').count(),1);assert.equal(await p.locator('.gg-compare-table tbody tr').first().getAttribute('data-station-id'),'72');await p.evaluate(()=>closeModal());
+ await p.evaluate(()=>{GGPlate.select(1);clearMapFilters();setStationView('list')});assert.equal(await p.locator('.gg-list-source,.list-summary>b,.list-summary>span').count(),0);assert.doesNotMatch(await p.evaluate(()=>stationList()),/Estaciones y áreas de servicio|gg-list-source|resultados ·/);for(const width of [320,375,430]){await p.setViewportSize({width,height:932});for(const selector of ['.list-summary button[onclick="openMapFilters()"]','.list-summary .gg-plan-open']){const rect=await p.locator(selector).boundingBox();assert.ok(rect&&rect.x>=0&&rect.x+rect.width<=width)}}await p.screenshot({path:'/tmp/gasgo-list-clean.png'});await p.locator('.list-summary').getByRole('button',{name:/Filtros/}).click();assert.equal(await p.locator('#modalMapQuery').isVisible(),true);await p.evaluate(()=>closeModal());await p.evaluate(()=>ggExplore.compare());assert.equal(await p.locator('.gg-compare-table tbody tr').count(),2);assert.equal(await p.locator('.gg-compare-table tbody tr').first().getAttribute('data-station-id'),'73');await p.evaluate(()=>closeModal());
+ await p.evaluate(()=>{GGPlate.select(2);clearMapFilters();go('Home')});await p.evaluate(()=>ggExplore.compare());assert.equal(await p.locator('.gg-compare-table tbody tr').count(),2);assert.match(await p.locator('.gg-compare-table').innerText(),/kWh/);assert.doesNotMatch(await p.locator('.gg-compare-table').innerText(),/Carga Tipo 2/);await p.evaluate(()=>closeModal());
  console.log('PASS gasoline/diesel/electric comparison, sorting by price or distance, matching connectors, map filters, list access and opening a station without starting supply');
- await p.evaluate(()=>{GGPlate.select(3);clearMapFilters();ggUX.setEnergy('both')});await p.locator('.gg-plan-open').click();await p.getByRole('button',{name:'Comparar estaciones del mapa'}).click();assert.match(await p.locator('.gg-compare-table').innerText(),/€\/L/);assert.doesNotMatch(await p.locator('.gg-compare-table').innerText(),/kWh/);await p.locator('#overlay').getByRole('button',{name:'Recargar',exact:true}).click();assert.equal(await p.locator('.gg-compare-table tbody tr').count(),1);assert.match(await p.locator('.gg-compare-table').innerText(),/kWh/);assert.equal(await p.evaluate(()=>ggUX.energyMode()),'both');await p.locator('#overlay').getByRole('button',{name:'Carga Tipo 2',exact:true}).click();assert.equal(await p.evaluate(()=>ggUX.energyMode()),'charge');assert.equal(await p.evaluate(()=>selectedStation),75);
+ await p.evaluate(()=>{GGPlate.select(3);clearMapFilters();ggUX.setEnergy('both')});await p.evaluate(()=>ggExplore.compare());assert.match(await p.locator('.gg-compare-table').innerText(),/€\/L/);assert.doesNotMatch(await p.locator('.gg-compare-table').innerText(),/kWh/);await p.locator('#overlay').getByRole('button',{name:'Recargar',exact:true}).click();assert.equal(await p.locator('.gg-compare-table tbody tr').count(),1);assert.match(await p.locator('.gg-compare-table').innerText(),/kWh/);assert.equal(await p.evaluate(()=>ggUX.energyMode()),'both');await p.locator('#overlay').getByRole('button',{name:'Carga Tipo 2',exact:true}).click();assert.equal(await p.evaluate(()=>ggUX.energyMode()),'charge');assert.equal(await p.evaluate(()=>selectedStation),75);
  await p.evaluate(()=>{go('Home');ggExplore.compare()});for(const width of [320,375,430]){await p.setViewportSize({width,height:850});assert.equal(await p.locator('#overlay .modalcontent').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true)}await p.evaluate(()=>closeModal());
  await p.evaluate(()=>openSearch());for(const width of [320,375,430]){await p.setViewportSize({width,height:850});assert.equal(await p.locator('#overlay .modalcontent').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true)}await p.evaluate(()=>closeModal());
  await p.evaluate(()=>{geoLoading=true;ggExplore.compare()});assert.match(await p.locator('#ggCompareResults').innerText(),/Buscando estaciones/);await p.evaluate(()=>{geoLoading=false;render()});assert.equal(await p.locator('.gg-compare-table').count(),1);await p.evaluate(()=>closeModal());
@@ -77,6 +80,8 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
  await p.getByRole('button',{name:'Girona, Gironès, Catalunya, España',exact:true}).click();
  await p.getByRole('heading',{name:'Gasolineras en el trayecto',exact:true}).waitFor();
  assert.equal(await p.getByText('Fuera de ruta',{exact:true}).count(),0);
+ assert.equal(await p.getByRole('button',{name:'Comparar estaciones del mapa'}).count(),0);
+ await p.getByRole('checkbox',{name:/Parada dentro de 10 km/}).waitFor();
  await p.getByRole('checkbox',{name:/Parada final/}).check();
  await p.getByRole('checkbox',{name:/Parada central/}).check();
  const google=new URL(await p.getByRole('link',{name:'Abrir en Google Maps'}).getAttribute('href'));
@@ -89,6 +94,14 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
   await p.setViewportSize({width,height:850});
   assert(await p.locator('#overlay .modalcontent').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
  }
+ await p.evaluate(()=>closeModal());
+ plannerFallback=true;
+ await p.locator('.gg-plan-open').click();
+ await p.getByRole('searchbox',{name:'Dirección de destino'}).fill('Girona');
+ await p.getByRole('button',{name:'Buscar destino',exact:true}).click();
+ await p.getByRole('button',{name:'Girona, Gironès, Catalunya, España',exact:true}).click();
+ await p.getByRole('checkbox',{name:/Parada alternativa/}).check();
+ assert.equal(new URL(await p.getByRole('link',{name:'Abrir en Google Maps'}).getAttribute('href')).searchParams.get('waypoints'),'41.6,2.4');
  await p.evaluate(()=>closeModal());
  console.log('PASS planificador: geometría, gasolineras en el trayecto, orden, Google Maps y GPX');
  await p.evaluate(()=>{go('Bienvenida');startPresentationDemo()});await p.locator('#ggv2X').waitFor();await p.locator('#ggv2X').click();assert.equal(await p.locator('.gg-plan-open').count(),0);await p.getByRole('button',{name:'Buscar gasolinera',exact:true}).click();assert.equal(await p.locator('#ggPlaceQuery').count(),0);assert.equal(await p.locator('#searchInput').count(),1);assert.deepEqual(errors,[]);
