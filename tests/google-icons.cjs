@@ -49,7 +49,7 @@ await star.click();assert.equal(await star.getAttribute('aria-pressed'),'false')
 assert.equal(await p.locator('.gg-station-popup button[onclick^="fav("]').count(),1);
 assert.equal(await p.locator('.gg-station-popup .gg-primary-actions').getByRole('button',{name:/Simular llegada/}).count(),1);
 console.log('PASS FULL Google navigation, garage and dynamic dialogs; text, input and receipt data preserved; favorite state remains visible');
-await p.evaluate(()=>go('Bienvenida'));await p.getByRole('button',{name:/DEMO.*acceso rápido/}).click();
+await p.evaluate(()=>go('Bienvenida'));await p.locator('.gg-demo-entry').evaluate(button=>{button.hidden=false});await p.getByRole('button',{name:/DEMO.*acceso rápido/}).click();
 await p.locator('#ggv2X').waitFor();await p.locator('#ggv2X').click();
 assert.equal(await p.locator('.gg-google-icon').count(),0);assert.equal(await p.locator('.footnav .house').innerText(),'⌂');assert.equal(await p.locator('#ggv2ConnectBtn').innerText(),'🔗');
 await p.locator('.footnav .home').click();assert.match(await p.locator('#menugrid').innerText(),/🚙/);

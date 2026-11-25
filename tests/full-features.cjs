@@ -61,7 +61,7 @@ assert.equal(await p.evaluate(()=>JSON.stringify(data.history)),historyBefore);
 await home();await p.getByRole('button',{name:'Recargar',exact:true}).click();await filters();await p.getByRole('button',{name:'Limpiar',exact:true}).click();assert.deepEqual(await p.evaluate(()=>shownStations().map(s=>s.id)),[15]);
 await p.locator('.geo-pin,.gg-map-cluster').first().waitFor({state:'attached'});await p.screenshot({path:'/workspace/gasgo-dev/full-v3-map.png'});
 console.log('PASS active edit renames plate without duplicates, migrates service preference, rejects conflicts, preserves receipts and updates connector filtering');
-await p.evaluate(()=>go('Bienvenida'));await p.getByRole('button',{name:/DEMO.*acceso rápido/}).click();await p.locator('#ggv2X').waitFor();await p.locator('#ggv2X').click();assert.equal(await p.locator('.gg-active-vehicle').count(),0);
+await p.evaluate(()=>go('Bienvenida'));await p.locator('.gg-demo-entry').evaluate(button=>{button.hidden=false});await p.getByRole('button',{name:/DEMO.*acceso rápido/}).click();await p.locator('#ggv2X').waitFor();await p.locator('#ggv2X').click();assert.equal(await p.locator('.gg-active-vehicle').count(),0);
 await p.locator('.mapcontrols').getByRole('button',{name:/Filtros/}).click();assert.equal(await p.locator('#modalFuel').count(),1);assert.equal(await p.locator('#modalConnector').count(),0);assert.deepEqual(errors,[]);
 console.log('PASS DEMO retains original filters and no FULL vehicle card; no browser exceptions');
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exit(1)});

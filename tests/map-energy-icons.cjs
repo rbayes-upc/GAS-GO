@@ -45,7 +45,7 @@ console.log('PASS mixed station remains accessible by keyboard');
 await p.evaluate(()=>{selectedStation=null;render()});await p.waitForFunction(()=>geoMap&&geoMap.getContainer().isConnected);await p.evaluate(()=>geoMap.setView(mapCenter,9,{animate:false}));
 assert.equal(await p.locator('.gg-map-cluster-charging').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 223, 46)');
 console.log('PASS groups containing charging points use the same yellow');
-await p.evaluate(()=>go('Bienvenida'));await p.getByRole('button',{name:/DEMO.*acceso rápido/}).click();await p.locator('#ggv2X').waitFor();await p.locator('#ggv2X').click();
+await p.evaluate(()=>go('Bienvenida'));await p.locator('.gg-demo-entry').evaluate(button=>{button.hidden=false});await p.getByRole('button',{name:/DEMO.*acceso rápido/}).click();await p.locator('#ggv2X').waitFor();await p.locator('#ggv2X').click();
 assert.equal(await p.locator('.gg-google-icon').count(),0);await p.locator('.gg-demo-map-marker').waitFor();assert.match(await p.locator('.gg-demo-map-marker').innerText(),/⛽/);
 assert.deepEqual(errors,[]);console.log('PASS DEMO keeps its original station marker and emoji');
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exit(1)});

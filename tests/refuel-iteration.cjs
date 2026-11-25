@@ -7,7 +7,7 @@ const root=path.resolve(__dirname,'..');
  try{
  const c=await b.newContext({viewport:{width:430,height:932}});const errors=[];c.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
  const app=await c.newPage();await app.goto(url,{waitUntil:'domcontentloaded'});
- const popup=app.waitForEvent('popup');await app.getByRole('button',{name:/DEMO.*acceso rápido/}).click();const pump=await popup;await pump.setViewportSize({width:1280,height:900});
+ const popup=app.waitForEvent('popup');await app.locator('.gg-demo-entry').evaluate(button=>{button.hidden=false});await app.getByRole('button',{name:/DEMO.*acceso rápido/}).click();const pump=await popup;await pump.setViewportSize({width:1280,height:900});
  await pump.locator('#welcomeModal').waitFor({state:'visible',timeout:20000});assert.match(await pump.locator('#stateBadge').innerText(),/Autorizado/);
  assert.equal(await pump.locator('#ggFirstRefuelGuide').count(),0);await pump.locator('#welcomeClose').click();
  await pump.locator('#supplyBtn').click();await pump.getByRole('heading',{name:'Tu primer repostaje, en tres pasos'}).waitFor();

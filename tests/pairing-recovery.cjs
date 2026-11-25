@@ -20,7 +20,7 @@ const {chromium}=require('playwright');const fs=require('fs');const path=require
  await pump.evaluate(()=>{testConnections[1].start();testConnections[0].close();testConnections[0].emit('data',{type:'arrival',vehicle:'OLD',fuel:'Diésel',price:1})});
  assert.equal(await pump.locator('#qrLinkBadge').innerText(),'MÓVIL ENLAZADO');assert.equal(await pump.locator('#qrNetworkPanel').isVisible(),false);assert.equal(await pump.locator('.meter').isVisible(),true);assert.equal(await pump.locator('#advancedMenu summary').isVisible(),true);assert.equal(await pump.locator('#stateBadge').innerText(),'● Disponible');
  console.log('PASS stale connection open/close/data cannot replace active connection');
- const phone=await c.newPage();await phone.clock.install();await phone.goto(url);await phone.getByRole('button',{name:/DEMO.*acceso rápido/}).click();
+ const phone=await c.newPage();await phone.clock.install();await phone.goto(url);await phone.locator('.gg-demo-entry').evaluate(button=>{button.hidden=false});await phone.getByRole('button',{name:/DEMO.*acceso rápido/}).click();
  assert.equal(await phone.locator('#ggConnectionTitle').innerText(),'Conectando con el servicio de enlace');
  await phone.evaluate(()=>testPeers[0].start());
  await phone.getByRole('heading',{name:'Enlazando con el surtidor',exact:true}).waitFor();
