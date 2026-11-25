@@ -71,3 +71,5 @@
 .embedded-store .store-main { padding-top: 16px; }
 .embedded-store .store-grid { margin-top: 16px; }
 .embedded-store .checkout-sidebar { order: 0; }
+
+.current-invoice-action { margin-top: 12px; }

@@ -67,9 +67,10 @@ function phaseCard(){
  return `<section class="card status-card"><span class="pill" data-connection-label></span><h2>${m[0]}</h2><p>${m[1]}</p>${p==='confirmation'?'<button class="button primary wide live-only" data-action="confirm">Confirmar identidad de prueba</button>':''}${p==='code'?'<form id="codeForm" class="code-form"><input aria-label="Código temporal" aria-describedby="codeError" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="off"><button class="button primary live-only">Entrar</button></form><p id="codeError" class="code-error" role="alert">'+U.esc(state?.note||'')+'</p>':''}${p==='ready'?'<button class="button primary wide" data-action="store">Abrir tienda virtual '+U.icon('arrow')+'</button>':''}${p==='payment_failed'?'<button class="button primary wide" data-tab="payments">Resolver el pago</button>':''}${p==='complete'?'<button class="button primary wide" data-action="receipt" data-id="'+U.esc(state.receipt.id)+'">Ver y descargar factura</button>':''}</section>`;
 }
 function basket(){
- const b=state?.basket,paid=state?.phase==='complete';
+ const b=state?.basket, paidReceipt=state?.phase==='complete'&&state.receipt;
+ if(paidReceipt&&U.receiptValid(paidReceipt))return `<section aria-label="Factura de esta compra"><div class="paid-banner">${U.icon('check')} Compra pagada · No se volverá a cobrar esta cesta.</div>${U.receiptHTML(paidReceipt)}<button class="button primary wide current-invoice-action" data-action="receipt" data-id="${U.esc(paidReceipt.id)}">Ver y descargar factura</button></section>`;
  if(!b?.rows.length)return `<div class="empty">${U.icon('bag')}<h3>${state?.phase==='left_empty'?'Has salido sin compra.':'Tu cesta empieza aquí.'}</h3><p>Al coger un producto en la tienda virtual, aparecerá automáticamente.</p></div>`;
- return `${paid?'<section class="paid-banner">'+U.icon('check')+' Compra pagada · No se volverá a cobrar esta cesta.</section>':''}${b.rows.map(p=>E.row(p)).join('')}${E.total(b,paid)}${paid?'<button class="button primary wide" data-action="receipt" data-id="'+U.esc(state.receipt.id)+'">Ver y descargar factura</button>':E.budget(state?.spending,{estimated:b.pending.length>0})}`;
+ return b.rows.map(p=>E.row(p)).join('')+E.total(b,false)+E.budget(state?.spending,{estimated:b.pending.length>0});
 }
 function paymentRecovery(){if(state?.phase!=='payment_failed')return '';const method=state.checkoutPayment||state.profile?.payment;return `<section class="card tinted"><h3>Resolver esta compra pendiente</h3><p>No se completó el pago con <strong>${U.esc(method)}</strong>.</p><p class="micro">Predeterminado para nuevas visitas: ${U.esc(data.profile.payment)}.</p><button class="button primary wide live-only" data-action="retry-current">Usar ${U.esc(data.profile.payment)} en esta compra y reintentar</button><p class="micro">Este botón autoriza el reintento de la misma compra con el método indicado. No crea otra cesta.</p></section>`}
 function render(){
@@ -93,9 +94,20 @@ channel.onmessage=({data:msg})=>{
  if(msg.type==='store_closed'){lastSeen=0;updateConnection();return}
  if(msg.type!=='state'||!msg.state||msg.state.version!==1)return;
  const next=msg.state;if(state?.storeId===next.storeId&&next.sequence<state.sequence)return;
- const changed=!state||state.sequence!==next.sequence||state.storeId!==next.storeId;
+ const previous=state;
+ const changed=!previous||previous.sequence!==next.sequence||previous.storeId!==next.storeId;
+ const phaseChanged=previous?.phase!==next.phase||previous?.visitId!==next.visitId;
  state=next;lastSeen=Date.now();sessionStorage.setItem(cachedKey,JSON.stringify(state));
  let added=false;for(const r of next.receipts||[])if(U.receiptValid(r)&&!data.receipts.some(x=>x.id===r.id)){data.receipts.push(r);added=true}if(added)save();
+ if(data.profile&&phaseChanged){
+  if(['confirmation','code'].includes(next.phase)&&tab!=='home'){navigate('home');return}
+  const entered=next.phase==='shopping'&&(!previous||previous.visitId!==next.visitId||['identifying','confirmation','code','ready'].includes(previous.phase));
+  const finished=['complete','left_empty'].includes(next.phase)&&previous?.visitId===next.visitId;
+  if(entered||finished){
+   if(tab!=='basket'){navigate('basket');return}
+   $('#appMain').scrollTop=0;
+  }
+ }
  if((changed||added)&&(!['limits','payments','profile','issue','issues'].includes(tab)||(tab==='payments'&&changed)||(tab==='limits'&&added&&!limitsDirty)))render();
  updateConnection();
 };
