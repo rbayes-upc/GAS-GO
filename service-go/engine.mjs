@@ -18,7 +18,19 @@ const motorcycleTires = ['Delantero', 'Trasero'];
 export function tireLabels(session) {
   return session.vehicle === 'motorcycle' ? motorcycleTires : tires;
 }
-export const programs = { water: 'Agua', foam: 'Espuma', rinse: 'Aclarado' };
+export const programs = { degrease: 'Desengrasante', water: 'Lavado', foam: 'Jabón', rinse: 'Aclarado' };
+export const pressureUnits = {
+  BAR: { factor: 1, step: 0.1, decimals: 2 },
+  PSI: { factor: 14.5037738, step: 1, decimals: 1 },
+  kPa: { factor: 100, step: 10, decimals: 0 },
+};
+const unitNames = Object.keys(pressureUnits);
+const minPressure = 0.5;
+const maxPressure = 6;
+
+export function selectedWheel(session) {
+  return session.tire ?? session.selectedTire ?? tireLabels(session).findIndex((_, i) => !session.completed.includes(i));
+}
 export const equipment = { air: 'A-01', wash: 'L-01' };
 
 export function createSession({ service, vehicle, method, limit, id, code, customer }, now) {
@@ -34,6 +46,7 @@ export function createSession({ service, vehicle, method, limit, id, code, custo
 }
 
 export function target(session, tire) {
+  if (session.pressureGoal != null && tire === selectedWheel(session)) return session.pressureGoal;
   return vehicles[session.vehicle][tire < tireLabels(session).length / 2 ? 'front' : 'rear'];
 }
 
@@ -77,7 +90,7 @@ export function advance(session, now) {
       ? desired : current + Math.sign(desired - current) * duration / 5000;
     if (duration === untilTarget) {
       updated.completed = [...new Set([...session.completed, session.tire])];
-      updated = { ...updated, phase: 'ready', runningSince: null, tire: null };
+      updated = { ...updated, phase: 'ready', runningSince: null, tire: null, selectedTire: null, pressureDraft: null, pressureGoal: null };
     }
   }
   if (duration === untilLimit) return finish(updated, eventTime, 'Importe máximo alcanzado');
@@ -102,10 +115,36 @@ export function act(session, action, value, now) {
         return authorize(current);
       }
       break;
-    case 'connect':
+    case 'unit':
+      if (current.service === 'air' && ['ready', 'running'].includes(current.phase)) {
+        const next = (unitNames.indexOf(current.pressureUnit ?? 'BAR') + 1) % unitNames.length;
+        return { ...current, pressureUnit: unitNames[next] };
+      }
+      break;
+    case 'wheel':
       if (current.service === 'air' && current.phase === 'ready' &&
           Number.isInteger(value) && value >= 0 && value < tireLabels(current).length && !current.completed.includes(value)) {
-        return advance({ ...current, tire: value, phase: 'running', runningSince: now }, now);
+        if (value === selectedWheel(current)) return current;
+        return { ...current, selectedTire: value, pressureDraft: null, pressureGoal: null };
+      }
+      break;
+    case 'adjust-pressure':
+      if (current.service === 'air' && current.phase === 'ready' && (value === 1 || value === -1)) {
+        const wheel = selectedWheel(current);
+        const unit = pressureUnits[current.pressureUnit ?? 'BAR'];
+        const draft = current.pressureDraft ?? target(current, wheel);
+        const adjusted = draft + value * unit.step / unit.factor;
+        return { ...current, pressureDraft: Math.max(minPressure, Math.min(maxPressure, adjusted)), pressureGoal: null };
+      }
+      break;
+    case 'set-pressure':
+      if (current.service === 'air' && current.phase === 'ready') {
+        return { ...current, pressureGoal: current.pressureDraft ?? target(current, selectedWheel(current)) };
+      }
+      break;
+    case 'pressurize':
+      if (current.service === 'air' && current.phase === 'ready' && current.pressureGoal != null) {
+        return advance({ ...current, tire: selectedWheel(current), phase: 'running', runningSince: now }, now);
       }
       break;
     case 'program':
@@ -114,6 +153,9 @@ export function act(session, action, value, now) {
       }
       break;
     case 'spray':
+      if (current.service === 'wash' && current.phase === 'running') {
+        return { ...current, phase: 'ready', runningSince: null };
+      }
       if (current.service === 'wash' && current.phase === 'ready') {
         return { ...current, phase: 'running', runningSince: now };
       }

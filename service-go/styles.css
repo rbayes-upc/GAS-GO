@@ -226,3 +226,41 @@ body[data-view="equipment"] {
 @media (max-width: 375px) {
   .session-options .fields { grid-template-columns: 1fr; }
 }
+
+.equipment-pane {
+  display: flex; flex-direction: column; min-width: 0;
+  height: min(890px, calc(100dvh - 40px)); overflow: hidden;
+  border: 1px solid var(--line); border-radius: 22px; background: var(--paper);
+}
+.equipment-pane > header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--line);
+}
+.equipment-pane h2 { font-size: 18px; }
+.equipment-pane iframe { width: 100%; flex: 1; min-height: 0; border: 0; }
+@media (min-width: 860px) {
+  body[data-view="client"].equipment-open {
+    display: grid; grid-template-columns: 440px minmax(0, 780px);
+    align-items: start; justify-content: center; gap: 16px; padding-inline: 16px;
+  }
+  .equipment-open .device { margin: 0; }
+}
+@media (max-width: 859px) {
+  .equipment-pane { width: min(100%, 680px); margin: 16px auto; }
+}
+.equipment-embedded .hero,
+.equipment-embedded .topbar .header-link { display: none; }
+.pressure-meter {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
+  color: var(--deep); background: var(--tint); padding: 10px;
+  border: 3px solid #7c97ba; border-radius: 12px;
+}
+.pressure-meter strong { display: block; font: 800 clamp(1rem, 5vw, 1.75rem)/1.3 ui-monospace, monospace; }
+.pressure-keys {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-top: 8px;
+}
+.pressure-keys button { min-width: 0; padding-inline: 2px; }
+.pressure-start, .wash-start { width: 100%; margin-top: 9px; }
+#air-controls h3:not(:first-child) { margin-top: 12px; }
+#programs { display: grid; gap: 7px; }
+#programs button { width: 100%; text-align: left; }

@@ -1,4 +1,4 @@
-import { equipment, methods, services, vehicles } from './engine.mjs?v=2';
+import { equipment, methods, services, vehicles } from './engine.mjs?v=3';
 
 export const money = cents => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 export const timer = milliseconds => {

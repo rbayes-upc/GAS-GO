@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · Simulador de equipos</title>
-  <link rel="stylesheet" href="./styles.css?v=5">
+  <link rel="stylesheet" href="./styles.css?v=10">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=4"></script>
+  <script type="module" src="./app.mjs?v=6"></script>
 </head>
 <body data-view="equipment">
   <header class="topbar">
@@ -28,7 +28,7 @@
       <p>Prepara un servicio en la app del cliente.</p>
       <div class="equipment-list">
         <div><span class="equipment-icon wheel" aria-hidden="true"></span><span><strong>Inflador de neumáticos</strong><small>Equipo A-01 · Presión por rueda</small></span></div>
-        <div><span class="equipment-icon wash" aria-hidden="true"></span><span><strong>Box de lavado</strong><small>Equipo L-01 · Agua, espuma y aclarado</small></span></div>
+        <div><span class="equipment-icon wash" aria-hidden="true"></span><span><strong>Box de lavado</strong><small>Equipo L-01 · Desengrasante, lavado, jabón y aclarado</small></span></div>
       </div>
     </section>
     <section class="panel session" id="session" aria-labelledby="service-title" hidden>
@@ -47,17 +47,29 @@
         <button class="primary" type="submit">Validar código</button>
       </form>
       <div id="air-controls" hidden>
-        <h3>Presión por neumático</h3>
+        <h3>Inflador</h3>
+        <div class="pressure-meter" aria-label="Contador de presión">
+          <div><small>Presión actual</small><strong id="pressure-current"></strong></div>
+          <div><small>Presión deseada</small><strong id="pressure-target"></strong></div>
+        </div>
+        <div class="pressure-keys" aria-label="Ajustes de presión">
+          <button type="button" id="pressure-set" aria-label="SET: fijar presión">SET</button>
+          <button type="button" id="pressure-up" aria-label="+: subir presión">+</button>
+          <button type="button" id="pressure-down" aria-label="-: bajar presión">−</button>
+          <button type="button" id="pressure-unit" aria-label="UNIT: cambiar unidad">UNIT</button>
+        </div>
+        <button class="primary pressure-start" type="button" data-action="pressurize" hidden>Presionar</button>
+        <h3>Selecciona una rueda</h3>
         <div class="tires" id="tires"></div>
         <p class="hint">Presiones de ejemplo para esta simulación.</p>
       </div>
       <div id="wash-controls" hidden>
-        <h3>Programa de la pistola</h3>
-        <div class="actions" id="programs" aria-label="Programas de lavado"></div>
+        <h3>Programas de lavado</h3>
+        <div id="programs" aria-label="Programas de lavado"></div>
+        <button class="primary wash-start" type="button" data-action="spray" hidden>Usar lanza</button>
       </div>
       <div class="actions">
         <button class="primary" type="button" data-action="identify" hidden>Identificar cliente</button>
-        <button class="primary" type="button" data-action="spray" hidden>Activar pistola</button>
         <button type="button" data-action="pause" hidden></button>
         <button type="button" data-action="finish" hidden>Finalizar servicio</button>
       </div>

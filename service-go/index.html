@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=9">
+  <link rel="stylesheet" href="./styles.css?v=10">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=5"></script>
+  <script type="module" src="./app.mjs?v=6"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -30,7 +30,7 @@
           <li>
             <div class="service-illustration illustration-wash" aria-hidden="true"><span class="equipment-icon wash"></span></div>
             <strong>Lavado en box</strong>
-            <small>Agua, espuma y aclarado con pistola a presión.</small>
+            <small>Desengrasante, lavado, jabón y aclarado.</small>
           </li>
           <li>
             <div class="service-illustration illustration-air" aria-hidden="true"><span class="equipment-icon wheel"></span></div>
@@ -103,9 +103,15 @@
     </main>
     <nav class="app-footer" aria-label="Accesos de Service&Go">
       <span>Servicios simulados</span>
-      <a class="header-link" href="./equipo.html" target="_blank" rel="noopener">Abrir simulador</a>
+      <a class="header-link" id="openEquipment" href="./equipo.html">Abrir simulador</a>
     </nav>
   </div>
+  <section class="equipment-pane" id="equipmentPane" aria-labelledby="equipmentPaneTitle" hidden>
+    <header>
+      <h2 id="equipmentPaneTitle">Simulador de equipos</h2>
+      <button type="button" id="closeEquipment">Cerrar simulador</button>
+    </header>
+  </section>
   <dialog class="issue-dialog" id="issueDialog" aria-labelledby="issue-title">
     <h2 id="issue-title">Comunicar una incidencia</h2>
     <p class="hint">El aviso se guarda en este navegador como parte de la demostración.</p>

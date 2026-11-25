@@ -1,4 +1,4 @@
-import { act, advance, createSession, equipment, methods, programs, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=2';
+import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=3';
 import { money, receipt, timer } from './pdf.mjs?v=2';
 import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 
@@ -6,7 +6,12 @@ const key = 'service-go.session.v1';
 const client = document.body.dataset.view === 'client';
 const $ = id => document.getElementById(id);
 const terminal = ['finished', 'expired', 'cancelled'];
-const bar = value => value.toFixed(2).replace('.', ',') + ' bar';
+function formatPressure(value, unit = 'BAR') {
+  const { factor, decimals } = pressureUnits[unit];
+  return (value * factor).toLocaleString('es-ES', {
+    minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+  }) + ' ' + unit;
+}
 const buttons = [...document.querySelectorAll('button[data-action]')];
 let shown;
 let configuring = false;
@@ -87,8 +92,9 @@ function render(session) {
   const air = session.service === 'air';
   const codeEntry = identifying && session.method === 'code';
   const labels = tireLabels(session);
+  const unit = session.pressureUnit ?? 'BAR';
   const activity = air
-    ? (running ? labels[session.tire] + ' · ' + bar(session.pressures[session.tire]) + ' → ' + bar(target(session, session.tire)) + ' · ' : '') +
+    ? (running ? labels[session.tire] + ' · ' + formatPressure(session.pressures[session.tire], unit) + ' → ' + formatPressure(target(session, session.tire), unit) + ' · ' : '') +
       session.completed.length + ' de ' + labels.length + ' neumáticos ajustados'
     : (running ? programs[session.program] + ' · ' : '') + 'Tarifa de ' + money(services.wash.rate) + ' por segundo activo';
   setText($('activity'), activity);
@@ -101,8 +107,9 @@ function render(session) {
     reset: terminal.includes(session.phase),
   } : {
     identify: session.phase === 'requested',
-    spray: !air && ready,
-    pause: running,
+    spray: !air && (ready || running),
+    pressurize: air && ready && session.pressureGoal != null,
+    pause: air && running,
     finish: ready || running,
   };
   for (const button of buttons) button.hidden = !visible[button.dataset.action];
@@ -115,14 +122,22 @@ function render(session) {
     if (previous?.id !== session.id || (previous?.phase === 'identifying' && !codeEntry)) $('code').value = '';
     $('air-controls').hidden = !air || !(ready || running);
     $('wash-controls').hidden = air || !(ready || running);
-    setText(document.querySelector('[data-action="pause"]'), air ? 'Desconectar boquilla' : 'Pausar pistola');
-
+    setText(document.querySelector('[data-action="pause"]'), 'Detener ajuste');
+    setText(document.querySelector('[data-action="spray"]'), running ? 'Pausar lanza' : 'Usar lanza');
+    const wheel = selectedWheel(session);
+    if (air && (ready || running)) {
+      setText($('pressure-current'), formatPressure(session.pressures[wheel], unit));
+      setText($('pressure-target'), formatPressure(session.pressureDraft ?? target(session, wheel), unit));
+      for (const id of ['pressure-set', 'pressure-up', 'pressure-down']) $(id).disabled = running;
+      $('pressure-set').setAttribute('aria-pressed', String(session.pressureGoal != null));
+    }
     tireControls.forEach(({ card, title, pressure, button }, i) => {
       card.hidden = i >= labels.length;
       if (card.hidden) return;
       setText(title, labels[i]);
-      setText(pressure, bar(session.pressures[i]) + ' / objetivo ' + bar(target(session, i)));
-      setText(button, session.completed.includes(i) ? 'Ajustado' : session.tire === i ? 'Boquilla conectada' : 'Conectar boquilla');
+      setText(pressure, formatPressure(session.pressures[i], unit));
+      setText(button, session.completed.includes(i) ? 'Ajustado' : 'Elegir');
+      button.setAttribute('aria-pressed', String(i === wheel));
       button.disabled = !ready || session.completed.includes(i);
     });
     for (const [program, button] of programControls) {
@@ -172,6 +187,36 @@ function readProfile() {
 const tireControls = [];
 const programControls = new Map();
 if (client) {
+  const pane = $('equipmentPane');
+  const opener = $('openEquipment');
+  function showEquipment(focus = false) {
+    if (pane.hidden) {
+      const frame = document.createElement('iframe');
+      frame.src = opener.href;
+      frame.title = 'Controles del inflador y del box de lavado';
+      pane.append(frame);
+      pane.hidden = false;
+      document.body.classList.add('equipment-open');
+      sessionStorage.setItem('service-go.equipment-open', '1');
+    }
+    if (focus) {
+      pane.scrollIntoView({ block: 'nearest' });
+      $('closeEquipment').focus({ preventScroll: true });
+    }
+  }
+  opener.addEventListener('click', event => {
+    event.preventDefault();
+    showEquipment(true);
+  });
+  $('closeEquipment').addEventListener('click', async () => {
+    await update((current, now) => current?.phase === 'running' ? act(current, 'pause', null, now) : current);
+    pane.querySelector('iframe')?.remove();
+    pane.hidden = true;
+    document.body.classList.remove('equipment-open');
+    sessionStorage.removeItem('service-go.equipment-open');
+    opener.focus();
+  });
+  if (sessionStorage.getItem('service-go.equipment-open') === '1') showEquipment();
   const issueForm = $('issueForm');
   $('openIssue').addEventListener('click', () => $('issueDialog').showModal());
   issueForm.addEventListener('submit', async event => {
@@ -214,35 +259,47 @@ if (client) {
     setText($('profile-payment'), profile.payment);
     setText($('limit-preview'), money(Math.round(Number(form.get('limit')) * 100)));
     setText($('vehicle-hint'), form.get('service') === 'air'
-      ? 'Objetivos simulados · delante ' + bar(selected.front) + ' · detrás ' + bar(selected.rear)
-      : 'El agua, la espuma y el aclarado tienen la misma tarifa. Las pausas no se cobran.');
+      ? 'Objetivos simulados · delante ' + formatPressure(selected.front) + ' · detrás ' + formatPressure(selected.rear)
+      : 'Todos los programas tienen la misma tarifa. Las pausas no se cobran.');
   }
   $('reservation').addEventListener('input', updateHint);
   addEventListener('storage', event => {
     if (event.key === gasgoStorageKey || event.key === null) updateHint();
   });
   updateHint();
-  $('reservation').addEventListener('submit', event => {
+  $('reservation').addEventListener('submit', async event => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const profile = readProfile();
-    update((current, now) => {
+    const id = crypto.randomUUID();
+    await update((current, now) => {
       if (current) return current;
       return createSession({
         service: form.get('service'), vehicle: profile.vehicle, customer: profile, method: form.get('method'),
-        limit: Math.round(Number(form.get('limit')) * 100), id: crypto.randomUUID(),
+        limit: Math.round(Number(form.get('limit')) * 100), id,
         code: String(100000 + crypto.getRandomValues(new Uint32Array(1))[0] % 900000),
       }, now);
     });
+    if (shown?.id === id) showEquipment();
   });
 } else {
+  if (window.parent !== window) {
+    document.body.classList.add('equipment-embedded');
+    document.querySelector('.topbar .brand').removeAttribute('href');
+  }
+  $('pressure-set').addEventListener('click', () => dispatch('set-pressure'));
+  $('pressure-up').addEventListener('click', () => dispatch('adjust-pressure', 1));
+  $('pressure-down').addEventListener('click', () => dispatch('adjust-pressure', -1));
+  $('pressure-unit').addEventListener('click', () => dispatch('unit'));
   for (const [i, tire] of tires.entries()) {
     const card = document.createElement('div');
     card.className = 'tire';
     const title = document.createElement('h4');
     title.textContent = tire;
     const pressure = document.createElement('p');
-    const button = makeButton('Conectar boquilla', () => dispatch('connect', i));
+    const button = makeButton('Elegir', () => dispatch('wheel', i));
+    button.setAttribute('aria-describedby', 'wheel-title-' + i);
+    title.id = 'wheel-title-' + i;
     card.append(title, pressure, button);
     $('tires').append(card);
     tireControls.push({ card, title, pressure, button });
