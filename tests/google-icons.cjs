@@ -32,6 +32,11 @@ for(const [label,entry] of [['Take&Go','take-go'],['Service&Go','service-go']]){
  const [app]=await Promise.all([c.waitForEvent('page'),link.click()]);
  await app.waitForURL(url=>url.origin==='https://gasgo.test'&&url.pathname==='/GAS-GO/'+entry+'/index.html');
  assert.match(await app.title(),new RegExp(label,'i'));
+ if(entry==='take-go'){
+  const start=app.getByRole('button',{name:'Probar TAKE&GO'});
+  await start.click();
+  await app.getByRole('heading',{name:'Tu pausa, a tu ritmo.'}).waitFor();
+ }
  await app.close();
 }
 await p.screenshot({path:'/workspace/gasgo-dev/full-google-menu.png'});

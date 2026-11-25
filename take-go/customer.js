@@ -1,5 +1,6 @@
 (function(){'use strict';
 const U=TakeGoUI,E=TakeGoExperience,$=s=>document.querySelector(s),key='takego_customer_v1';
+const welcomeMarkup=$('#appMain').innerHTML;
 let data;try{data=JSON.parse(localStorage.getItem(key))||{}}catch{data={}}
 if(data.profile)data.profile.limits=TakeGoSpending.normalize(data.profile.limits);
 data.receipts=Array.isArray(data.receipts)?data.receipts.filter(U.receiptValid):[];
@@ -77,7 +78,15 @@ function basket(){
 function paymentRecovery(){if(state?.phase!=='payment_failed')return '';const method=state.checkoutPayment||state.profile?.payment;return `<section class="card tinted"><h3>Resolver esta compra pendiente</h3><p>No se completó el pago con <strong>${U.esc(method)}</strong>.</p><p class="micro">Predeterminado para nuevas visitas: ${U.esc(data.profile.payment)}.</p><button class="button primary wide live-only" data-action="retry-current">Usar ${U.esc(data.profile.payment)} en esta compra y reintentar</button><p class="micro">Este botón autoriza el reintento de la misma compra con el método indicado. No crea otra cesta.</p></section>`}
 function render(){
  const main=$('#appMain');
- if(tab==='welcome'||!data.profile){main.innerHTML=`<div class="welcome-copy">${U.logo('full','welcome-logo')}<p class="eyebrow">TU PARADA, SIN PASAR POR CAJA</p><h1>Lo coges.<br>Y sigues tu camino.</h1>${U.hero()}<p>Entra con tu identidad GAS&GO, elige tus productos y sal. Nosotros nos encargamos del resto.</p><button class="button primary wide" data-action="demo">Probar TAKE&GO ${U.icon('arrow')}</button><p class="micro center" style="margin-top:15px">Perfil ficticio · Sin conexión a tu cuenta GAS&GO.<br>Sin cámaras conectadas ni cobros reales.</p></div>`;$('#appNav').innerHTML='';return}
+ if(tab==='welcome'||!data.profile){
+  main.innerHTML=welcomeMarkup;
+  $('#welcomeDescription').insertAdjacentHTML('beforebegin',U.hero());
+  const start=$('[data-action="demo"]');
+  start.insertAdjacentHTML('beforeend',U.icon('arrow'));
+  start.disabled=false;
+  $('#appNav').innerHTML='';
+  return;
+ }
  const profileTabs=['payments','limits','issues','issue'];
  $('#appNav').innerHTML=[['home','home','Inicio'],['basket','bag','Cesta'],['receipts','receipt','Facturas'],['profile','person','Perfil']].map(([id,icon,label])=>`<button class="nav-button ${tab===id||(id==='profile'&&profileTabs.includes(tab))?'active':''}" data-tab="${id}" ${tab===id||(id==='profile'&&profileTabs.includes(tab))?'aria-current="page"':''}>${U.icon(icon)}${label}</button>`).join('');
  const backButton=tab!=='home'?'<button class="back" data-action="back">'+U.icon('back')+' Volver</button>':'';
