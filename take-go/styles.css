@@ -27,3 +27,7 @@
 #appMain:has(+ .app-nav [data-tab="home"].active)::-webkit-scrollbar {
   display: none;
 }
+
+.app-shell:has(#appMain:empty, #appMain > .welcome-copy) > .app-header {
+  display: none;
+}
