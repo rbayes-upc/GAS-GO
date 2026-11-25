@@ -44,7 +44,7 @@ body[data-view="client"] { min-height: 100dvh; background: var(--paper); }
 }
 .device .topbar .brand { margin-left: -12px; }
 .welcome { text-align: center; margin-bottom: 18px; }
-.welcome img { display: block; margin: -8px auto -7px; width: min(210px, 100%); height: auto; }
+.welcome img { display: block; margin: -8px auto -7px; width: min(300px, 100%); height: auto; }
 .welcome h1 { font-size: clamp(1.55rem, 6vw, 1.9rem); letter-spacing: -.045em; line-height: 1.12; }
 .welcome p { margin: 7px auto 0; max-width: 32ch; color: var(--muted); }
 @media (min-width: 560px) {
