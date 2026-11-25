@@ -31,3 +31,43 @@
 .app-shell:has(#appMain:empty, #appMain > .welcome-copy) > .app-header {
   display: none;
 }
+
+.virtual-store {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: min(890px, calc(100dvh - 40px));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--white);
+}
+.virtual-store-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.virtual-store-bar h2 { margin: 0; font-size: 18px; }
+.virtual-store iframe { flex: 1; min-height: 0; width: 100%; border: 0; }
+.embedded-store #openCustomer { display: none; }
+@media (min-width: 860px) {
+  .customer-page.store-open {
+    display: grid;
+    grid-template-columns: 440px minmax(0, 920px);
+    align-items: start;
+    justify-content: center;
+    gap: 16px;
+    padding-inline: 16px;
+  }
+}
+@media (max-width: 859px) {
+  .virtual-store { width: min(100%, 680px); margin: 16px auto; }
+}
+.embedded-store .store-title,
+.embedded-store .store-guide { display: none; }
+.embedded-store .store-main { padding-top: 16px; }
+.embedded-store .store-grid { margin-top: 16px; }
+.embedded-store .checkout-sidebar { order: 0; }

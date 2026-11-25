@@ -1,7 +1,8 @@
 (function(){'use strict';
 const U=TakeGoUI,E=TakeGoExperience,$=s=>document.querySelector(s);
 let link=new URLSearchParams(location.search).get('session');if(!/^[a-f0-9-]{36}$/i.test(link||''))link=crypto.randomUUID();history.replaceState(null,'','?session='+link);
-$('.wordmark').href='./index.html?session='+link;
+if(window.parent===window)$('a.wordmark').href='./index.html?session='+link;
+else{document.body.classList.add('embedded-store');$('a.wordmark').removeAttribute('href')}
 const key='takego_store_v1_'+link,channel=new BroadcastChannel('takego_v1_'+link);
 let engine,category='Todo',receipt=null,lastSeen=0,active=false,lastAnnounced=null;
 const connected=()=>lastSeen>0&&Date.now()-lastSeen<6000;

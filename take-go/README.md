@@ -1,6 +1,6 @@
 # TAKE&GO · prototipo independiente
 
-Abrir `index.html` (cliente) mediante un servidor HTTP y pulsar **Probar TAKE&GO → Abrir tienda virtual**. Ambas pestañas deben permanecer en el mismo navegador y origen. La tienda también se puede abrir en `tienda.html`; desde allí se abre la app del cliente con el enlace de sesión correcto.
+Abrir `index.html` (cliente) mediante un servidor HTTP y pulsar **Probar TAKE&GO → Abrir tienda virtual**. El catálogo se abre junto a la app en escritorio y debajo en pantallas estrechas. Puedes cerrar y volver a abrir el panel para continuar la misma compra. La tienda también se puede abrir en `tienda.html`; desde allí se abre la app del cliente con el enlace de sesión correcto.
 
 Identidad de prueba Alex García. La acreditación automática A representa BLE + UWB + token; en «Escenarios de prueba» también están B (confirmación en app) y C (código temporal mostrado por la tienda). Son métodos conceptuales de GAS&GO, sin conexión a sus cuentas ni credenciales.
 

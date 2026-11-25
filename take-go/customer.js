@@ -27,7 +27,31 @@ function showRoute(){const r=route();if($('#receiptDialog').open)$('#receiptDial
 history.replaceState({takego:true,depth:0,tab:route().view==='invoice'?'receipts':route().view},'',url(route().view,route().id));
 $('.wordmark').href=url('home');$('.wordmark').onclick=e=>{e.preventDefault();navigate('home')};
 addEventListener('popstate',showRoute);
-function openStore(){const popup=window.open('./tienda.html?session='+link,'takego-shop-'+link);if(!popup)toast('Permite abrir la pestaña de la tienda virtual en tu navegador.')}
+const storePane=$('#virtualStore'),storeOpenKey='takego_open_store_'+link;
+function openStore({focus=false}={}){
+ if(storePane.hidden){
+  const frame=document.createElement('iframe');
+  frame.id='virtualStoreFrame';
+  frame.title='Catálogo y controles de la tienda virtual';
+  frame.src='./tienda.html?session='+link;
+  storePane.append(frame);
+  storePane.hidden=false;
+  document.body.classList.add('store-open');
+  sessionStorage.setItem(storeOpenKey,'1');
+ }
+ if(focus){
+  storePane.scrollIntoView({block:'nearest'});
+  $('#closeVirtualStore').focus({preventScroll:true});
+ }
+}
+$('#closeVirtualStore').onclick=()=>{
+ $('#virtualStoreFrame').remove();
+ storePane.hidden=true;
+ document.body.classList.remove('store-open');
+ sessionStorage.removeItem(storeOpenKey);
+ ($('[data-action="store"]')||$('.nav-button.active'))?.focus();
+};
+if(data.profile&&sessionStorage.getItem(storeOpenKey)==='1')openStore();
 function connectionHTML(){return `<div class="connection-notice" data-connection-notice role="status" aria-live="polite" hidden></div>`}
 function updateConnection(){
  const online=connected();
@@ -82,7 +106,7 @@ document.addEventListener('click',e=>{
  const action=b.dataset.action;
  if(action==='back'){back();return}
  if(action==='demo'){data.profile={id:'TG-DEMO-ALEX',name:'Alex García',payment:TakeGo.CARDS[0],limits:TakeGoSpending.empty()};save();hello();render()}
- if(action==='store')openStore();
+ if(action==='store')openStore({focus:true});
  if(action==='confirm')liveSend({type:'confirm',visitId:state?.visitId});
  if(action==='receipt')navigate('invoice',b.dataset.id);
  if(action==='retry-current')liveSend({type:'retry_payment',visitId:state?.visitId,payment:data.profile.payment});
