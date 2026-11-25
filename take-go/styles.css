@@ -17,3 +17,13 @@
 @media(max-width:700px){.app-nav{padding-top:12px;padding-bottom:max(14px,env(safe-area-inset-bottom))}.app-header{min-height:75px}}
 /* Variantes originales para fondos claros y oscuros. */
 :root{--white:#fdf7ed}.app-header,.store-header{background:var(--white);color:var(--brown);border-bottom:1px solid var(--line)}.demo-pill{color:var(--brown);background:#fed61226;border-color:#c8b8a5}.header-divider{background:var(--line)}.connection-state{color:#6f5546}.store-header .button.outline{border-color:#c8b8a5}.brand-image{background:var(--white)}.brand-image img{mix-blend-mode:darken}.brand-full{aspect-ratio:1140/335}.brand-full img{width:110%;left:-5.2632%;top:-131.3433%}.brand-dark{background:var(--brown)}.brand-dark img{mix-blend-mode:lighten}.brand-full.brand-dark{aspect-ratio:1500/420}.brand-full.brand-dark img{width:111.4667%;left:-6%;top:-57.1429%}.welcome-logo{border-radius:0}
+
+/* Welcome and Home keep touch, wheel and keyboard scrolling without a visible scrollbar. */
+#appMain:has(.welcome-copy),
+#appMain:has(+ .app-nav [data-tab="home"].active) {
+  scrollbar-width: none;
+}
+#appMain:has(.welcome-copy)::-webkit-scrollbar,
+#appMain:has(+ .app-nav [data-tab="home"].active)::-webkit-scrollbar {
+  display: none;
+}
