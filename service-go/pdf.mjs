@@ -1,4 +1,4 @@
-import { equipment, methods, services, sessionTariff, vehicles } from './engine.mjs?v=4';
+import { equipment, methods, services, sessionTariff, vehicles } from './engine.mjs?v=5';
 
 export const money = cents => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 export function tariffLabel(session) {
@@ -6,9 +6,10 @@ export function tariffLabel(session) {
   return money(cents) + (milliseconds === 60000 ? '/min' : '/s');
 }
 
-export const timer = milliseconds => {
+export const timer = (milliseconds, exact = false) => {
   const seconds = Math.floor(milliseconds / 1000);
-  return [Math.floor(seconds / 60), seconds % 60].map(value => String(value).padStart(2, '0')).join(':');
+  const display = [Math.floor(seconds / 60), seconds % 60].map(value => String(value).padStart(2, '0')).join(':');
+  return exact ? display + ',' + String(Math.floor(milliseconds % 1000 / 10)).padStart(2, '0') : display;
 };
 
 function pdfText(value) {
@@ -29,7 +30,7 @@ export function invoiceDetails(session) {
     vehicle: session.customer?.vehicleLabel || vehicles[session.vehicle].label,
     customer: session.customer?.name || 'Perfil de demostración',
     payment: session.customer?.payment || 'Método de prueba',
-    duration: timer(session.elapsed),
+    duration: timer(session.elapsed, session.service === 'air'),
     rate: tariffLabel(session),
     limit: money(session.limit),
     reason: session.reason,

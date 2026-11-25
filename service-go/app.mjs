@@ -1,5 +1,5 @@
-import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=4';
-import { invoiceDetails, money, receipt, tariffLabel, timer } from './pdf.mjs?v=4';
+import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=5';
+import { invoiceDetails, money, receipt, tariffLabel, timer } from './pdf.mjs?v=5';
 import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 
 const key = 'service-go.session.v1';
@@ -57,7 +57,11 @@ function status(session) {
       if (session.method === 'auto') return 'Identificando automáticamente…';
       if (session.method === 'confirm') return client ? 'Confirma tu identidad para activar el equipo.' : 'Esperando confirmación en la app.';
       return client ? 'Introduce este código en el simulador.' : 'Introduce el código temporal que aparece en la app.';
-    case 'ready': return session.completed.length ? 'Objetivo alcanzado. ' + active : 'Equipo listo. ' + active;
+    case 'ready':
+      if (session.service === 'air' && session.completed.length === tireLabels(session).length) {
+        return 'Neumáticos ajustados. Puedes volver a ajustar una rueda o finalizar.';
+      }
+      return session.completed.length ? 'Objetivo alcanzado. ' + active : 'Equipo listo. ' + active;
     case 'running': return session.service === 'air' ? 'Ajustando presión' : 'Pistola activa';
     case 'finished': return session.reason + '.';
     case 'expired': return 'La identificación ha caducado. Prepara otra sesión.';
@@ -80,7 +84,7 @@ function render(session) {
   setText($('equipment-name'), 'EQUIPO ' + equipment[session.service]);
   setText($('service-title'), services[session.service].label);
   setText($('status'), status(session));
-  setText($('time'), timer(session.elapsed));
+  setText($('time'), timer(session.elapsed, session.service === 'air'));
   setText($('total'), money(session.total));
   setText($('limit'), money(session.limit));
   $('budget').max = session.limit;
@@ -95,7 +99,7 @@ function render(session) {
   const unit = session.pressureUnit ?? 'BAR';
   const activity = air
     ? (running ? labels[session.tire] + ' · ' + formatPressure(session.pressures[session.tire], unit) + ' → ' + formatPressure(target(session, session.tire), unit) + ' · ' : '') +
-      session.completed.length + ' de ' + labels.length + ' neumáticos ajustados'
+      session.completed.length + ' de ' + labels.length + ' neumáticos ajustados · ' + tariffLabel(session) + ' de ajuste activo'
     : (running ? programs[session.program] + ' · ' : '') + 'Tarifa: ' + tariffLabel(session);
   setText($('activity'), activity);
 
@@ -142,9 +146,9 @@ function render(session) {
       if (card.hidden) return;
       setText(title, labels[i]);
       setText(pressure, formatPressure(session.pressures[i], unit));
-      setText(button, session.completed.includes(i) ? 'Ajustado' : 'Elegir');
+      setText(button, session.completed.includes(i) ? 'Volver a ajustar' : 'Elegir');
       button.setAttribute('aria-pressed', String(i === wheel));
-      button.disabled = !ready || session.completed.includes(i);
+      button.disabled = !ready;
     });
     for (const [program, button] of programControls) {
       button.setAttribute('aria-pressed', String(session.program === program));

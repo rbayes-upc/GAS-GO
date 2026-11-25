@@ -38,7 +38,8 @@ const minPressure = 0.5;
 const maxPressure = 6;
 
 export function selectedWheel(session) {
-  return session.tire ?? session.selectedTire ?? tireLabels(session).findIndex((_, i) => !session.completed.includes(i));
+  const next = tireLabels(session).findIndex((_, i) => !session.completed.includes(i));
+  return session.tire ?? session.selectedTire ?? (next >= 0 ? next : session.completed.at(-1) ?? 0);
 }
 export const equipment = { air: 'A-01', wash: 'L-01' };
 
@@ -56,6 +57,7 @@ export function createSession({ service, vehicle, method, limit, id, code, custo
 
 export function target(session, tire) {
   if (session.pressureGoal != null && tire === selectedWheel(session)) return session.pressureGoal;
+  if (session.completed.includes(tire)) return session.pressures[tire];
   return vehicles[session.vehicle][tire < tireLabels(session).length / 2 ? 'front' : 'rear'];
 }
 
@@ -103,9 +105,6 @@ export function advance(session, now) {
     }
   }
   if (duration === untilLimit) return finish(updated, eventTime, 'Importe máximo alcanzado');
-  if (updated.completed.length === tireLabels(updated).length) {
-    return finish(updated, eventTime, updated.vehicle === 'motorcycle' ? 'Dos neumáticos ajustados' : 'Cuatro neumáticos ajustados');
-  }
   return updated;
 }
 
@@ -132,7 +131,7 @@ export function act(session, action, value, now) {
       break;
     case 'wheel':
       if (current.service === 'air' && current.phase === 'ready' &&
-          Number.isInteger(value) && value >= 0 && value < tireLabels(current).length && !current.completed.includes(value)) {
+          Number.isInteger(value) && value >= 0 && value < tireLabels(current).length) {
         if (value === selectedWheel(current)) return current;
         return { ...current, selectedTire: value, pressureDraft: null, pressureGoal: null };
       }
@@ -153,7 +152,11 @@ export function act(session, action, value, now) {
       break;
     case 'pressurize':
       if (current.service === 'air' && current.phase === 'ready' && current.pressureGoal != null) {
-        return advance({ ...current, tire: selectedWheel(current), phase: 'running', runningSince: now }, now);
+        const tire = selectedWheel(current);
+        return advance({
+          ...current, tire, completed: current.completed.filter(i => i !== tire),
+          phase: 'running', runningSince: now,
+        }, now);
       }
       break;
     case 'program':
