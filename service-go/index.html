@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=13">
+  <link rel="stylesheet" href="./styles.css?v=14">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=12"></script>
+  <script type="module" src="./app.mjs?v=13"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -144,6 +144,25 @@
           <button type="button" data-action="reset" hidden>Nueva sesión</button>
         </div>
       </section>
+      <section id="invoicesView" aria-labelledby="invoicesTitle" hidden>
+        <h2 id="invoicesTitle" tabindex="-1">Tus facturas</h2>
+        <p class="hint">Servicios guardados en este navegador.</p>
+        <div id="invoiceList" class="invoice-list"></div>
+        <div id="invoiceDetail" hidden>
+          <div id="invoicePreview"></div>
+          <button class="primary history-download" type="button" id="downloadSavedInvoice">Descargar factura PDF</button>
+        </div>
+      </section>
+      <section id="profileView" aria-labelledby="profileTitle" hidden>
+        <h2 id="profileTitle" tabindex="-1">Tu perfil</h2>
+        <p class="hint" id="saved-profile-origin"></p>
+        <dl class="session-profile panel">
+          <div><dt>Identidad</dt><dd id="saved-profile-name"></dd></div>
+          <div><dt>Vehículo activo</dt><dd id="saved-profile-vehicle"></dd></div>
+          <div><dt>Pago simulado</dt><dd id="saved-profile-payment"></dd></div>
+        </dl>
+        <p class="hint">Puedes actualizar tus datos y elegir el vehículo activo en Gas&amp;Go.</p>
+      </section>
     </main>
     <nav class="app-footer" aria-label="Accesos de Service&Go">
       <span>Servicios simulados</span>
@@ -153,6 +172,8 @@
       <button type="button" data-operation="home" aria-current="page"><span class="operation-icon operation-home" aria-hidden="true"></span>Inicio</button>
       <button type="button" data-operation="air"><span class="operation-icon equipment-icon wheel" aria-hidden="true"></span>Inflar</button>
       <button type="button" data-operation="wash"><span class="operation-icon equipment-icon wash" aria-hidden="true"></span>Lavar</button>
+      <button type="button" data-operation="invoices"><span class="operation-icon operation-invoice" aria-hidden="true"></span>Facturas</button>
+      <button type="button" data-operation="profile"><span class="operation-icon operation-profile" aria-hidden="true"></span>Perfil</button>
     </nav>
   </div>
   <section class="equipment-pane" id="equipmentPane" aria-labelledby="equipmentPaneTitle" hidden>

@@ -305,7 +305,7 @@ body[data-view="equipment"] {
 }
 
 .operations-nav {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); flex-shrink: 0;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); flex-shrink: 0;
   padding: 5px 8px max(5px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line);
 }
 .operations-nav button {
@@ -324,3 +324,14 @@ body[data-view="equipment"] {
 }
 .operation-icon.wheel::after { inset: 4px 5px; border-width: 4px; }
 .operation-icon.wash::after { width: 9px; height: 13px; top: 5px; left: 9px; }
+
+.operation-invoice::after {
+  content: ''; position: absolute; inset: 4px 7px; border: 2px solid var(--deep); border-radius: 2px;
+  background: repeating-linear-gradient(to bottom, var(--deep) 0 1px, transparent 1px 4px) center / 5px 8px no-repeat;
+}
+.operation-profile::before, .operation-profile::after { content: ''; position: absolute; background: var(--deep); }
+.operation-profile::before { width: 7px; height: 7px; border-radius: 50%; top: 3px; left: 9.5px; }
+.operation-profile::after { width: 14px; height: 8px; border-radius: 7px 7px 2px 2px; top: 12px; left: 6px; }
+.invoice-list { display: grid; gap: 8px; }
+.invoice-list button { text-align: left; background: white; }
+.history-download { width: 100%; margin-top: 10px; }

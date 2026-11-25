@@ -3,6 +3,7 @@ import { invoiceDetails, money, receipt, tariffLabel, timer } from './pdf.mjs?v=
 import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 
 const key = 'service-go.session.v1';
+const invoiceKey = 'service-go.invoices.v1';
 const client = document.body.dataset.view === 'client';
 const $ = id => document.getElementById(id);
 const terminal = ['finished', 'expired', 'cancelled'];
@@ -16,9 +17,33 @@ const buttons = [...document.querySelectorAll('button[data-action]')];
 let shown;
 let configuring = false;
 let viewingWelcome = false;
+let auxiliaryView = null;
+let selectedInvoice = null;
 
 function read() {
   return JSON.parse(localStorage.getItem(key));
+}
+
+function readInvoices() {
+  try {
+    const list = JSON.parse(localStorage.getItem(invoiceKey) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberInvoice(session) {
+  if (session?.phase !== 'finished') return;
+  const invoices = readInvoices();
+  if (!invoices.some(invoice => invoice.id === session.id)) {
+    localStorage.setItem(invoiceKey, JSON.stringify([session, ...invoices]));
+  }
+}
+
+function fillInvoice(node, session) {
+  const details = invoiceDetails(session);
+  for (const field of node.querySelectorAll('[data-invoice]')) setText(field, details[field.dataset.invoice]);
 }
 
 function setText(element, text) {
@@ -40,9 +65,13 @@ async function update(change) {
       const next = change ? change(current, now) : current;
       if (next !== previous) {
         if (next) localStorage.setItem(key, JSON.stringify(next));
-        else localStorage.removeItem(key);
+        else {
+          rememberInvoice(current);
+          localStorage.removeItem(key);
+        }
       }
-      render(next);
+      try { rememberInvoice(next); }
+      finally { render(next); }
     });
     if (change) showError(null);
   } catch (error) {
@@ -73,13 +102,15 @@ function status(session) {
 function render(session) {
   const previous = shown;
   shown = session;
-  $('session').hidden = !session || viewingWelcome;
+  $('session').hidden = !session || viewingWelcome || Boolean(auxiliaryView);
   if (client) {
-    $('welcome').hidden = !viewingWelcome && (Boolean(session) || configuring);
-    $('reservation').hidden = viewingWelcome || Boolean(session) || !configuring;
+    $('welcome').hidden = Boolean(auxiliaryView) || (!viewingWelcome && (Boolean(session) || configuring));
+    $('reservation').hidden = Boolean(auxiliaryView) || viewingWelcome || Boolean(session) || !configuring;
+    $('invoicesView').hidden = auxiliaryView !== 'invoices';
+    $('profileView').hidden = auxiliaryView !== 'profile';
     $('backService').hidden = !$('welcome').hidden;
     setText($('startService'), session ? 'Continuar sesión' : 'Probar Service&Go');
-    const operation = !$('welcome').hidden ? 'home' : session?.service ?? $('reservation').elements.service.value;
+    const operation = auxiliaryView ?? (!$('welcome').hidden ? 'home' : session?.service ?? $('reservation').elements.service.value);
     for (const button of document.querySelectorAll('[data-operation]')) {
       if (button.dataset.operation === operation) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
@@ -130,8 +161,7 @@ function render(session) {
     const invoice = $('serviceInvoice');
     invoice.hidden = session.phase !== 'finished';
     if (!invoice.hidden && (previous?.phase !== 'finished' || previous.id !== session.id)) {
-      const details = invoiceDetails(session);
-      for (const field of invoice.querySelectorAll('[data-invoice]')) setText(field, details[field.dataset.invoice]);
+      fillInvoice(invoice, session);
     }
     $('client-code').hidden = !codeEntry;
     setText($('client-code'), codeEntry ? 'Código temporal · ' + session.code : '');
@@ -177,8 +207,8 @@ function dispatch(action, value) {
 }
 
 async function download(event) {
-  if (shown?.phase !== 'finished') return;
-  const session = shown;
+  const session = auxiliaryView === 'invoices' ? selectedInvoice : shown;
+  if (session?.phase !== 'finished') return;
   const button = event.currentTarget;
   button.disabled = true;
   try {
@@ -251,6 +281,7 @@ if (client) {
   });
   async function showWelcome() {
     if (!$('welcome').hidden) return;
+    auxiliaryView = null;
     await pauseSession();
     hideEquipment();
     configuring = false;
@@ -258,7 +289,16 @@ if (client) {
     render(shown);
     $('welcome-title').focus();
   }
-  $('backService').addEventListener('click', showWelcome);
+  $('backService').addEventListener('click', () => {
+    if (!auxiliaryView) {
+      showWelcome();
+      return;
+    }
+    auxiliaryView = null;
+    render(shown);
+    if (shown && !viewingWelcome) $('service-title').focus();
+    else $($('reservation').hidden ? 'welcome-title' : 'service-choice').focus();
+  });
   document.querySelector('[data-operation="home"]').addEventListener('click', showWelcome);
   $('returnGasgo').addEventListener('click', async event => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || shown?.phase !== 'running') return;
@@ -294,6 +334,7 @@ if (client) {
   });
   $('issueDialog').addEventListener('close', () => setText($('issueStatus'), ''));
   function openOperation(service) {
+    auxiliaryView = null;
     if (service && !shown) {
       $('reservation').elements.service.value = service;
       updateHint();
@@ -312,8 +353,53 @@ if (client) {
     }
   }
   $('startService').addEventListener('click', () => openOperation());
-  for (const button of document.querySelectorAll('[data-operation]:not([data-operation="home"])')) {
+  for (const button of document.querySelectorAll('[data-operation="air"], [data-operation="wash"]')) {
     button.addEventListener('click', () => openOperation(button.dataset.operation));
+  }
+  const savedInvoice = $('serviceInvoice').cloneNode(true);
+  savedInvoice.id = 'savedInvoice';
+  savedInvoice.hidden = false;
+  savedInvoice.tabIndex = -1;
+  $('invoicePreview').append(savedInvoice);
+
+  function renderInvoices() {
+    const invoices = readInvoices();
+    if (shown?.phase === 'finished' && !invoices.some(invoice => invoice.id === shown.id)) invoices.unshift(shown);
+    const list = $('invoiceList');
+    list.replaceChildren();
+    if (!invoices.length) list.textContent = 'Todavía no tienes facturas.';
+    for (const session of invoices) {
+      const details = invoiceDetails(session);
+      const button = makeButton(details.service, () => {
+        selectedInvoice = session;
+        fillInvoice(savedInvoice, session);
+        $('invoiceDetail').hidden = false;
+        savedInvoice.scrollIntoView({ block: 'start' });
+        savedInvoice.focus({ preventScroll: true });
+      });
+      const summary = document.createElement('small');
+      summary.textContent = details.date + ' · ' + details.total;
+      button.append(summary);
+      list.append(button);
+    }
+  }
+  $('downloadSavedInvoice').addEventListener('click', download);
+  addEventListener('storage', event => {
+    if (event.key === invoiceKey && auxiliaryView === 'invoices') renderInvoices();
+  });
+  for (const view of ['invoices', 'profile']) {
+    document.querySelector(`[data-operation="${view}"]`).addEventListener('click', () => {
+      auxiliaryView = view;
+      if (view === 'invoices') {
+        selectedInvoice = null;
+        $('invoiceDetail').hidden = true;
+        renderInvoices();
+      } else {
+        updateHint();
+      }
+      render(shown);
+      $(view + 'Title').focus();
+    });
   }
   for (const [id, label] of Object.entries(methods)) $('method').add(new Option(label, id));
   function updateHint() {
@@ -324,6 +410,10 @@ if (client) {
     setText($('profile-name'), profile.name);
     setText($('profile-vehicle'), profile.vehicleLabel);
     setText($('profile-payment'), profile.payment);
+    setText($('saved-profile-origin'), profile.linked ? 'Perfil de GAS&GO' : 'Perfil de demostración');
+    setText($('saved-profile-name'), profile.name);
+    setText($('saved-profile-vehicle'), profile.vehicleLabel);
+    setText($('saved-profile-payment'), profile.payment);
     setText($('limit-preview'), money(Math.round(Number(form.get('limit')) * 100)));
     setText($('vehicle-hint'), form.get('service') === 'air'
       ? 'Objetivos simulados · delante ' + formatPressure(selected.front) + ' · detrás ' + formatPressure(selected.rear)
