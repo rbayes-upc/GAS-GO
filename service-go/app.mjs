@@ -62,7 +62,8 @@ async function update(change) {
       const previous = read();
       const now = Date.now();
       const current = previous && advance(previous, now);
-      const next = change ? change(current, now) : current;
+      const detectCustomer = !client && current?.phase === 'requested' && current.method === 'auto';
+      const next = change ? change(current, now) : detectCustomer ? act(current, 'identify', null, now) : current;
       if (next !== previous) {
         if (next) localStorage.setItem(key, JSON.stringify(next));
         else {
@@ -82,7 +83,9 @@ async function update(change) {
 function status(session) {
   const active = client ? 'Sigue las indicaciones del equipo.' : 'Selecciona un control para empezar o continuar.';
   switch (session.phase) {
-    case 'requested': return client ? 'Abre el simulador e inicia la identificación.' : 'Solicitud recibida. Identifica al cliente para empezar.';
+    case 'requested':
+      if (session.method === 'auto') return 'Esperando la identificación automática del equipo.';
+      return client ? 'Inicia la identificación en el simulador.' : 'Solicitud recibida. Identifica al cliente para empezar.';
     case 'identifying':
       if (session.method === 'auto') return 'Identificando automáticamente…';
       if (session.method === 'confirm') return client ? 'Confirma tu identidad para activar el equipo.' : 'Esperando confirmación en la app.';
@@ -149,7 +152,7 @@ function render(session) {
     receipt: session.phase === 'finished',
     reset: terminal.includes(session.phase),
   } : {
-    identify: session.phase === 'requested',
+    identify: session.phase === 'requested' && session.method !== 'auto',
     spray: !air && (ready || running),
     pressurize: air && ready && session.pressureGoal != null,
     pause: air && running,
