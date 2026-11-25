@@ -1,7 +1,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),path=require('node:path');
 const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('leaflet/dist/leaflet.js',{paths:['/workspace/gasgo-dev/node_modules']}));
 (async()=>{const b=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});try{
- const c=await b.newContext({viewport:{width:430,height:932}}),errors=[],queries=[],bounds=[];let geocodeMode='ok',stationFailure=false,plannerFallback=false,pendingGeocode;
+ const c=await b.newContext({viewport:{width:430,height:932}}),errors=[],queries=[],bounds=[];let geocodeMode='ok',stationFailure=false,plannerFallback=false,plannerQuery=false,pendingGeocode;
  c.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
  await c.route('**/*',async r=>{
   const u=new URL(r.request().url());
@@ -12,6 +12,7 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
    return r.fulfill({json:geocodeMode==='empty'?[]:geocodeMode==='tarragona'?[{lat:'41.1189',lon:'1.2445',display_name:'Tarragona, Catalunya, España'}]:[{lat:'41.9794',lon:'2.8214',display_name:'Girona, Gironès, Catalunya, España'},{lat:'41.98',lon:'2.82',display_name:'Carrer de Girona, Catalunya, España'}],headers:{'access-control-allow-origin':'*'}});
   }
   if(u.hostname==='routing.openstreetmap.de'){
+   plannerQuery=true;
    assert.match(u.pathname,/^\/routed-car\/route\/v1\/driving\//);
    return r.fulfill({json:{routes:[{distance:94000,geometry:{coordinates:[[2.17,41.38],[2.4,41.6],[2.8214,41.9794]]}}]}});
   }
@@ -26,7 +27,13 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
   }
   if(u.hostname==='energia.serviciosmin.gob.es')return r.fulfill({json:{ListaEESSPrecio:[]}});
   if(u.hostname==='puntomuerto.es'){
-   if(plannerFallback&&u.searchParams.get('limit')==='800')return r.fulfill({json:{estaciones:[{lat:'41,6',lng:'2,4',rotulo:'Parada alternativa'}]}});
+   if(plannerQuery&&u.searchParams.get('limit')==='800'){
+    if(!plannerFallback)return r.fulfill({status:503,body:'unavailable'});
+    return r.fulfill({json:{estaciones:[
+     {lat:'41,6',lng:'2,4',rotulo:'Parada alternativa',precios:{g95e5:'1,45'}},
+     ...Array.from({length:5},(_,i)=>({lat:41.65+i*.05,lng:2.45+i*.05,rotulo:'Estación '+(i+2),precios:{g95e5:1.5+i*.05}})),
+    ]}});
+   }
    const lat=(Number(u.searchParams.get('minLat'))+Number(u.searchParams.get('maxLat')))/2,lng=(Number(u.searchParams.get('minLng'))+Number(u.searchParams.get('maxLng')))/2;bounds.push({lat,lng});
    if(stationFailure)return r.fulfill({status:503,body:'unavailable'});
    return r.fulfill({json:{estaciones:[{id:551,rotulo:'Estación zona buscada',direccion:'Carrer de prova',localidad:'Girona',lat:lat+.001,lng:lng+.001,precios:{g95e5:1.65,'gasoleo-a':1.55}},{id:552,rotulo:'Estación otra ciudad',lat:40.4,lng:-3.7,precios:{g95e5:1.5,'gasoleo-a':1.4}}]}});
@@ -101,6 +108,17 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
  await p.getByRole('button',{name:'Buscar destino',exact:true}).click();
  await p.getByRole('button',{name:'Girona, Gironès, Catalunya, España',exact:true}).click();
  await p.getByRole('checkbox',{name:/Parada alternativa/}).check();
+ assert.equal(await p.locator('.gg-route-stops input').count(),5);
+ await p.getByRole('button',{name:'Siguientes',exact:true}).click();
+ assert.equal(await p.locator('.gg-route-stops input').count(),1);
+ await p.getByRole('button',{name:'Filtros',exact:true}).last().click();
+ await p.getByLabel('Precio desde (€/L)').fill('1.60');
+ await p.getByLabel('Precio hasta (€/L)').fill('1.75');
+ await p.getByLabel('Km del viaje desde').fill('50');
+ await p.getByLabel('Km del viaje hasta').fill('90');
+ await p.getByRole('button',{name:'Aplicar filtros'}).click();
+ assert.equal(await p.locator('.gg-route-stops input').count(),3);
+ await p.locator('.gg-route-map .leaflet-control-zoom-in').click();
  assert.equal(new URL(await p.getByRole('link',{name:'Abrir en Google Maps'}).getAttribute('href')).searchParams.get('waypoints'),'41.6,2.4');
  await p.evaluate(()=>closeModal());
  console.log('PASS planificador: geometría, gasolineras en el trayecto, orden, Google Maps y GPX');

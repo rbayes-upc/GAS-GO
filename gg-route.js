@@ -4,6 +4,11 @@
 
 const corridor = 10000;
 const maxStops = 3;
+const pageSize = 5;
+const formatPrice = value => value.toLocaleString('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' €/L';
+const number = value => value == null || String(value).trim() === '' ? NaN : Number(String(value).replace(',', '.'));
+const defaultFuel = () => (data.customVehicle?.combustionFuel || data.fuel) === 'Diésel' ? 'diesel' : 'gas';
+const filters = fuel => ({ fuel, priceFrom: null, priceTo: null, kmFrom: null, kmTo: null });
 const esc = escapeHtml;
 const point = p => p.lat + ',' + p.lng;
 const roadPoint = p => p.lng + ',' + p.lat;
@@ -63,7 +68,7 @@ function locate(station, segments) {
   return best;
 }
 
-async function fallbackStations(points, signal) {
+async function pricedStations(points, signal) {
   // Limit the bounding boxes to route sections so long trips do not query the whole map.
   const boxes = [];
   let start = 0, traveled = 0;
@@ -93,8 +98,8 @@ async function fallbackStations(points, signal) {
       successes++;
       if (item.value.length >= 800) partial = true;
       for (const p of item.value) {
-        const parse = value => value === null || value === '' ? NaN : Number(String(value).replace(',', '.'));
-        elements.push({ lat: parse(p.lat), lon: parse(p.lng), tags: { name: p.rotulo } });
+        elements.push({ lat: number(p.lat), lon: number(p.lng), tags: { name: p.rotulo },
+          prices: { gas: number(p.precios?.g95e5), diesel: number(p.precios?.['gasoleo-a']) } });
       }
     }
   }
@@ -112,16 +117,18 @@ async function fuelStations(points, signal) {
   }
   const path = simplified.map(p => (p.y / 111320).toFixed(6) + ',' + (p.x / 111320).toFixed(6)).join(',');
   const query = `[out:json][timeout:10];nwr["amenity"="fuel"](around:${Math.ceil(corridor + tolerance)},${path});out center;`;
-  let body, source = 'OpenStreetMap', partial = false;
+  let body, source = 'Punto Muerto', partial = false;
   try {
+    body = await pricedStations(points, AbortSignal.any([signal, AbortSignal.timeout(12000)]));
+    if (!body.elements.length) throw Error('Sin estaciones');
+    partial = body.partial;
+  } catch {
+    source = 'OpenStreetMap';
     body = await request('https://overpass.kumi.systems/api/interpreter', {
       method: 'POST', body: new URLSearchParams({ data: query }),
       signal: AbortSignal.any([signal, AbortSignal.timeout(12000)]),
     });
-    if (!Array.isArray(body.elements) || body.remark || !body.elements.length) throw Error('Consulta incompleta');
-  } catch {
-    body = await fallbackStations(points, signal);
-    ({ source, partial } = body);
+    if (!Array.isArray(body.elements) || body.remark) throw Error('Consulta incompleta');
   }
   const segments = routeSegments(points);
   const stations = [];
@@ -132,7 +139,7 @@ async function fuelStations(points, signal) {
     const key = lat.toFixed(4) + ',' + lng.toFixed(4);
     if (seen.has(key)) continue;
     seen.add(key);
-    const station = { lat, lng, label: String(item.tags?.name || item.tags?.brand || 'Gasolinera').slice(0, 100) };
+    const station = { lat, lng, prices: item.prices ?? {}, label: String(item.tags?.name || item.tags?.brand || 'Gasolinera').slice(0, 100) };
     const nearest = locate(station, segments);
     if (nearest.offset <= corridor) stations.push({ ...station, ...nearest });
   }
@@ -145,27 +152,51 @@ function active(current) {
 
 function drawMap(current) {
   if (!window.L || !current.route) return;
-  current.map?.remove();
-  const node = current.root.querySelector('.gg-route-map');
-  node.hidden = false;
-  const map = current.map = L.map(node, { scrollWheelZoom: false, preferCanvas: true });
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles © Esri and contributors',
-  }).addTo(map);
-  const path = L.polyline(current.route.points.map(p => [p.lat, p.lng]), { color: '#075a46', weight: 4 }).addTo(map);
-  for (const [index, station] of current.stations.entries()) {
-    if (current.stops.includes(station)) continue;
+  if (!current.map) {
+    const node = current.root.querySelector('.gg-route-map');
+    node.hidden = false;
+    const map = current.map = L.map(node, { preferCanvas: true });
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri and contributors',
+    }).addTo(map);
+    const path = L.polyline(current.route.points.map(p => [p.lat, p.lng]), { color: '#075a46', weight: 4 }).addTo(map);
+    map.fitBounds(path.getBounds(), { padding: [15, 15], maxZoom: 15 });
+    for (const [label, p] of [['Origen', current.origin], ['Destino', current.destination]]) {
+      L.circleMarker([p.lat, p.lng], { radius: 7, color: '#075a46', fillColor: '#fff', fillOpacity: 1 })
+        .bindTooltip(label).addTo(map);
+    }
+    current.markers = L.layerGroup().addTo(map);
+  }
+  current.markers.clearLayers();
+  const stations = new Set([...matchingStations(current), ...current.stops]);
+  for (const station of stations) {
+    const selected = current.stops.includes(station);
     const label = document.createElement('span');
-    label.textContent = station.label;
-    L.circleMarker([station.lat, station.lng], { radius: 4, color: '#075a46', fillColor: '#fff', fillOpacity: 1 }).addTo(map)
-      .bindTooltip(label)
-      .on('click', () => current.root.querySelector(`.gg-route-stops input[value="${index}"]`)?.click());
+    label.textContent = station.label + (selected ? ' · parada seleccionada' : '');
+    L.circleMarker([station.lat, station.lng], { radius: selected ? 8 : 5, color: '#075a46', fillColor: selected ? '#ffdf2e' : '#fff', fillOpacity: 1 })
+      .bindTooltip(label).on('click', () => toggleStop(current, station)).addTo(current.markers);
   }
-  for (const [index, p] of [current.origin, ...current.stops, current.destination].entries()) {
-    L.circleMarker([p.lat, p.lng], { radius: 7, color: '#075a46', fillColor: '#ffdf2e', fillOpacity: 1 }).addTo(map)
-      .bindTooltip(index === 0 ? 'Origen' : index === current.stops.length + 1 ? 'Destino' : 'Parada ' + index);
+}
+
+function matchingStations(current) {
+  const { fuel, priceFrom, priceTo, kmFrom, kmTo } = current.filters;
+  return current.stations.filter(station => {
+    const price = station.prices[fuel], km = station.along / 1000;
+    if ((priceFrom !== null || priceTo !== null) && !(price > 0)) return false;
+    return (priceFrom === null || price >= priceFrom) && (priceTo === null || price <= priceTo) &&
+      (kmFrom === null || km >= kmFrom) && (kmTo === null || km <= kmTo);
+  });
+}
+
+function toggleStop(current, station) {
+  if (current.stops.includes(station)) current.stops = current.stops.filter(stop => stop !== station);
+  else if (current.stops.length < maxStops) current.stops.push(station);
+  else {
+    current.root.querySelector('.gg-route-count').textContent = 'Máximo de tres paradas. Quita una para añadir otra.';
+    return;
   }
-  map.fitBounds(path.getBounds(), { padding: [15, 15], maxZoom: 15 });
+  refreshStops(current);
+  drawMap(current);
 }
 
 function orderedStops(current) {
@@ -198,24 +229,101 @@ function downloadGpx(current) {
   setTimeout(() => URL.revokeObjectURL(href), 1000);
 }
 
+function refreshStops(current) {
+  const root = current.root, results = matchingStations(current);
+  const start = current.page * pageSize;
+  root.querySelector('.gg-route-stops').innerHTML = results.length
+    ? results.slice(start, start + pageSize).map(p => {
+      const price = p.prices[current.filters.fuel];
+      return `<label><input type="checkbox" value="${current.stations.indexOf(p)}" ${current.stops.includes(p) ? 'checked' : ''}><span><strong>${esc(p.label)}</strong><small>Km ${formatDistance(p.along).replace(' km', '')} del viaje · ${formatDistance(p.offset)} de la ruta · ${price > 0 ? formatPrice(price) : 'Sin precio disponible'}</small></span></label>`;
+    }).join('')
+    : '<p class="small muted">No hay gasolineras que coincidan con estos filtros.</p>';
+  const pager = root.querySelector('.gg-route-paging');
+  pager.hidden = results.length <= pageSize;
+  pager.querySelector('span').textContent = `${start + 1}–${Math.min(start + pageSize, results.length)} de ${results.length}`;
+  pager.querySelector('[data-route-prev]').disabled = start === 0;
+  pager.querySelector('[data-route-next]').disabled = start + pageSize >= results.length;
+  root.querySelector('.gg-route-picked').innerHTML = orderedStops(current).map(p =>
+    `<li><span>${esc(p.label)}</span><button type="button" class="btn ghost" data-route-remove="${current.stations.indexOf(p)}" aria-label="Quitar ${esc(p.label)}">Quitar</button></li>`).join('');
+  updateExport(current);
+}
+
 function renderResults(current, failed) {
   const node = current.root.querySelector('.gg-route-results');
-  const stations = current.stations;
+  const fields = [
+    ['priceFrom', 'Precio desde (€/L)', '0.001'], ['priceTo', 'Precio hasta (€/L)', '0.001'],
+    ['kmFrom', 'Km del viaje desde', '0.1'], ['kmTo', 'Km del viaje hasta', '0.1'],
+  ];
   node.innerHTML = `<h3>Gasolineras en el trayecto</h3><p class="small muted">${formatDistance(current.route.distance)} de ruta. Distancias a la ruta en línea recta.</p>
-    ${failed ? '<p role="status">No se han podido cargar las gasolineras. Puedes abrir la ruta o reintentar.</p><button class="btn ghost" type="button" data-route-retry>Reintentar gasolineras</button>' :
-    stations.length ? `<p class="small muted">${stations.length} gasolineras a hasta 10 km de la ruta · ${esc(current.source)}.</p><fieldset class="gg-route-stops"><legend>Elige hasta tres paradas</legend>${stations.map((p, i) => `<label><input type="checkbox" value="${i}"><span><strong>${esc(p.label)}</strong><small>Km ${formatDistance(p.along).replace(' km','')} del viaje · ${formatDistance(p.offset)} de la ruta</small></span></label>`).join('')}</fieldset>` : '<p>No se encontraron gasolineras cerca de este trayecto.</p>'}
+    ${failed ? '<p role="status">No se han podido cargar las gasolineras. Puedes abrir la ruta o reintentar.</p><button class="btn ghost" type="button" data-route-retry>Reintentar gasolineras</button>' : ''}
+    <div class="gg-route-availability" ${current.stations.length ? '' : 'hidden'}>
+      <p class="small muted">${current.stations.length} gasolineras a hasta 10 km de la ruta · ${esc(current.source ?? '')}.</p>
+      <button class="btn ghost" type="button" data-route-filter aria-expanded="false" aria-controls="ggRouteFilters">Filtros</button>
+      <form id="ggRouteFilters" hidden>
+        <label>Combustible<select name="fuel"><option value="gas">Gasolina 95</option><option value="diesel">Diésel A</option></select></label>
+        <div class="gg-route-filter-fields">${fields.map(([id, label, step]) => `<label>${label}<input name="${id}" type="number" min="0" step="${step}" inputmode="decimal"></label>`).join('')}</div>
+        <p class="small muted" role="alert"></p>
+        <button class="btn primary" type="submit">Aplicar filtros</button>
+        <button class="btn ghost" type="reset">Limpiar</button>
+      </form>
+      <fieldset class="gg-route-stops" aria-label="Elige hasta tres paradas"></fieldset>
+      <div class="gg-route-paging"><button type="button" class="btn ghost" data-route-prev>Anteriores</button><span></span><button type="button" class="btn ghost" data-route-next>Siguientes</button></div>
+    </div>${!failed && !current.stations.length ? '<p>No se encontraron gasolineras cerca de este trayecto.</p>' : ''}
     ${current.partial ? '<p class="small muted">Hay tramos sin datos. Puedes seleccionar las gasolineras disponibles.</p>' : ''}
-    <p class="gg-route-count small muted" role="status"></p><div class="gg-route-export"><a class="btn primary gg-route-google" target="_blank" rel="noopener">Abrir en Google Maps</a><button class="btn ghost" type="button" data-route-gpx>Descargar GPX</button></div><p class="small muted">El navegador recalculará el trayecto con las paradas elegidas. El GPX incluye el origen, las paradas y el destino en orden.</p>`;
-  node.addEventListener('change', event => {
-    if (!event.target.matches('input[type=checkbox]')) return;
-    current.stops = [...node.querySelectorAll('input:checked')].map(input => stations[Number(input.value)]);
-    for (const checkbox of node.querySelectorAll('input')) checkbox.disabled = !checkbox.checked && current.stops.length >= maxStops;
-    updateExport(current);
+    <p class="gg-route-count small muted" role="status"></p><ol class="gg-route-picked"></ol>
+    <div class="gg-route-export"><a class="btn primary gg-route-google" target="_blank" rel="noopener">Abrir en Google Maps</a><button class="btn ghost" type="button" data-route-gpx>Descargar GPX</button></div><p class="small muted">El navegador recalculará el trayecto con las paradas elegidas. El GPX incluye el origen, las paradas y el destino en orden.</p>`;
+  const form = node.querySelector('#ggRouteFilters'), filterButton = node.querySelector('[data-route-filter]');
+  form.elements.fuel.value = current.filters.fuel;
+  filterButton.onclick = () => {
+    form.hidden = !form.hidden;
+    filterButton.setAttribute('aria-expanded', String(!form.hidden));
+  };
+  const apply = next => {
+    current.filters = next;
+    current.page = 0;
+    refreshStops(current);
     drawMap(current);
-  }, { signal: current.controller.signal });
+  };
+  form.onsubmit = event => {
+    event.preventDefault();
+    const next = filters(form.elements.fuel.value);
+    for (const [name] of fields) next[name] = form.elements[name].value === '' ? null : form.elements[name].valueAsNumber;
+    const error = form.querySelector('[role=alert]');
+    if (['price', 'km'].some(key => next[key + 'From'] !== null && next[key + 'To'] !== null && next[key + 'From'] > next[key + 'To'])) {
+      error.textContent = 'El mínimo debe ser menor o igual que el máximo.';
+      return;
+    }
+    error.textContent = '';
+    apply(next);
+    filterButton.click();
+  };
+  form.onreset = event => {
+    event.preventDefault();
+    for (const [name] of fields) form.elements[name].value = '';
+    form.elements.fuel.value = defaultFuel();
+    form.querySelector('[role=alert]').textContent = '';
+    apply(filters(defaultFuel()));
+  };
+  node.querySelector('.gg-route-stops').onchange = event => {
+    if (event.target.matches('input[type=checkbox]')) {
+      const index = Number(event.target.value);
+      toggleStop(current, current.stations[index]);
+      const input = node.querySelector(`.gg-route-stops input[value="${index}"]`);
+      if (input) {
+        input.checked = current.stops.includes(current.stations[index]);
+        input.focus({ preventScroll: true });
+      }
+    }
+  };
+  node.querySelector('.gg-route-picked').onclick = event => {
+    const button = event.target.closest('[data-route-remove]');
+    if (button) toggleStop(current, current.stations[Number(button.dataset.routeRemove)]);
+  };
+  node.querySelector('[data-route-prev]').onclick = () => { current.page--; refreshStops(current); };
+  node.querySelector('[data-route-next]').onclick = () => { current.page++; refreshStops(current); };
   node.querySelector('[data-route-gpx]').onclick = () => downloadGpx(current);
   node.querySelector('[data-route-retry]')?.addEventListener('click', () => plan(current, current.destination));
-  updateExport(current);
+  refreshStops(current);
 }
 
 async function plan(current, destination) {
@@ -226,6 +334,8 @@ async function plan(current, destination) {
   current.stops = [];
   current.stations = [];
   current.partial = false;
+  current.filters = filters(defaultFuel());
+  current.page = 0;
   current.status.textContent = 'Calculando la ruta…';
   current.root.querySelector('.gg-route-results').replaceChildren();
   current.map?.remove();
