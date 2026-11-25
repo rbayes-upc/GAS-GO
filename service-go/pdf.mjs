@@ -1,6 +1,11 @@
-import { equipment, methods, services, vehicles } from './engine.mjs?v=3';
+import { equipment, methods, services, sessionTariff, vehicles } from './engine.mjs?v=4';
 
 export const money = cents => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+export function tariffLabel(session) {
+  const { cents, milliseconds } = sessionTariff(session);
+  return money(cents) + (milliseconds === 60000 ? '/min' : '/s');
+}
+
 export const timer = milliseconds => {
   const seconds = Math.floor(milliseconds / 1000);
   return [Math.floor(seconds / 60), seconds % 60].map(value => String(value).padStart(2, '0')).join(':');
@@ -25,7 +30,7 @@ export function invoiceDetails(session) {
     customer: session.customer?.name || 'Perfil de demostración',
     payment: session.customer?.payment || 'Método de prueba',
     duration: timer(session.elapsed),
-    rate: money(services[session.service].rate) + '/s',
+    rate: tariffLabel(session),
     limit: money(session.limit),
     reason: session.reason,
     total: money(session.total),

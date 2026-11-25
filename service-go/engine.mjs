@@ -5,9 +5,18 @@ export const vehicles = {
   van: { label: 'Furgoneta', front: 3.2, rear: 3.5 },
 };
 export const services = {
-  air: { label: 'Inflador de neumáticos', rate: 2 },
-  wash: { label: 'Autolavado con pistola', rate: 5 },
+  air: { label: 'Inflador de neumáticos', tariff: { cents: 5, milliseconds: 1000 } },
+  wash: { label: 'Autolavado con pistola', tariff: { cents: 100, milliseconds: 60000 } },
 };
+const legacyTariffs = {
+  air: { cents: 2, milliseconds: 1000 },
+  wash: { cents: 5, milliseconds: 1000 },
+};
+
+export function sessionTariff(session) {
+  return session.tariff ?? legacyTariffs[session.service];
+}
+
 export const methods = {
   auto: 'Automático',
   confirm: 'Confirmación en app',
@@ -39,7 +48,7 @@ export function createSession({ service, vehicle, method, limit, id, code, custo
     throw new Error('Elige un servicio y fija un límite entre 0,50 € y 50,00 €.');
   }
   return {
-    service, vehicle, method, limit, id, code, customer, created: now, expires: now + 90000,
+    service, vehicle, method, limit, id, code, customer, tariff: services[service].tariff, created: now, expires: now + 90000,
     phase: 'requested', elapsed: 0, total: 0, pressures: vehicle === 'motorcycle' ? [1.8, 2.0] : [1.8, 2.0, 1.9, 2.2],
     completed: [], tire: null, program: 'water', runningSince: null,
   };
@@ -68,8 +77,8 @@ export function advance(session, now) {
   }
   if (session.phase !== 'running') return session;
 
-  const rate = services[session.service].rate;
-  const untilLimit = Math.ceil(session.limit * 1000 / rate) - session.elapsed;
+  const { cents, milliseconds } = sessionTariff(session);
+  const untilLimit = Math.ceil(session.limit * milliseconds / cents) - session.elapsed;
   const untilTarget = session.service === 'air'
     ? Math.ceil(Math.abs(target(session, session.tire) - session.pressures[session.tire]) * 5000 - 1e-8)
     : Infinity;
@@ -80,7 +89,7 @@ export function advance(session, now) {
   const elapsed = session.elapsed + duration;
   let updated = {
     ...session, elapsed, runningSince: eventTime,
-    total: Math.min(session.limit, Math.floor(elapsed * rate / 1000)),
+    total: Math.min(session.limit, Math.floor(elapsed * cents / milliseconds)),
   };
   if (session.service === 'air') {
     updated.pressures = [...session.pressures];

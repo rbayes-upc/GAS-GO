@@ -1,5 +1,5 @@
-import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=3';
-import { invoiceDetails, money, receipt, timer } from './pdf.mjs?v=3';
+import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=4';
+import { invoiceDetails, money, receipt, tariffLabel, timer } from './pdf.mjs?v=4';
 import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 
 const key = 'service-go.session.v1';
@@ -96,7 +96,7 @@ function render(session) {
   const activity = air
     ? (running ? labels[session.tire] + ' · ' + formatPressure(session.pressures[session.tire], unit) + ' → ' + formatPressure(target(session, session.tire), unit) + ' · ' : '') +
       session.completed.length + ' de ' + labels.length + ' neumáticos ajustados'
-    : (running ? programs[session.program] + ' · ' : '') + 'Tarifa de ' + money(services.wash.rate) + ' por segundo activo';
+    : (running ? programs[session.program] + ' · ' : '') + 'Tarifa: ' + tariffLabel(session);
   setText($('activity'), activity);
 
   const visible = client ? {
