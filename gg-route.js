@@ -220,26 +220,55 @@ function googleUrl(current) {
   return google.href;
 }
 
-function updateExport(current) {
-  current.root.querySelector('.gg-route-count').textContent = current.stops.length + ' de ' + maxStops + ' paradas seleccionadas';
-  const root = current.root;
+function navigationMarkup() {
+  return `<form class="gg-route-export">
+    <label for="ggRouteNavigator">Navegador</label>
+    <select id="ggRouteNavigator" name="navigator"></select>
+    <button class="btn primary" type="submit">Ir</button>
+  </form>`;
+}
+
+function bindNavigation(current) {
+  current.root.querySelector('.gg-route-export').onsubmit = event => {
+    event.preventDefault();
+    const option = event.currentTarget.elements.navigator.selectedOptions[0];
+    if (option.value === 'gpx') downloadGpx(current);
+    else window.open(option.dataset.url, '_blank', 'noopener,noreferrer');
+  };
+  updateNavigation(current);
+}
+
+function updateNavigation(current) {
+  const select = current.root.querySelector('#ggRouteNavigator');
+  const previous = select.value;
   const stops = orderedStops(current);
-  root.querySelector('.gg-route-google').href = googleUrl(current);
+  const option = (label, value, url) => {
+    const node = new Option(label, value);
+    if (url) node.dataset.url = url;
+    return node;
+  };
   const apple = new URL('https://maps.apple.com/directions');
   apple.search = new URLSearchParams({
     source: point(current.origin), destination: point(current.destination), mode: 'driving',
   });
   for (const stop of stops) apple.searchParams.append('waypoint', point(stop));
-  root.querySelector('.gg-route-apple').href = apple.href;
-
   const waze = target => 'https://waze.com/ul?' + new URLSearchParams({ ll: point(target), navigate: 'yes' });
-  const direct = root.querySelector('.gg-route-waze');
-  direct.hidden = stops.length > 0;
-  direct.href = waze(current.destination);
-  const legs = root.querySelector('.gg-route-waze-legs');
-  legs.hidden = !stops.length;
-  legs.querySelector('ol').innerHTML = [...stops, current.destination].map((target, i) =>
-    `<li><a href="${esc(waze(target))}" target="_blank" rel="noopener">${i < stops.length ? 'Parada ' + (i + 1) + ' · ' : 'Destino · '}${esc(target.label)}</a></li>`).join('');
+
+  select.replaceChildren(option('Google Maps', 'google', googleUrl(current)), option('Apple Maps', 'apple', apple.href));
+  if (stops.length) {
+    const legs = document.createElement('optgroup');
+    legs.label = 'Waze · por etapas';
+    stops.forEach((stop, i) => legs.append(option('Parada ' + (i + 1) + ' · ' + stop.label, 'waze:' + point(stop), waze(stop))));
+    legs.append(option('Destino · ' + current.destination.label, 'waze:destination', waze(current.destination)));
+    select.append(legs);
+  } else select.append(option('Waze', 'waze:destination', waze(current.destination)));
+  select.append(option('Descargar GPX', 'gpx'));
+  if (Array.from(select.options).some(item => item.value === previous)) select.value = previous;
+}
+
+function updateExport(current) {
+  current.root.querySelector('.gg-route-count').textContent = current.stops.length + ' de ' + maxStops + ' paradas seleccionadas';
+  updateNavigation(current);
 }
 
 function downloadGpx(current) {
@@ -305,7 +334,7 @@ function renderResults(current, failed) {
     </div>${!failed && !current.stations.length ? '<p>No se encontraron gasolineras cerca de este trayecto.</p>' : ''}
     ${current.partial ? '<p class="small muted">Hay tramos sin datos. Puedes seleccionar las gasolineras disponibles.</p>' : ''}
     <p class="gg-route-count small muted" role="status"></p><ol class="gg-route-picked"></ol>
-    <div class="gg-route-export"><a class="btn primary gg-route-google" target="_blank" rel="noopener">Abrir en Google Maps</a><a class="btn ghost gg-route-apple" target="_blank" rel="noopener">Apple Maps</a><a class="btn ghost gg-route-waze" target="_blank" rel="noopener">Waze</a><button class="btn ghost" type="button" data-route-gpx>Descargar GPX</button></div><details class="gg-route-waze-legs" hidden><summary>Waze · abrir por etapas</summary><p class="small muted">Abre cada parada en orden. Waze navega a un destino por enlace.</p><ol></ol></details><p class="small muted">El navegador recalculará el trayecto con las paradas elegidas. El GPX incluye el origen, las paradas y el destino en orden.</p>`;
+    ${navigationMarkup()}<p class="small muted">El navegador recalculará el trayecto con las paradas elegidas. El GPX incluye el origen, las paradas y el destino en orden.</p>`;
   const form = node.querySelector('#ggRouteFilters'), filterButton = node.querySelector('[data-route-filter]');
   filterButton.onclick = () => {
     form.hidden = !form.hidden;
@@ -354,7 +383,7 @@ function renderResults(current, failed) {
   };
   node.querySelector('[data-route-prev]').onclick = () => { current.page--; refreshStops(current); };
   node.querySelector('[data-route-next]').onclick = () => { current.page++; refreshStops(current); };
-  node.querySelector('[data-route-gpx]').onclick = () => downloadGpx(current);
+  bindNavigation(current);
   node.querySelector('[data-route-retry]')?.addEventListener('click', () => plan(current, current.destination));
   refreshStops(current);
 }
@@ -394,13 +423,8 @@ async function plan(current, destination) {
   } catch (error) {
     if (!selected()) return;
     current.status.textContent = error.name === 'AbortError' ? 'La ruta tardó demasiado. Elige el destino para reintentar.' : 'No se pudo calcular la ruta. Elige el destino para reintentar.';
-    const link = document.createElement('a');
-    link.className = 'btn primary';
-    link.href = googleUrl(current);
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.textContent = 'Abrir destino en Google Maps';
-    current.root.querySelector('.gg-route-results').replaceChildren(link);
+    current.root.querySelector('.gg-route-results').innerHTML = navigationMarkup();
+    bindNavigation(current);
   } finally { clearTimeout(timer); }
 }
 

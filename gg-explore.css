@@ -21,8 +21,10 @@
 .gg-route-stops label:last-child { border-bottom:0 }
 .gg-route-stops input[type="checkbox"] { flex:0 0 18px;width:18px;height:18px;margin:0;accent-color:#075a46 }
 .gg-route-stops small { display:block;color:#526e60 }
-.gg-route-export { display:flex;gap:8px;flex-wrap:wrap }
-.gg-route-export .btn { display:inline-flex;align-items:center;justify-content:center;text-decoration:none;min-height:44px }
+.gg-route-export { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 8px }
+.gg-route-export label { grid-column:1/-1;font-weight:750 }
+.gg-route-export select { min-width:0;width:100%;font-size:16px }
+.gg-route-export button { min-height:44px }
 
 #ggRouteDestination:focus-visible { outline:2px solid #075a46;outline-offset:2px }
 
@@ -36,6 +38,3 @@
 .gg-route-picked:empty { display:none }
 .gg-route-picked li { padding:4px 0 }
 .gg-route-picked button { margin-left:6px }
-.gg-route-export [hidden] { display:none }
-.gg-route-waze-legs { margin:10px 0 }
-.gg-route-waze-legs summary { cursor:pointer;font-weight:750 }

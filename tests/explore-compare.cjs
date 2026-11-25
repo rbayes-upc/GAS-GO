@@ -91,10 +91,11 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
  await p.getByRole('checkbox',{name:/Parada dentro de 10 km/}).waitFor();
  await p.getByRole('checkbox',{name:/Parada final/}).check();
  await p.getByRole('checkbox',{name:/Parada central/}).check();
- const google=new URL(await p.getByRole('link',{name:'Abrir en Google Maps'}).getAttribute('href'));
+ const google=new URL(await p.locator('#ggRouteNavigator option[value=google]').getAttribute('data-url'));
  assert.equal(google.searchParams.get('destination'),'41.9794,2.8214');
  assert.equal(google.searchParams.get('waypoints'),'41.6,2.4|41.96,2.8');
- const [gpx]=await Promise.all([p.waitForEvent('download'),p.getByRole('button',{name:'Descargar GPX'}).click()]);
+ await p.getByLabel('Navegador',{exact:true}).selectOption('gpx');
+ const [gpx]=await Promise.all([p.waitForEvent('download'),p.getByRole('button',{name:'Ir',exact:true}).click()]);
  const xml=require('node:fs').readFileSync(await gpx.path(),'utf8');
  assert.match(xml,/<rtept lat="41.6" lon="2.4".*Parada central.*Parada final.*Girona/);
  for(const width of [320,430]){
@@ -109,11 +110,14 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
  await p.getByRole('button',{name:'Buscar destino',exact:true}).click();
  await p.getByRole('button',{name:'Girona, Gironès, Catalunya, España',exact:true}).click();
  await p.getByRole('checkbox',{name:/Parada alternativa/}).check();
- const apple=new URL(await p.getByRole('link',{name:'Apple Maps',exact:true}).getAttribute('href'));
+ const apple=new URL(await p.locator('#ggRouteNavigator option[value=apple]').getAttribute('data-url'));
  assert.equal(apple.searchParams.get('destination'),'41.9794,2.8214');
  assert.deepEqual(apple.searchParams.getAll('waypoint'),['41.6,2.4']);
- await p.getByText('Waze · abrir por etapas',{exact:true}).click();
- const waze=new URL(await p.getByRole('link',{name:/Parada 1 · Parada alternativa/}).getAttribute('href'));
+ const waze=new URL(await p.locator('#ggRouteNavigator optgroup[label="Waze · por etapas"] option').first().getAttribute('data-url'));
+ await p.evaluate(()=>{window.open=(url)=>{window.testNavigation=url}});
+ await p.getByLabel('Navegador',{exact:true}).selectOption('waze:41.6,2.4');
+ await p.getByRole('button',{name:'Ir',exact:true}).click();
+ assert.equal(await p.evaluate(()=>window.testNavigation),waze.href);
  assert.equal(waze.searchParams.get('ll'),'41.6,2.4');
  assert.equal(await p.locator('.gg-route-stops input').count(),5);
  await p.getByRole('button',{name:'Siguientes',exact:true}).click();
@@ -132,7 +136,7 @@ const root=path.resolve(__dirname,'..'),leaflet=path.dirname(require.resolve('le
  await p.getByRole('button',{name:'Aplicar filtros'}).click();
  assert.equal(await p.locator('.gg-route-stops input').count(),3);
  await p.locator('.gg-route-map .leaflet-control-zoom-in').click();
- assert.equal(new URL(await p.getByRole('link',{name:'Abrir en Google Maps'}).getAttribute('href')).searchParams.get('waypoints'),'41.6,2.4');
+ assert.equal(new URL(await p.locator('#ggRouteNavigator option[value=google]').getAttribute('data-url')).searchParams.get('waypoints'),'41.6,2.4');
  await p.evaluate(()=>closeModal());
  console.log('PASS planificador: geometría, gasolineras en el trayecto, orden, Google Maps y GPX');
  await p.evaluate(()=>{go('Bienvenida');startPresentationDemo()});await p.locator('#ggv2X').waitFor();await p.locator('#ggv2X').click();assert.equal(await p.locator('.gg-plan-open').count(),0);await p.getByRole('button',{name:'Buscar gasolinera',exact:true}).click();assert.equal(await p.locator('#ggPlaceQuery').count(),0);assert.equal(await p.locator('#searchInput').count(),1);assert.deepEqual(errors,[]);
