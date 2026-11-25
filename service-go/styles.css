@@ -73,25 +73,14 @@ body[data-view="client"] { min-height: 100dvh; background: var(--paper); }
   font-weight: 800; color: var(--blue); text-decoration: none;
 }
 .header-link:hover { text-decoration: underline; text-underline-offset: 3px; }
-.chooser { padding: 0; margin: 0 0 14px; border: 0; min-width: 0; }
-legend { margin-bottom: 12px; }
-.choices { display: grid; gap: 8px; }
-.choice {
-  display: flex; align-items: center; gap: 10px; min-height: 62px; padding: 9px 11px;
-  border-radius: 14px; border: 1px solid var(--line); background: white; cursor: pointer;
-}
-.choice:has(:checked) { border-color: var(--blue); background: var(--tint); box-shadow: inset 0 0 0 1px var(--blue); }
-.choice input { order: 3; width: 17px; height: 17px; margin-left: auto; flex: 0 0 auto; accent-color: var(--blue); }
-.choice strong, small { display: block; }
+small { display: block; }
 small { color: var(--muted); margin-top: 2px; }
 .equipment-icon { position: relative; width: 36px; height: 36px; flex: 0 0 36px; background: #ffeb84; border-radius: 10px; }
-.choice:has(:checked) .equipment-icon { background: var(--yellow); }
 .wheel::after { content: ''; position: absolute; inset: 8px; border: 5px double var(--deep); border-radius: 50%; }
 .wash::after { content: ''; position: absolute; width: 13px; height: 17px; top: 9px; left: 11px; background: var(--deep); border-radius: 70% 45% 70% 70%; transform: rotate(37deg); }
 .panel { padding: 15px; background: white; border: 1px solid var(--line); border-radius: 17px; box-shadow: 0 4px 14px #182e520a; }
 .panel > h2 { margin-bottom: 12px; }
 .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-.fields label:last-child { grid-column: 1 / -1; }
 .fields label, #code-form label { display: grid; gap: 4px; font-size: .82rem; font-weight: 750; }
 select, input:not([type="radio"]) {
   width: 100%; min-height: 44px; border: 1px solid #a7b9cf; border-radius: 9px;
@@ -108,7 +97,6 @@ button:disabled { opacity: .65; cursor: default; }
 button.primary { color: var(--deep); background: var(--yellow); border-color: var(--yellow); }
 button.primary:hover { background: #f4d026; }
 button[aria-pressed="true"] { color: white; background: var(--blue); border-color: var(--blue); }
-.setup button { width: 100%; }
 .device .session { border-top: 4px solid var(--blue); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .device .session { padding: 16px; }
@@ -221,10 +209,8 @@ body[data-view="equipment"] {
 .session-profile div { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .session-profile dt { color: var(--muted); flex-shrink: 0; }
 .session-profile dd { margin: 0; text-align: right; font-weight: 750; overflow-wrap: anywhere; }
-.session-options summary { padding: 10px 0; color: var(--blue); font-weight: 750; cursor: pointer; }
-.session-options .fields label:last-child { grid-column: auto; }
 @media (max-width: 375px) {
-  .session-options .fields { grid-template-columns: 1fr; }
+  #sessionOptions .fields { grid-template-columns: 1fr; }
 }
 
 .equipment-pane {
@@ -335,3 +321,15 @@ body[data-view="equipment"] {
 .invoice-list { display: grid; gap: 8px; }
 .invoice-list button { text-align: left; background: white; }
 .history-download { width: 100%; margin-top: 10px; }
+
+
+.service-guide h2 { font-size: 1.8rem; }
+.procedure { list-style: none; margin: 20px 0; padding: 0; display: grid; gap: 16px; counter-reset: procedure; }
+.procedure li { display: flex; align-items: flex-start; gap: 11px; }
+.procedure li::before {
+  counter-increment: procedure; content: counter(procedure, decimal-leading-zero);
+  display: grid; place-items: center; flex: 0 0 28px; height: 28px; border-radius: 50%;
+  background: var(--tint); color: var(--deep); font-size: .75rem; font-weight: 800;
+}
+.procedure p { margin-top: 2px; color: var(--muted); font-size: .88rem; }
+#reservation > button { width: 100%; }

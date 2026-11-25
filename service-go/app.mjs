@@ -1,4 +1,4 @@
-import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires, vehicles } from './engine.mjs?v=6';
+import { act, advance, createSession, equipment, methods, pressureUnits, programs, selectedWheel, services, target, tireLabels, tires } from './engine.mjs?v=6';
 import { invoiceDetails, money, receipt, tariffLabel, timer } from './pdf.mjs?v=5';
 import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 
@@ -335,10 +335,8 @@ if (client) {
   $('issueDialog').addEventListener('close', () => setText($('issueStatus'), ''));
   function openOperation(service) {
     auxiliaryView = null;
-    if (service && !shown) {
-      $('reservation').elements.service.value = service;
-      updateHint();
-    }
+    if (service && !shown) $('reservation').elements.service.value = service;
+    updateProfile();
     configuring = true;
     viewingWelcome = false;
     render(shown);
@@ -352,7 +350,7 @@ if (client) {
       showError(null);
     }
   }
-  $('startService').addEventListener('click', () => openOperation());
+  $('startService').addEventListener('click', () => openOperation(shown ? null : 'wash'));
   for (const button of document.querySelectorAll('[data-operation="air"], [data-operation="wash"]')) {
     button.addEventListener('click', () => openOperation(button.dataset.operation));
   }
@@ -395,48 +393,48 @@ if (client) {
         $('invoiceDetail').hidden = true;
         renderInvoices();
       } else {
-        updateHint();
+        updateProfile();
       }
       render(shown);
       $(view + 'Title').focus();
     });
   }
   for (const [id, label] of Object.entries(methods)) $('method').add(new Option(label, id));
-  function updateHint() {
+  function updateProfile() {
     const profile = readProfile();
-    const selected = vehicles[profile.vehicle];
-    const form = new FormData($('reservation'));
-    setText($('profile-origin'), profile.linked ? 'Perfil de GAS&GO' : 'Perfil de demostración');
-    setText($('profile-name'), profile.name);
-    setText($('profile-vehicle'), profile.vehicleLabel);
-    setText($('profile-payment'), profile.payment);
+    const service = $('reservation').elements.service.value;
+    setText($('service-choice'), 'Hola, ' + profile.name.split(' ')[0]);
+    for (const guide of document.querySelectorAll('[data-service-guide]')) {
+      guide.hidden = guide.dataset.serviceGuide !== service;
+    }
     setText($('saved-profile-origin'), profile.linked ? 'Perfil de GAS&GO' : 'Perfil de demostración');
     setText($('saved-profile-name'), profile.name);
     setText($('saved-profile-vehicle'), profile.vehicleLabel);
     setText($('saved-profile-payment'), profile.payment);
-    setText($('limit-preview'), money(Math.round(Number(form.get('limit')) * 100)));
-    setText($('vehicle-hint'), form.get('service') === 'air'
-      ? 'Objetivos simulados · delante ' + formatPressure(selected.front) + ' · detrás ' + formatPressure(selected.rear)
-      : 'Todos los programas tienen la misma tarifa. Las pausas no se cobran.');
   }
-  $('reservation').addEventListener('input', event => {
-    updateHint();
-    if (event.target.name === 'service') render(shown);
-  });
+  const options = $('sessionOptions');
+  options.addEventListener('submit', event => event.preventDefault());
   addEventListener('storage', event => {
-    if (event.key === gasgoStorageKey || event.key === null) updateHint();
+    if (event.key === gasgoStorageKey || event.key === null) updateProfile();
   });
-  updateHint();
+  updateProfile();
   $('reservation').addEventListener('submit', async event => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    if (!options.checkValidity()) {
+      auxiliaryView = 'profile';
+      render(shown);
+      options.reportValidity();
+      return;
+    }
+    const service = event.currentTarget.elements.service.value;
+    const settings = new FormData(options);
     const profile = readProfile();
     const id = crypto.randomUUID();
     await update((current, now) => {
       if (current) return current;
       return createSession({
-        service: form.get('service'), vehicle: profile.vehicle, customer: profile, method: form.get('method'),
-        limit: Math.round(Number(form.get('limit')) * 100), id,
+        service, vehicle: profile.vehicle, customer: profile, method: settings.get('method'),
+        limit: Math.round(Number(settings.get('limit')) * 100), id,
         code: String(100000 + crypto.getRandomValues(new Uint32Array(1))[0] % 900000),
       }, now);
     });

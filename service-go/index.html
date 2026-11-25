@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=14">
+  <link rel="stylesheet" href="./styles.css?v=15">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=13"></script>
+  <script type="module" src="./app.mjs?v=14"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -50,39 +50,27 @@
         <button class="primary" id="startService" type="button">Probar Service&amp;Go</button>
       </section>
       <form id="reservation" hidden>
-        <fieldset class="chooser">
-          <legend id="service-choice" tabindex="-1">Elige un servicio</legend>
-          <div class="choices">
-            <label class="choice">
-              <input type="radio" name="service" value="air" checked>
-              <span class="equipment-icon wheel" aria-hidden="true"></span>
-              <span><strong>Inflar neumáticos</strong><small>Ajuste por rueda · 0,05 €/s</small></span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="service" value="wash">
-              <span class="equipment-icon wash" aria-hidden="true"></span>
-              <span><strong>Lavar el vehículo</strong><small>Box con pistola · 1 €/min</small></span>
-            </label>
-          </div>
-        </fieldset>
-        <section class="panel setup" aria-labelledby="setup-title">
-          <h2 id="setup-title">Tu sesión</h2>
-          <p class="hint" id="profile-origin"></p>
-          <dl class="session-profile">
-            <div><dt>Identidad</dt><dd id="profile-name"></dd></div>
-            <div><dt>Vehículo activo</dt><dd id="profile-vehicle"></dd></div>
-            <div><dt>Pago simulado</dt><dd id="profile-payment"></dd></div>
-          </dl>
-          <details class="session-options">
-            <summary>Opciones de sesión · máximo <span id="limit-preview">3,00 €</span></summary>
-            <div class="fields">
-              <label>Identificación <select name="method" id="method"></select></label>
-              <label>Importe máximo (€) <input name="limit" type="number" inputmode="decimal" min="0.50" max="50" step="0.01" value="3.00" required></label>
-            </div>
-          </details>
-          <p class="hint" id="vehicle-hint"></p>
-          <button class="primary" type="submit">Preparar servicio</button>
+        <input type="hidden" name="service" value="wash">
+        <p class="eyebrow" id="service-choice" tabindex="-1">Hola</p>
+        <section class="service-guide" data-service-guide="wash">
+          <h2>Vamos a lavar tu coche</h2>
+          <p class="hint">Lavado en box · 1 €/min de uso de la lanza</p>
+          <ol class="procedure">
+            <li><div><strong>Entra en el box e identifícate</strong><p>Prepara el servicio y confirma tu acceso en el simulador.</p></div></li>
+            <li><div><strong>Elige un programa y usa la lanza</strong><p>Desengrasa, lava, enjabona o aclara. Puedes pausar cuando quieras.</p></div></li>
+            <li><div><strong>Finaliza y sigue tu viaje</strong><p>Consulta el importe del tiempo que has usado y descarga la factura.</p></div></li>
+          </ol>
         </section>
+        <section class="service-guide" data-service-guide="air" hidden>
+          <h2>Vamos a inflar las ruedas</h2>
+          <p class="hint">Inflado por rueda · 0,05 €/s de ajuste activo</p>
+          <ol class="procedure">
+            <li><div><strong>Acércate al inflador e identifícate</strong><p>Prepara el servicio y confirma tu acceso en el simulador.</p></div></li>
+            <li><div><strong>Fija la presión y ajusta cada rueda</strong><p>Elige una rueda, confirma la presión con SET y pulsa Presionar. El inflador conserva el objetivo para la siguiente.</p></div></li>
+            <li><div><strong>Revisa las ruedas y finaliza</strong><p>Puedes volver a ajustar una rueda antes de terminar. La factura queda en la app.</p></div></li>
+          </ol>
+        </section>
+        <button class="primary" type="submit">Preparar servicio</button>
       </form>
       <section class="panel session" id="session" aria-labelledby="service-title" hidden>
         <p class="eyebrow" id="equipment-name"></p>
@@ -162,6 +150,13 @@
           <div><dt>Pago simulado</dt><dd id="saved-profile-payment"></dd></div>
         </dl>
         <p class="hint">Puedes actualizar tus datos y elegir el vehículo activo en Gas&amp;Go.</p>
+        <form id="sessionOptions" class="panel" aria-labelledby="sessionOptionsTitle">
+          <h3 id="sessionOptionsTitle">Opciones de sesión</h3>
+          <div class="fields">
+            <label>Identificación <select name="method" id="method"></select></label>
+            <label>Importe máximo (€) <input name="limit" type="number" inputmode="decimal" min="0.50" max="50" step="0.01" value="3.00" required></label>
+          </div>
+        </form>
       </section>
     </main>
     <nav class="app-footer" aria-label="Accesos de Service&Go">
