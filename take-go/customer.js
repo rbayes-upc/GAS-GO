@@ -3,8 +3,9 @@ const U=TakeGoUI,E=TakeGoExperience,$=s=>document.querySelector(s),key='takego_c
 let data;try{data=JSON.parse(localStorage.getItem(key))||{}}catch{data={}}
 if(data.profile)data.profile.limits=TakeGoSpending.normalize(data.profile.limits);
 data.receipts=Array.isArray(data.receipts)?data.receipts.filter(U.receiptValid):[];
-let link=new URLSearchParams(location.search).get('session');
-if(!/^[a-f0-9-]{36}$/i.test(link||''))link=sessionStorage.getItem('takego_link_v1')||crypto.randomUUID();
+const requestedLink=new URLSearchParams(location.search).get('session');
+const linkedEntry=/^[a-f0-9-]{36}$/i.test(requestedLink||'');
+const link=linkedEntry?requestedLink:sessionStorage.getItem('takego_link_v1')||crypto.randomUUID();
 sessionStorage.setItem('takego_link_v1',link);
 const cachedKey='takego_last_state_'+link;
 let state=null;try{state=JSON.parse(sessionStorage.getItem(cachedKey))}catch{}
@@ -14,7 +15,7 @@ const connected=()=>lastSeen>0&&Date.now()-lastSeen<6000;
 const hello=()=>channel.postMessage({type:'hello',role:'customer',profile:data.profile});
 const receiptById=id=>data.receipts.find(r=>r.id===id)||(state?.receipt?.id===id?state.receipt:null);
 function toast(message){$('#toast').textContent=message;$('#toast').style.display='block';setTimeout(()=>$('#toast').style.display='none',4000)}
-function route(){const [view,id]=location.hash.slice(1).split('/');return {view:['home','basket','receipts','profile','payments','limits','issues','issue','invoice'].includes(view)?view:'home',id:id?decodeURIComponent(id):null}}
+function route(){const [view,id]=location.hash.slice(1).split('/');return {view:['welcome','home','basket','receipts','profile','payments','limits','issues','issue','invoice'].includes(view)?view:linkedEntry?'home':'welcome',id:id?decodeURIComponent(id):null}}
 function url(view,id){return '?session='+link+'#'+view+(id?'/'+encodeURIComponent(id):'')}
 function navigate(view,id,{replace=false}={}){
  if(view===tab&&!id)return;
@@ -51,7 +52,8 @@ $('#closeVirtualStore').onclick=()=>{
  sessionStorage.removeItem(storeOpenKey);
  ($('[data-action="store"]')||$('.nav-button.active'))?.focus();
 };
-if(data.profile&&sessionStorage.getItem(storeOpenKey)==='1')openStore();
+function restoreStore(){if(data.profile&&sessionStorage.getItem(storeOpenKey)==='1')openStore()}
+if(route().view!=='welcome')restoreStore();
 function connectionHTML(){return `<div class="connection-notice" data-connection-notice role="status" aria-live="polite" hidden></div>`}
 function updateConnection(){
  const online=connected();
@@ -75,7 +77,7 @@ function basket(){
 function paymentRecovery(){if(state?.phase!=='payment_failed')return '';const method=state.checkoutPayment||state.profile?.payment;return `<section class="card tinted"><h3>Resolver esta compra pendiente</h3><p>No se completó el pago con <strong>${U.esc(method)}</strong>.</p><p class="micro">Predeterminado para nuevas visitas: ${U.esc(data.profile.payment)}.</p><button class="button primary wide live-only" data-action="retry-current">Usar ${U.esc(data.profile.payment)} en esta compra y reintentar</button><p class="micro">Este botón autoriza el reintento de la misma compra con el método indicado. No crea otra cesta.</p></section>`}
 function render(){
  const main=$('#appMain');
- if(!data.profile){main.innerHTML=`<div class="welcome-copy">${U.logo('full','welcome-logo')}<p class="eyebrow">TU PARADA, SIN PASAR POR CAJA</p><h1>Lo coges.<br>Y sigues tu camino.</h1>${U.hero()}<p>Entra con tu identidad GAS&GO, elige tus productos y sal. Nosotros nos encargamos del resto.</p><button class="button primary wide" data-action="demo">Probar TAKE&GO ${U.icon('arrow')}</button><p class="micro center" style="margin-top:15px">Perfil ficticio · Sin conexión a tu cuenta GAS&GO.<br>Sin cámaras conectadas ni cobros reales.</p></div>`;$('#appNav').innerHTML='';return}
+ if(tab==='welcome'||!data.profile){main.innerHTML=`<div class="welcome-copy">${U.logo('full','welcome-logo')}<p class="eyebrow">TU PARADA, SIN PASAR POR CAJA</p><h1>Lo coges.<br>Y sigues tu camino.</h1>${U.hero()}<p>Entra con tu identidad GAS&GO, elige tus productos y sal. Nosotros nos encargamos del resto.</p><button class="button primary wide" data-action="demo">Probar TAKE&GO ${U.icon('arrow')}</button><p class="micro center" style="margin-top:15px">Perfil ficticio · Sin conexión a tu cuenta GAS&GO.<br>Sin cámaras conectadas ni cobros reales.</p></div>`;$('#appNav').innerHTML='';return}
  const profileTabs=['payments','limits','issues','issue'];
  $('#appNav').innerHTML=[['home','home','Inicio'],['basket','bag','Cesta'],['receipts','receipt','Facturas'],['profile','person','Perfil']].map(([id,icon,label])=>`<button class="nav-button ${tab===id||(id==='profile'&&profileTabs.includes(tab))?'active':''}" data-tab="${id}" ${tab===id||(id==='profile'&&profileTabs.includes(tab))?'aria-current="page"':''}>${U.icon(icon)}${label}</button>`).join('');
  const backButton=tab!=='home'?'<button class="back" data-action="back">'+U.icon('back')+' Volver</button>':'';
@@ -99,7 +101,7 @@ channel.onmessage=({data:msg})=>{
  const phaseChanged=previous?.phase!==next.phase||previous?.visitId!==next.visitId;
  state=next;lastSeen=Date.now();sessionStorage.setItem(cachedKey,JSON.stringify(state));
  let added=false;for(const r of next.receipts||[])if(U.receiptValid(r)&&!data.receipts.some(x=>x.id===r.id)){data.receipts.push(r);added=true}if(added)save();
- if(data.profile&&phaseChanged){
+ if(data.profile&&tab!=='welcome'&&phaseChanged){
   if(['confirmation','code'].includes(next.phase)&&tab!=='home'){navigate('home');return}
   const entered=next.phase==='shopping'&&(!previous||previous.visitId!==next.visitId||['identifying','confirmation','code','ready'].includes(previous.phase));
   const finished=['complete','left_empty'].includes(next.phase)&&previous?.visitId===next.visitId;
@@ -117,7 +119,12 @@ document.addEventListener('click',e=>{
  if(b.dataset.tab){navigate(b.dataset.tab);return}
  const action=b.dataset.action;
  if(action==='back'){back();return}
- if(action==='demo'){data.profile={id:'TG-DEMO-ALEX',name:'Alex García',payment:TakeGo.CARDS[0],limits:TakeGoSpending.empty()};save();hello();render()}
+ if(action==='demo'){
+  if(!data.profile){data.profile={id:'TG-DEMO-ALEX',name:'Alex García',payment:TakeGo.CARDS[0],limits:TakeGoSpending.empty()};save()}
+  const activeBasket=['shopping','reviewing','exiting','paying','limit_exceeded','payment_failed'].includes(state?.phase);
+  if(tab==='welcome')navigate(activeBasket?'basket':'home',null,{replace:true});else render();
+  restoreStore();hello();
+ }
  if(action==='store')openStore({focus:true});
  if(action==='confirm')liveSend({type:'confirm',visitId:state?.visitId});
  if(action==='receipt')navigate('invoice',b.dataset.id);
