@@ -46,7 +46,7 @@ body[data-view="client"] { min-height: 100dvh; background: var(--paper); }
 .device .topbar .brand { margin-left: -12px; }
 .welcome { max-width: 380px; margin: 0 auto 18px; text-align: center; }
 .welcome img { display: block; margin: -8px auto -7px; width: min(300px, 100%); height: auto; }
-.welcome h1 { font-size: clamp(1.75rem, 7vw, 2.1rem); letter-spacing: -.045em; line-height: 1.12; }
+.welcome h1 { text-wrap: balance; font-size: clamp(1.75rem, 7vw, 2.1rem); letter-spacing: -.045em; line-height: 1.12; }
 .welcome p { margin: 7px auto 0; max-width: 32ch; color: var(--muted); }
 @media (min-width: 560px) {
   body[data-view="client"] { padding: 20px 0; background: #e4ecf6; }
