@@ -191,7 +191,8 @@ function drawStations(map,layer){
    const position=cluster?[group.reduce((n,x)=>n+x.lat,0)/group.length,group.reduce((n,x)=>n+x.lng,0)/group.length]:[s.lat,s.lng];
    const mixed=s.ev>0&&(Number(s.gas)>0||Number(s.diesel)>0),ev=s.ev>0&&!mixed;
    const hasCharging=group.some(station=>station.ev>0);
-   const icon=L.divIcon({className:'',html:cluster?`<button class="gg-map-cluster ${hasCharging?'gg-map-cluster-charging':''}" aria-label="Ver ${group.length} estaciones${hasCharging?', con recarga eléctrica':''}">${group.length}</button>`:`<div class="geo-pin ${ev?'ev':mixed?'mixed':''}" aria-label="${esc(s.name)}">${ev?'⚡':'⛽'}</div>`,iconSize:[34,34],iconAnchor:[17,17]});
+   const size=cluster?44:34;
+   const icon=L.divIcon({className:'',html:cluster?`<button class="gg-map-cluster" aria-label="Ver ${group.length} estaciones${hasCharging?', con recarga eléctrica':''}"><span class="gg-map-cluster-badge ${hasCharging?'gg-map-cluster-charging':''}" aria-hidden="true">${group.length}</span></button>`:`<div class="geo-pin ${ev?'ev':mixed?'mixed':''}" aria-label="${esc(s.name)}">${ev?'⚡':'⛽'}</div>`,iconSize:[size,size],iconAnchor:[size/2,size/2]});
    const marker=L.marker(position,{icon,autoPanOnFocus:false}).addTo(layer);
    marker.getElement()?.addEventListener('mousedown',event=>{
     // Leaflet restaura el scroll de la ventana, pero el mapa vive en un panel

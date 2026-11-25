@@ -42,8 +42,13 @@ console.log('PASS mixed station retains pump icon while its charge action remain
 await p.locator('.gg-station-popup .close').click();await p.waitForFunction(()=>geoMap&&geoMap.getContainer().isConnected);await p.evaluate(()=>geoMap.setView(mapCenter,17,{animate:false}));
 await p.getByRole('button',{name:'Estación mixta',exact:true}).press('Enter');await p.locator('.gg-station-popup').getByRole('button',{name:'Simular recarga',exact:true}).waitFor();
 console.log('PASS mixed station remains accessible by keyboard');
-await p.evaluate(()=>{selectedStation=null;render()});await p.waitForFunction(()=>geoMap&&geoMap.getContainer().isConnected);await p.evaluate(()=>geoMap.setView(mapCenter,9,{animate:false}));
+await p.evaluate(()=>{selectedStation=null;userPosition={lat:41.391,lng:2.161};render()});await p.waitForFunction(()=>geoMap&&geoMap.getContainer().isConnected);await p.evaluate(()=>geoMap.setView(mapCenter,9,{animate:false}));
 assert.equal(await p.locator('.gg-map-cluster-charging').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 223, 46)');
+for(const [selector,size] of [['.gg-user-dot',20],['.gg-map-cluster-badge',36],['.gg-map-cluster',44]]){
+ const marker=p.locator(selector).first();
+ await marker.waitFor({state:'attached'});
+ assert.deepEqual(await marker.evaluate(el=>{const {width,height}=el.getBoundingClientRect();return [width,height]}),[size,size],selector);
+}
 console.log('PASS groups containing charging points use the same yellow');
 await p.evaluate(()=>go('Bienvenida'));await p.locator('.gg-demo-entry').evaluate(button=>{button.hidden=false});await p.getByRole('button',{name:/DEMO.*acceso rápido/}).click();await p.locator('#ggv2X').waitFor();await p.locator('#ggv2X').click();
 assert.equal(await p.locator('.gg-google-icon').count(),0);await p.locator('.gg-demo-map-marker').waitFor();assert.match(await p.locator('.gg-demo-map-marker').innerText(),/⛽/);
