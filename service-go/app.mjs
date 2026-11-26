@@ -4,6 +4,7 @@ import { gasgoStorageKey, serviceProfile } from './profile.mjs';
 
 const key = 'service-go.session.v1';
 const invoiceKey = 'service-go.invoices.v1';
+const issueKey = 'service-go.issues.v1';
 const client = document.body.dataset.view === 'client';
 const $ = id => document.getElementById(id);
 const terminal = ['finished', 'expired', 'cancelled'];
@@ -18,6 +19,7 @@ let shown;
 let configuring = false;
 let viewingWelcome = false;
 let auxiliaryView = null;
+let profilePage = 'overview';
 let selectedInvoice = null;
 
 function read() {
@@ -296,6 +298,10 @@ if (client) {
     $('welcome-title').focus();
   }
   $('backService').addEventListener('click', () => {
+    if (auxiliaryView === 'profile' && profilePage !== 'overview') {
+      showProfilePage('overview');
+      return;
+    }
     if (!auxiliaryView) {
       showWelcome();
       return;
@@ -324,13 +330,13 @@ if (client) {
       reason: fields.get('reason'), details: String(fields.get('details')).trim(),
       sessionId: shown?.id ?? null, createdAt: Date.now(),
     };
-    const issueKey = 'service-go.issues.v1';
     try {
       await navigator.locks.request(issueKey, () => {
         const issues = JSON.parse(localStorage.getItem(issueKey) || '[]');
         localStorage.setItem(issueKey, JSON.stringify([...issues, issue]));
       });
       issueForm.reset();
+      if (auxiliaryView === 'profile' && profilePage === 'issues') renderProfileIssues();
       setText($('issueStatus'), 'Incidencia guardada en este navegador.');
     } catch {
       setText($('issueStatus'), 'No se pudo guardar la incidencia. Vuelve a intentarlo.');
@@ -356,6 +362,46 @@ if (client) {
       showError(null);
     }
   }
+  function renderProfileIssues() {
+    const list = $('profileIssueList');
+    list.replaceChildren();
+    let issues = [];
+    try {
+      const stored = JSON.parse(localStorage.getItem(issueKey) || '[]');
+      if (Array.isArray(stored)) issues = stored.slice().reverse();
+    } catch {}
+    if (!issues.length) list.textContent = 'Todavía no tienes incidencias.';
+    for (const issue of issues) {
+      const card = document.createElement('div');
+      card.className = 'panel';
+      const title = document.createElement('strong');
+      title.textContent = issue.reason;
+      const date = document.createElement('small');
+      date.textContent = new Date(issue.createdAt).toLocaleDateString('es-ES');
+      card.append(title, date);
+      if (issue.details) {
+        const details = document.createElement('p');
+        details.textContent = issue.details;
+        card.append(details);
+      }
+      list.append(card);
+    }
+  }
+  function showProfilePage(page) {
+    profilePage = page;
+    for (const section of document.querySelectorAll('[data-profile-page]')) {
+      section.hidden = section.dataset.profilePage !== page;
+      if (!section.hidden) section.querySelector('h2').focus();
+    }
+    if (page === 'issues') renderProfileIssues();
+  }
+  for (const button of document.querySelectorAll('[data-profile-open]')) {
+    button.addEventListener('click', () => showProfilePage(button.dataset.profileOpen));
+  }
+  $('newProfileIssue').addEventListener('click', () => $('issueDialog').showModal());
+  addEventListener('storage', event => {
+    if (event.key === issueKey && auxiliaryView === 'profile' && profilePage === 'issues') renderProfileIssues();
+  });
   $('startService').addEventListener('click', () => openOperation(shown ? null : 'wash'));
   for (const button of document.querySelectorAll('[data-operation="air"], [data-operation="wash"]')) {
     button.addEventListener('click', () => openOperation(button.dataset.operation));
@@ -402,7 +448,8 @@ if (client) {
         updateProfile();
       }
       render(shown);
-      $(view + 'Title').focus();
+      if (view === 'profile') showProfilePage('overview');
+      else $('invoicesTitle').focus();
     });
   }
   for (const [id, label] of Object.entries(methods)) $('method').add(new Option(label, id));
@@ -416,10 +463,18 @@ if (client) {
     setText($('saved-profile-origin'), profile.linked ? 'Perfil de GAS&GO' : 'Perfil de demostración');
     setText($('saved-profile-name'), profile.name);
     setText($('saved-profile-vehicle'), profile.vehicleLabel);
-    setText($('saved-profile-payment'), profile.payment);
+    setText($('saved-profile-payment'), profile.payment + ' · Predeterminado');
+    setText($('paymentDetails'), profile.payment);
+    setText($('profileInitials'), profile.name.split(' ').slice(0, 2).map(word => word[0]).join('').toLocaleUpperCase('es-ES'));
   }
   const options = $('sessionOptions');
   options.addEventListener('submit', event => event.preventDefault());
+  function updateLimitSummary() {
+    const value = options.elements.limit.valueAsNumber;
+    setText($('profileLimitSummary'), Number.isFinite(value) ? 'Máximo ' + money(Math.round(value * 100)) + ' por sesión' : 'Importe máximo por sesión');
+  }
+  options.addEventListener('input', updateLimitSummary);
+  updateLimitSummary();
   addEventListener('storage', event => {
     if (event.key === gasgoStorageKey || event.key === null) updateProfile();
   });
@@ -429,6 +484,7 @@ if (client) {
     if (!options.checkValidity()) {
       auxiliaryView = 'profile';
       render(shown);
+      showProfilePage('limits');
       options.reportValidity();
       return;
     }

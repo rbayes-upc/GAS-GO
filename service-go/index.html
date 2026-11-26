@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=16">
+  <link rel="stylesheet" href="./styles.css?v=17">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=16"></script>
+  <script type="module" src="./app.mjs?v=17"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -143,21 +143,53 @@
         </div>
       </section>
       <section id="profileView" aria-labelledby="profileTitle" hidden>
-        <h2 id="profileTitle" tabindex="-1">Tu perfil</h2>
-        <p class="hint" id="saved-profile-origin"></p>
-        <dl class="session-profile panel">
-          <div><dt>Identidad</dt><dd id="saved-profile-name"></dd></div>
-          <div><dt>Vehículo activo</dt><dd id="saved-profile-vehicle"></dd></div>
-          <div><dt>Pago simulado</dt><dd id="saved-profile-payment"></dd></div>
-        </dl>
-        <p class="hint">Puedes actualizar tus datos y elegir el vehículo activo en Gas&amp;Go.</p>
-        <form id="sessionOptions" class="panel" aria-labelledby="sessionOptionsTitle">
-          <h3 id="sessionOptionsTitle">Opciones de sesión</h3>
-          <div class="fields">
-            <label>Identificación <select name="method" id="method"></select></label>
-            <label>Importe máximo (€) <input name="limit" type="number" inputmode="decimal" min="0.50" max="50" step="0.01" value="3.00" required></label>
+        <div data-profile-page="overview">
+          <h2 id="profileTitle" tabindex="-1">Tu perfil.</h2>
+          <p class="hint">Tu identidad de Gas&amp;Go en cada servicio.</p>
+          <div class="profile-card profile-identity">
+            <span class="profile-avatar" id="profileInitials" aria-hidden="true"></span>
+            <div>
+              <strong id="saved-profile-name"></strong>
+              <small id="saved-profile-origin"></small>
+              <small id="saved-profile-vehicle"></small>
+            </div>
           </div>
-        </form>
+          <div class="profile-actions">
+            <button class="profile-card" type="button" data-profile-open="payment">
+              <span><strong><span class="profile-symbol" aria-hidden="true">▤</span>Método de pago</strong><small id="saved-profile-payment"></small></span>
+              <span aria-hidden="true">→</span>
+            </button>
+            <button class="profile-card" type="button" data-profile-open="limits">
+              <span><strong><span class="profile-symbol" aria-hidden="true">◷</span>Límite de servicio</strong><small id="profileLimitSummary"></small></span>
+              <span aria-hidden="true">→</span>
+            </button>
+            <button class="profile-card" type="button" data-profile-open="issues">
+              <span><strong><span class="profile-symbol" aria-hidden="true">△</span>Mis incidencias</strong><small>Avisos guardados en este navegador</small></span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </div>
+        <section data-profile-page="payment" hidden>
+          <h2 tabindex="-1">Método de pago</h2>
+          <p class="hint">Método simulado para los servicios.</p>
+          <div class="panel"><strong id="paymentDetails"></strong><p class="hint">Puedes cambiarlo en Gas&amp;Go.</p></div>
+        </section>
+        <section data-profile-page="limits" hidden>
+          <h2 tabindex="-1">Límite de servicio</h2>
+          <p class="hint">El equipo se detiene al llegar a este importe.</p>
+          <form id="sessionOptions" class="panel" aria-label="Opciones de sesión">
+            <div class="fields">
+              <label>Importe máximo (€) <input name="limit" type="number" inputmode="decimal" min="0.50" max="50" step="0.01" value="3.00" required></label>
+              <label>Identificación <select name="method" id="method"></select></label>
+            </div>
+          </form>
+        </section>
+        <section data-profile-page="issues" hidden>
+          <h2 tabindex="-1">Mis incidencias</h2>
+          <p class="hint">Avisos guardados en este navegador.</p>
+          <div id="profileIssueList" class="profile-actions"></div>
+          <button class="primary" id="newProfileIssue" type="button">Comunicar incidencia</button>
+        </section>
       </section>
     </main>
     <nav class="operations-nav" aria-label="Operaciones de Service&Go">
