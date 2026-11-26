@@ -4,7 +4,9 @@ const $=id=>document.getElementById(id);
 let peer=null,connection=null,remoteState=null,overlayMode=null,cameraStream=null,scanFrame=null,pendingStation=null,isConnecting=false,currentScannerMode=null,connTimer=null,operationStation=null,peerInitPromise=null,lastTarget=null;
 const fmt=n=>Number(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
 const isLinked=()=>!!connection?.open&&(connection.local!==true||!!(localPumpWindow&&!localPumpWindow.closed));
-let localPumpWindow=null,localPendingId=null,localReady=false,localWindowTimer=null,qrEntryActive=false;
+let localPumpWindow=null,localPendingId=null,localReady=false,localWindowTimer=null,localPumpMode=null,qrEntryActive=false;
+const localOrigin=location.protocol==='file:'?'*':location.origin;
+const localPumpUrl='./surtidor-demo.html?gglocal=1&v=299';
 const useLocalDemo=()=>!qrEntryActive&&typeof inPresentationDemo==='function'&&inPresentationDemo()&&(location.protocol==='file:'||['localhost','127.0.0.1','[::1]'].includes(location.hostname));
 function currentProfile(){const pp=data.profile||{},cv=data.customVehicle||{};return {profileName:[pp.first,pp.last].filter(Boolean).join(' ').trim()||'Usuario GAS&GO',vehicle:data.vehicle||cv.name||'Vehículo registrado',fuel:data.fuel||cv.fuel||'Gasolina 95',vehicleName:cv.name||data.vehicle||'Vehículo registrado',vehicleModel:cv.model||'',vehiclePlate:cv.plate||'',vehicleEmoji:cv.emoji||'',...(window.GGPreferences?.operation()||{}),vehicleDetected:[cv.name||data.vehicle||'Vehículo registrado',cv.model||'',cv.plate||''].filter(Boolean).join(' · ')}}
 function reportProfile(){if(isLinked())connection.send({type:'profile',...currentProfile()})}
@@ -30,8 +32,11 @@ function pairErrorMessage(error){
 }
 function retry(){if(lastTarget){if(connection&&!connection.open){try{connection.close()}catch(e){}}connection=null;isConnecting=false;connect(lastTarget)}else openPair()}
 
-function openPair(){if(useLocalDemo()&&!isLinked()){openLocalPump(9001);return}if(isLinked()){show(`<h2>Dispositivos vinculados</h2><p>El móvil está conectado con el surtidor virtual del portátil.</p><div class="ggv2-success">● Conexión activa</div><button class="ggv2-alt" onclick="ggv2.unlink()">Desvincular</button>`, 'paired');return}
- show(`<h2>Conectar con el surtidor</h2><p>Escanea con la cámara del móvil el <b>QR de vinculación</b> que aparece en el ordenador. Esto conecta los dispositivos, pero no autoriza un repostaje.</p><button class="ggv2-main" onclick="ggv2.scanPair()">▣ Abrir cámara y escanear QR</button><div class="ggv2-separator">o introduce el código del portátil</div><label for="ggv2Code">Código de vinculación</label><input id="ggv2Code" type="text" autocapitalize="characters" autocomplete="off" maxlength="32" placeholder="GG-XXXX-XXXX-XXXX-XXXX" value=""><button class="ggv2-alt" onclick="ggv2.pairManual()">Vincular con código</button><div id="ggv2Alert" class="ggv2-alert hide" role="alert"></div><p class="ggv2-note">La cámara requiere abrir esta aplicación desde una dirección HTTPS en Chrome, Safari o Firefox, no desde la vista de un archivo de WhatsApp.</p>`, 'pair')}
+function localPumpChoices(){
+ return `<div class="gg-pump-choices"><button class="ggv2-main" type="button" onclick="ggv2.openLocal('panel')">Abrir surtidor al lado</button><button class="ggv2-alt" type="button" onclick="ggv2.openLocal('tab')">Abrir surtidor en otra pestaña</button></div>`;
+}
+function openPair(){if(useLocalDemo()&&!isLinked()){openLocalPump(9001);return}if(isLinked()){show(`<h2>Dispositivos vinculados</h2><div class="ggv2-success">● Conexión activa</div>${connection.local?localPumpChoices():''}<button class="ggv2-alt" onclick="ggv2.unlink()">Desvincular</button>`, 'paired');return}
+ show(`<h2>Conectar con el surtidor</h2><p>Elige cómo quieres mostrar el surtidor virtual en este navegador.</p>${localPumpChoices()}<div class="ggv2-separator">Para usar otro dispositivo</div><button class="ggv2-alt" onclick="ggv2.scanPair()">▣ Abrir cámara y escanear QR</button><label for="ggv2Code">Código de vinculación</label><input id="ggv2Code" type="text" autocapitalize="characters" autocomplete="off" maxlength="32" placeholder="GG-XXXX-XXXX-XXXX-XXXX"><button class="ggv2-alt" onclick="ggv2.pairManual()">Vincular con código</button><div id="ggv2Alert" class="ggv2-alert hide" role="alert"></div>`, 'pair')}
 function parsePeer(input){const raw=String(input||'').trim();if(!raw)return null;try{const u=new URL(raw);const p=u.searchParams.get('ggpair');if(p)return parsePeer(p)}catch(e){}const compact=raw.toUpperCase().replace(/[^A-Z0-9]/g,'');if(compact.startsWith('GGP')&&compact.length===19&&/^[0-9A-F]+$/.test(compact.slice(3)))return 'gg-p-'+compact.slice(3);if(compact.startsWith('GG')&&compact.length===18&&/^[0-9A-F]+$/.test(compact.slice(2)))return 'gg-p-'+compact.slice(2);if(/^gg-p-[a-f0-9]{16}$/i.test(raw))return raw.toLowerCase();return null}
 function startPeer(){
  if(peer?.open)return Promise.resolve(peer);
@@ -64,7 +69,12 @@ async function connect(id){if(isLinked()){close();return}if(isConnecting)return;
  }catch(e){isConnecting=false;syncLinkUI();showProblem(e.message||'No fue posible vincular los dispositivos')}
 }
 function pairManual(){connect($('ggv2Code')?.value||'')}
-function unlink(){const previous=connection;connection=null;previous?.close();remoteState=null;pendingStation=null;lastTarget=null;upsertConnectButton();close();toast('Dispositivos desvinculados')}
+function unlink(){
+ if(connection?.local){
+  if(closeLocalPump()){close();toast('Dispositivos desvinculados')}
+  return;
+ }
+ const previous=connection;connection=null;previous?.close();remoteState=null;pendingStation=null;lastTarget=null;upsertConnectButton();close();toast('Dispositivos desvinculados')}
 function requestScan(mode){if(!navigator.mediaDevices?.getUserMedia){showProblem('La cámara requiere HTTPS y permisos del navegador. Abre la web publicada en Chrome o Safari.');return}
  if(typeof jsQR!=='function'){showProblem('No se ha cargado el lector QR. Comprueba Internet o usa el código manual.');return}
  currentScannerMode=mode;const caption=mode==='pair'?'Escanea el QR del portátil':'Escanea el QR de seguridad del surtidor';
@@ -78,7 +88,7 @@ function statusScreen(){const s=remoteState;if(!s)return '<p>Esperando la respue
  const label=actionText[s.status]||s.status;
  let result=`<h2>Surtidor 02</h2><p class="ggv2-state">● ${safe(label)}</p><p class="ggv2-note">${safe(s.vehicle||data.vehicle||'Vehículo seleccionado')} · ${safe(s.fuel||data.fuel||'')}</p>`;
  if(s.status==='awaiting_confirmation')result+=`<p>Confirma que estás frente al <b>Surtidor 02</b> antes de autorizar el suministro.</p><button class="ggv2-main" onclick="ggv2.confirm()">Confirmar Surtidor 02</button>`;
- else if(s.status==='awaiting_fallback')result+=(typeof inPresentationDemo==='function'&&inPresentationDemo()?`<p>Verificación alternativa: introduce los seis dígitos que aparecen en el surtidor DEMO. No hace falta utilizar la cámara.</p>`:`<p>El sistema necesita una verificación alternativa. Escanea el <b>QR de seguridad</b> del surtidor.</p><button class="ggv2-main" onclick="ggv2.scanVerify()">▣ Escanear QR de seguridad</button><div class="ggv2-separator">o introduce el código temporal</div>`)+`<label for="ggv2Verify">Código del surtidor</label><input id="ggv2Verify" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="000000"><button class="ggv2-alt" onclick="ggv2.verifyManual()">Validar código</button>`;
+ else if(s.status==='awaiting_fallback')result+=(typeof inPresentationDemo==='function'&&inPresentationDemo()||connection?.local?`<p>Verificación alternativa: introduce los seis dígitos que aparecen en el surtidor DEMO. No hace falta utilizar la cámara.</p>`:`<p>El sistema necesita una verificación alternativa. Escanea el <b>QR de seguridad</b> del surtidor.</p><button class="ggv2-main" onclick="ggv2.scanVerify()">▣ Escanear QR de seguridad</button><div class="ggv2-separator">o introduce el código temporal</div>`)+`<label for="ggv2Verify">Código del surtidor</label><input id="ggv2Verify" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="000000"><button class="ggv2-alt" onclick="ggv2.verifyManual()">Validar código</button>`;
  else if(s.status==='verifying')result+='<p>La estación está comprobando la autorización. No necesitas realizar ninguna acción.</p>';
  else if(s.status==='authorized')result+=`<div class="ggv2-success">✓ ${s.fuel==='Eléctrico'?'Punto de carga autorizado. Puedes iniciar la recarga desde el portátil.':'Surtidor autorizado. Puedes repostar desde el portátil.'}</div>`;
  else if(s.status==='fueling'||s.status==='paused')result+=`<p>${s.fuel==='Eléctrico'?'La recarga':'El repostaje'} se controla desde el portátil. ${s.status==='paused'?'Operación pausada.':'Puedes cerrar esta ventana.'}</p>`;
@@ -123,28 +133,85 @@ function saveReceipt(s){if(!s.sessionId||!s.quantity||!s.vehicle)return;
  r.loyaltyProvider=s.loyaltyProgram||null;r.loyaltyCardRef=s.loyaltyCardRef||null;r.loyaltyStatus=s.loyaltyCardRef?'Identificación de fidelización simulada · sin puntos oficiales':null;if(window.GGWallet){GGWallet.record(r,s);};data.history.push(r);save();localStorage.setItem(lock,'1');if(page!=='Bienvenida'&&page!=='Registro'){go('Home');showRepostNotification(r.amount,r.id)}else toast('Operación completada: '+fmt(r.amount));
 }
 // V2.5.9 · Enlace local con apertura automática del surtidor DEMO y sin modal en la APP.
-function localSend(data){if(localPumpWindow&&!localPumpWindow.closed){localPumpWindow.postMessage({gasgoLocal:258,data},'*');return true}return false}
+function localSend(data){if(localPumpWindow&&!localPumpWindow.closed){localPumpWindow.postMessage({gasgoLocal:258,data},localOrigin);return true}return false}
 function releaseLocalConnection(){if(!connection?.local)return;connection=null;remoteState=null;localReady=false;upsertConnectButton()}
-function openLocalPump(id){
- if(!useLocalDemo()){openPair();return}
- localPendingId=id;
+function pumpActive() {
+ return !!remoteState && !['idle','finished','emergency'].includes(remoteState.status);
+}
+function removeLocalPanel(){
+ const pane=$('ggPumpPane');
+ pane?.remove();
+ document.body.classList.remove('gg-pump-panel-open');
+}
+function closeLocalPump(){
+ if(pumpActive()){toast('Finaliza la operación en el surtidor antes de cerrarlo.');return false}
+ clearInterval(localWindowTimer);
+ localWindowTimer=null;
+ if(localPumpMode==='tab'&&!localPumpWindow?.closed)localPumpWindow?.close();
+ localPumpWindow=null;
+ localPumpMode=null;
+ localPendingId=null;
+ removeLocalPanel();
+ releaseLocalConnection();
+ $('ggv2ConnectBtn')?.focus();
+ return true;
+}
+function openLocalPump(id,mode='tab'){
+ if(navigator.onLine===false){toast('Conéctate a Internet para iniciar una operación.');return}
+ if(isConnecting || (isLinked() && !connection.local)) return;
+ const previous=localPumpWindow;
+ if(previous&&!previous.closed&&localPumpMode===mode){
+  close();
+  if(mode==='panel')$('ggPumpPane').scrollIntoView({block:'nearest'});
+  else previous.focus();
+  if(id!=null){
+   if(localReady)startConnectedOperation(id);
+   else localPendingId=id;
+  }
+  return;
+ }
+ if(pumpActive()){toast('Finaliza la operación antes de cambiar la vista del surtidor.');return}
  let w;
- try{w=window.open('./surtidor-demo.html?gglocal=1','gasgo-surtidor-demo','width=1080,height=880')}catch(e){}
- if(!w){toast('El navegador ha bloqueado la pestaña. Permite ventanas emergentes para esta APP.');return}
+ if(mode==='panel'){
+  const pane=document.createElement('section');
+  pane.id='ggPumpPane';
+  pane.setAttribute('aria-labelledby','ggPumpPaneTitle');
+  pane.innerHTML='<header><h2 id="ggPumpPaneTitle">Surtidor virtual</h2><button type="button" class="btn ghost">Cerrar surtidor</button></header><iframe title="Surtidor virtual de GAS&GO"></iframe>';
+  pane.querySelector('iframe').src=localPumpUrl;
+  pane.querySelector('button').addEventListener('click',closeLocalPump);
+  document.body.append(pane);
+  document.body.classList.add('gg-pump-panel-open');
+  w=pane.querySelector('iframe').contentWindow;
+ }else{
+  try{w=window.open(localPumpUrl,'gasgo-surtidor-demo','width=1080,height=880')}catch(e){}
+ }
+ if(!w){toast('El navegador ha bloqueado la apertura del surtidor. Puedes abrirlo al lado.');return}
+ if(localPumpMode==='panel')removeLocalPanel();
+ else if(previous&&!previous.closed&&previous!==w)previous.close();
+ if(connection?.local)releaseLocalConnection();
+ localReady=false;
  localPumpWindow=w;
- if(connection?.local){connection=null;remoteState=null;localReady=false}
+ localPumpMode=mode;
+ localPendingId=id ?? localPendingId;
+ pendingStation=null;
  close();
+ if(mode==='panel')$('ggPumpPane').scrollIntoView({block:'nearest'});
  const ping=()=>localSend({type:'helloLocal'});
  ping();clearInterval(localWindowTimer);let attempts=0;
  localWindowTimer=setInterval(()=>{
-   if(localReady||!localPumpWindow||localPumpWindow.closed){clearInterval(localWindowTimer);localWindowTimer=null;if(!localReady)toast('La pestaña del surtidor se ha cerrado. Vuelve a abrir el modo DEMO.');return}
-   if(++attempts>25){clearInterval(localWindowTimer);localWindowTimer=null;toast('No responde el surtidor local. Cierra su pestaña y vuelve a abrir el modo DEMO.');return}
+   if(localReady||!localPumpWindow||localPumpWindow.closed){clearInterval(localWindowTimer);localWindowTimer=null;return}
+   if(++attempts>25){clearInterval(localWindowTimer);localWindowTimer=null;toast('No responde el surtidor local. Vuelve a abrirlo.');return}
    ping();
  },350);
 }
 window.addEventListener('message',event=>{
- if(!localPumpWindow||event.source!==localPumpWindow||event.data?.gasgoLocal!==258)return;
+ if(!localPumpWindow||event.source!==localPumpWindow||(localOrigin!=='*'&&event.origin!==localOrigin)||event.data?.gasgoLocal!==258)return;
  const msg=event.data.data||{};
+ if(msg.type==='focusLocalApp'&&localPumpMode==='panel'){
+  $('ggv2ConnectBtn')?.focus({preventScroll:true});
+  document.querySelector('.device').scrollIntoView({block:'start'});
+  return;
+ }
  if(msg.type==='readyLocal'){
   if(localReady)return;
   localReady=true;clearInterval(localWindowTimer);localWindowTimer=null;
@@ -160,8 +227,8 @@ window.addEventListener('message',event=>{
 });
 setInterval(()=>{if(connection?.local&&localPumpWindow?.closed){releaseLocalConnection();toast('Se ha cerrado el surtidor DEMO')}},1200);
 const formerStart=window.start;
-window.start=function(id){if(isConnecting)return;if(useLocalDemo())return openLocalPump(id);startConnectedOperation(id)};
-window.ggv2={close,openPair,pairManual,retry,refreshLinkUI:syncLinkUI,scanPair:()=>requestScan('pair'),scanVerify:()=>requestScan('verify'),stopScan,confirm:confirmPump,verifyManual,showSession,unlink};
+window.start=function(id){if(isConnecting)return;if(useLocalDemo())return openLocalPump(id,localPumpMode||'tab');startConnectedOperation(id)};
+window.ggv2={close,openPair,openLocal:mode=>openLocalPump(pendingStation,mode),pairManual,retry,refreshLinkUI:syncLinkUI,scanPair:()=>requestScan('pair'),scanVerify:()=>requestScan('verify'),stopScan,confirm:confirmPump,verifyManual,showSession,unlink};
 upsertConnectButton();
 // Acceso directo desde el QR físico: abre GAS&GO y enlaza automáticamente.
 // No solicita elegir modo FULL/DEMO ni escanear un segundo código.

@@ -30,3 +30,16 @@ body.ggv2-lock{overflow:hidden!important}
 /* v2.5.0 — QR único: indicador de vinculación en la bienvenida */
 .ggv250-link-state{max-width:306px;width:100%;margin:18px auto -12px;border:1px solid #a5d4bf;background:#e8f8ef;border-radius:14px;padding:11px 13px;text-align:center;color:#08573f;font-size:12px;font-weight:740;line-height:1.4}
 .ggv250-link-state.ggv250-waiting{background:#fff8de;border-color:#f2dc91;color:#735513}
+
+.gg-pump-choices { display:grid;gap:6px;margin:12px 0 }
+#ggPumpPane { display:flex;flex-direction:column;min-width:0;height:min(890px,calc(100dvh - 40px));overflow:hidden;border:1px solid #d2e5d9;border-radius:22px;background:#fff }
+#ggPumpPane > header { display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 14px;border-bottom:1px solid #d2e5d9 }
+#ggPumpPane h2 { margin:0;font-size:18px }
+#ggPumpPane iframe { width:100%;flex:1;min-height:0;border:0 }
+@media (min-width:860px) {
+ body.gg-pump-panel-open { display:grid;grid-template-columns:440px minmax(0,1000px);align-items:start;justify-content:center;gap:16px;padding:20px 16px }
+ body.gg-pump-panel-open > .device { width:100%;margin:0 }
+}
+@media (max-width:859px) {
+ #ggPumpPane { width:min(100%,720px);margin:16px auto }
+}

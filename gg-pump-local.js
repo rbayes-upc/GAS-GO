@@ -129,7 +129,7 @@ function paint(){
  $('emergencyMiniBtn').disabled=$('emergencyBtn').disabled;
  $('disconnectBtn').disabled=guestMode();
  $('peerStatus').textContent=connected()?'● APP local conectada':peerServiceStatus==='error'?'● Servicio no disponible':peerServiceStatus==='disconnected'?'● Servicio desconectado':peerServiceStatus==='ready'?'● Esperando móvil…':'● Conectando al servicio…';
- $('pairHelp').textContent=connected()?'GAS&GO y el surtidor están enlazados localmente. El usuario puede autorizar y completar el suministro.':'Al abrir el modo DEMO en la APP, este surtidor se enlaza automáticamente. Ambas pestañas deben permanecer en el mismo navegador.';
+ $('pairHelp').textContent=connected()?'GAS&GO y el surtidor están enlazados localmente. El usuario puede autorizar y completar el suministro.':'Abre este surtidor desde GAS&GO para enlazarlo automáticamente. La app y el surtidor deben permanecer abiertos en el mismo navegador.';
 }
 function answer(msg){if(!msg||typeof msg!=='object')return;if(msg.type==='hello'||msg.type==='profile'){linkedProfile=normalizeProfile(msg);session.clientReady=true;broadcast();return}if(msg.type==='arrival'){
  if(traditionalLocked()||(session.status!=='idle'&&session.status!=='finished')){connection?.send({type:'notice',message:'El surtidor está ocupado. Finaliza la operación anterior.'});return}
@@ -340,11 +340,17 @@ function initRemotePump(){
 $('qrNetworkRefresh')?.addEventListener('click',()=>{if(connected()){if(!confirm('¿Desvincular el móvil y cambiar el QR?'))return;try{connection.close()}catch(e){}connection=null;reset()}
  try{peer?.destroy()}catch(e){}peer=null;code=hexToken().slice(0,16);peerId='gg-p-'+code;initRemotePump()});
 
-// DEMO local: la comunicación usa window.postMessage entre las dos pestañas
-// abiertas desde el mismo navegador; el surtidor se abre automáticamente desde la APP DEMO.
-function localSend(data){if(window.opener&&!window.opener.closed)window.opener.postMessage({gasgoLocal:258,data},'*')}
+// Local: el equipo puede estar en un panel de la app o en una pestaña enlazada.
+const localClient=window.parent!==window?window.parent:window.opener;
+const localOrigin=location.protocol==='file:'?'*':location.origin;
+function localSend(data){if(localClient&&!localClient.closed)localClient.postMessage({gasgoLocal:258,data},localOrigin)}
+$('focusLocalApp').addEventListener('click',()=>{
+ if(window.parent!==window)localSend({type:'focusLocalApp'});
+ else if(window.opener)window.opener.focus();
+ else alert('Abre esta pantalla desde la aplicación GAS&GO.');
+});
 function localConnect(){
- if(!window.opener||window.opener.closed){
+ if(!localClient||localClient.closed){
   connection=null;setPeerServiceStatus('error','Abre esta pantalla pulsando el botón desde GAS&GO.');paint();return;
  }
  if(!connection||!connection.open)connection={open:true,send:localSend,close:()=>{connection=null;paint()}};
@@ -352,9 +358,10 @@ function localConnect(){
  paint();localSend({type:'request-profile'});broadcast();
 }
 window.addEventListener('message',ev=>{
- if(ev.source!==window.opener||!ev.data||ev.data.gasgoLocal!==258)return;
- if(ev.data.type==='helloLocal'){localConnect();localSend({type:'readyLocal'});return;}
- if(ev.data.data){if(!connected())localConnect();answer(ev.data.data)}
+ if(netlifyPumpMode||ev.source!==localClient||(localOrigin!=='*'&&ev.origin!==localOrigin)||ev.data?.gasgoLocal!==258)return;
+ const msg=ev.data.data;
+ if(msg?.type==='helloLocal'){localConnect();localSend({type:'readyLocal'});return;}
+ if(msg){if(!connected())localConnect();answer(msg)}
 });
 window.addEventListener('beforeunload',()=>{halt();localSend({type:'closedLocal'})});
 function initialize(){if(netlifyPumpMode){initRemotePump();return}localConnect();localSend({type:'readyLocal'})}
