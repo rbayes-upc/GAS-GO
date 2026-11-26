@@ -4,7 +4,7 @@ Prototipo autónomo para dos servicios de estación. El inflador utiliza presion
 
 ## Ejecutar
 
-Desde la raíz del repositorio, ejecuta `python3 -m http.server 8000` y abre `/service-go/` desde el servidor local. Al preparar la sesión, el simulador se abre al lado de la app en escritorio y debajo en pantallas estrechas. Puedes volver a abrirlo desde **Abrir simulador**. La app y el simulador comparten la sesión local en el mismo origen, en localhost o HTTPS.
+Desde la raíz del repositorio, ejecuta `python3 -m http.server 8000` y abre `/service-go/` desde el servidor local. Al preparar la sesión, el simulador se abre al lado de la app en escritorio y debajo en pantallas estrechas. Si lo cierras durante una sesión, puedes volver a abrirlo desde **Reabrir simulador**. La app y el simulador comparten la sesión local en el mismo origen, en localhost o HTTPS.
 
 1. Pulsa **Probar Service&Go** para ver la guía de lavado, o abre **Inflar** o **Lavar** desde la barra inferior. La app reutiliza el nombre, el vehículo activo y la etiqueta del método de pago del perfil local de GAS&GO si está disponible en el mismo navegador y origen. Si falta, usa un perfil de ejemplo. La identificación automática y el máximo de 3 € vienen seleccionados. En **Perfil → Opciones de sesión** puedes cambiar el método de identificación y fijar un máximo entre 0,50 € y 50,00 €.
 2. El simulador detecta la solicitud y autoriza el modo automático tras una breve espera. Para los métodos alternativos, pulsa **Identificar cliente** en el simulador y confirma en la app o introduce en el equipo el código temporal de seis cifras. La solicitud caduca a los 90 segundos.

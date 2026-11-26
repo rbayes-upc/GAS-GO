@@ -63,11 +63,6 @@ body[data-view="client"] { min-height: 100dvh; background: var(--paper); }
   }
 }
 .device > main { padding: 20px; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
-.app-footer {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 20px;
-  padding-bottom: max(9px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line);
-  font-size: .8rem; color: var(--muted);
-}
 .header-link {
   display: inline-flex; align-items: center; gap: 5px; min-height: 44px;
   font-weight: 800; color: var(--blue); text-decoration: none;

@@ -112,6 +112,7 @@ function render(session) {
     $('invoicesView').hidden = auxiliaryView !== 'invoices';
     $('profileView').hidden = auxiliaryView !== 'profile';
     $('backService').hidden = !$('welcome').hidden;
+    $('openEquipment').hidden = !session || terminal.includes(session.phase) || !$('equipmentPane').hidden;
     setText($('startService'), session ? 'Continuar sesión' : 'Probar Service&Go');
     const operation = auxiliaryView ?? (!$('welcome').hidden ? 'home' : session?.service ?? $('reservation').elements.service.value);
     for (const button of document.querySelectorAll('[data-operation]')) {
@@ -256,6 +257,7 @@ if (client) {
       frame.title = 'Controles del inflador y del box de lavado';
       pane.append(frame);
       pane.hidden = false;
+      opener.hidden = true;
       document.body.classList.add('equipment-open');
       sessionStorage.setItem('service-go.equipment-open', '1');
     }
@@ -274,13 +276,14 @@ if (client) {
   function hideEquipment() {
     pane.querySelector('iframe')?.remove();
     pane.hidden = true;
+    opener.hidden = !shown || terminal.includes(shown.phase);
     document.body.classList.remove('equipment-open');
     sessionStorage.removeItem('service-go.equipment-open');
   }
   $('closeEquipment').addEventListener('click', async () => {
     await pauseSession();
     hideEquipment();
-    opener.focus();
+    if (!opener.hidden) opener.focus();
   });
   async function showWelcome() {
     if (!$('welcome').hidden) return;

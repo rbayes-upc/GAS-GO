@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9fc">
   <title>Service&Go · App del cliente</title>
-  <link rel="stylesheet" href="./styles.css?v=15">
+  <link rel="stylesheet" href="./styles.css?v=16">
   <link rel="icon" type="image/png" href="./assets/monograma-service-go.png">
-  <script type="module" src="./app.mjs?v=15"></script>
+  <script type="module" src="./app.mjs?v=16"></script>
 </head>
 <body data-view="client">
   <div class="device">
@@ -125,6 +125,7 @@
           </div>
         </article>
         <div class="actions">
+          <a class="header-link" id="openEquipment" href="./equipo.html" hidden>Reabrir simulador</a>
           <button class="primary" type="button" data-action="confirm" hidden>Confirmar identificación</button>
           <button type="button" data-action="cancel" hidden>Cancelar solicitud</button>
           <button type="button" data-action="finish" hidden>Finalizar servicio</button>
@@ -159,10 +160,6 @@
         </form>
       </section>
     </main>
-    <nav class="app-footer" aria-label="Accesos de Service&Go">
-      <span>Servicios simulados</span>
-      <a class="header-link" id="openEquipment" href="./equipo.html">Abrir simulador</a>
-    </nav>
     <nav class="operations-nav" aria-label="Operaciones de Service&Go">
       <button type="button" data-operation="home" aria-current="page"><span class="operation-icon operation-home" aria-hidden="true"></span>Inicio</button>
       <button type="button" data-operation="air"><span class="operation-icon equipment-icon wheel" aria-hidden="true"></span>Inflar</button>
